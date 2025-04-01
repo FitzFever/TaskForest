@@ -1,0 +1,189 @@
+---
+description: 
+globs: *.java, pom.xml, build.gradle
+---
+# Java包导入规范
+
+> file_patterns: ["*.java", "pom.xml", "build.gradle"]
+> description: Java项目的包导入和依赖管理规范
+
+## 项目依赖管理
+> required: true
+
+### Maven依赖配置
+```xml
+<!-- pom.xml -->
+<dependencies>
+    <!-- 1. Spring Boot 依赖（父依赖管理版本） -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+    </parent>
+    
+    <!-- 2. 核心依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    
+    <!-- 3. 数据库相关依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    
+    <!-- 4. 工具类依赖 -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+    
+    <!-- 5. 测试依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+### Gradle依赖配置
+```groovy
+// build.gradle
+plugins {
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+}
+
+dependencies {
+    // 1. Spring Boot 依赖
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    // 2. 数据库相关依赖
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    
+    // 3. 工具类依赖
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // 4. 测试依赖
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+```
+
+## 包导入规范
+> required: true
+
+### ✅ 推荐的导入方式
+```java
+// 1. Java核心包导入
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+// 2. 第三方框架包导入（按字母顺序排列）
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+// 3. 项目内部包导入（按模块分组）
+// 3.1 领域模型
+import com.company.project.domain.User;
+import com.company.project.domain.Order;
+// 3.2 数据传输对象
+import com.company.project.dto.UserDTO;
+import com.company.project.dto.OrderDTO;
+// 3.3 异常类
+import com.company.project.exception.ResourceNotFoundException;
+
+// 4. 静态导入（仅用于常量和工具方法）
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static com.company.project.util.Constants.MAX_RETRY_COUNT;
+```
+
+### ❌ 避免的导入方式
+```java
+// 错误示例1：使用通配符导入（降低代码可读性）
+import java.util.*;  // ❌ 避免使用通配符
+import org.springframework.data.jpa.repository.*;  // ❌ 避免使用通配符
+
+// 错误示例2：导入顺序混乱
+import com.company.project.domain.User;
+import java.util.List;  // ❌ Java核心包应该在最前面
+import org.springframework.stereotype.Service;
+
+// 错误示例3：不必要的静态导入
+import static java.util.stream.Collectors.*;  // ❌ 避免过度使用静态导入
+```
+
+### 包结构规范
+```bash
+src/main/java/com/company/project/
+├── Application.java                # 应用程序入口
+├── controller/                     # REST API层
+├── service/                        # 业务逻辑层
+│   ├── impl/                      # 接口实现
+│   └── interfaces/                # 服务接口
+├── repository/                     # 数据访问层
+├── domain/                         # 领域模型
+├── dto/                           # 数据传输对象
+├── exception/                     # 自定义异常
+└── config/                       # 配置类
+```
+
+## 依赖管理最佳实践
+> required: true
+
+### 版本管理
+```xml
+<!-- 在properties中集中管理版本 -->
+<properties>
+    <java.version>17</java.version>
+    <spring-boot.version>3.2.0</spring-boot.version>
+    <lombok.version>1.18.30</lombok.version>
+</properties>
+```
+
+### 依赖范围管理
+```xml
+<!-- 正确使用依赖范围 -->
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <scope>provided</scope>  <!-- 编译时需要，运行时不需要 -->
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>  <!-- 仅测试时需要 -->
+</dependency>
+```
+
+## 检查清单
+> required: true
+
+### 依赖检查
+- [ ] 是否使用了最新稳定版本的依赖
+- [ ] 是否在properties中统一管理版本号
+- [ ] 是否正确设置了依赖范围
+- [ ] 是否避免了依赖冲突
+- [ ] 是否移除了未使用的依赖
+
+### 导入检查
+- [ ] 包导入是否按类型正确分组
+- [ ] 是否避免使用通配符导入
+- [ ] 静态导入是否仅用于常量和工具方法
+- [ ] 是否遵循标准的包命名规范
+- [ ] 是否移除了未使用的导入
+
+### 项目结构检查
+- [ ] 是否遵循标准的包结构
+- [ ] 是否正确放置了配置文件
+- [ ] 是否遵循了分层架构原则
+- [ ] 是否避免了循环依赖 

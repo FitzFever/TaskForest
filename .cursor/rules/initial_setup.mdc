@@ -1,0 +1,214 @@
+---
+description: Java项目初始化设置指南
+globs: *.java, pom.xml, build.gradle, application.yml
+---
+---
+description: Java项目初始化设置指南
+globs: ["*.java", "pom.xml", "build.gradle", "application.yml"]
+---
+# Java项目初始化规范
+
+> file_patterns: ["*.java", "pom.xml", "build.gradle", "application.yml"]
+> description: Java项目初始化的核心规范
+
+## 项目结构规范
+> required: true
+
+### 标准结构
+```bash
+项目根目录/
+├── src/
+│   ├── main/
+│   │   ├── java/com/company/project/     # 源码目录
+│   │   │   ├── controller/              # 控制器层
+│   │   │   ├── service/                 # 服务层
+│   │   │   │   ├── impl/               # 接口实现
+│   │   │   │   └── interfaces/         # 服务接口
+│   │   │   ├── repository/             # 数据访问层
+│   │   │   ├── domain/                 # 领域模型
+│   │   │   ├── dto/                    # 数据传输对象
+│   │   │   ├── config/                 # 配置类
+│   │   │   └── Application.java        # 启动类
+│   │   └── resources/                  # 资源目录
+│   │       ├── application.yml         # 主配置文件
+│   │       ├── application-dev.yml     # 开发环境配置
+│   │       ├── application-prod.yml    # 生产环境配置
+│   │       └── db/migration/           # 数据库脚本
+│   └── test/                          # 测试目录
+│       └── java/com/company/project/
+├── docs/                              # 项目文档
+├── .gitignore                        # Git忽略文件
+├── pom.xml                           # Maven配置
+└── README.md                         # 项目说明
+```
+
+## 代码规范
+> required: true
+
+### 基础模板
+```java
+package com.company.project.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 数据处理服务
+ * 
+ * 功能：处理输入数据并生成标准输出
+ * 配置：通过配置类进行配置
+ */
+@Service
+@RequiredArgsConstructor
+public class DataProcessorService {
+    
+    private final ProcessorConfig config;
+    private final DataRepository dataRepository;
+    
+    /**
+     * 处理数据
+     *
+     * @param request 请求数据
+     * @return 处理结果
+     */
+    @Transactional
+    public ProcessResponse process(ProcessRequest request) {
+        validateRequest(request);
+        // 处理逻辑
+        return ProcessResponse.builder()
+            .status("success")
+            .build();
+    }
+    
+    private void validateRequest(ProcessRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("请求不能为空");
+        }
+        // 其他验证逻辑
+    }
+}
+```
+
+## 配置管理
+> required: true
+
+### 环境配置
+```yaml
+# application.yml
+spring:
+  profiles:
+    active: dev
+  datasource:
+    url: ${JDBC_URL:jdbc:mysql://localhost:3306/dbname}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    
+# 自定义配置
+app:
+  api:
+    key: ${API_KEY:default_key}
+    url: ${API_URL:http://api.example.com}
+```
+
+```java
+// 配置类
+@Configuration
+@ConfigurationProperties(prefix = "app.api")
+@Validated
+@Data
+public class ApiConfig {
+    
+    @NotBlank(message = "API key不能为空")
+    private String key;
+    
+    @NotBlank(message = "API URL不能为空")
+    private String url;
+}
+```
+
+## 测试规范
+> required: true
+
+### 基础测试
+```java
+// 测试配置
+@TestConfiguration
+public class TestConfig {
+    
+    @Bean
+    public ProcessorConfig testProcessorConfig() {
+        return ProcessorConfig.builder()
+            .apiKey("test_key")
+            .apiUrl("http://test.api")
+            .build();
+    }
+}
+
+// 单元测试
+@SpringBootTest
+class DataProcessorServiceTest {
+    
+    @Autowired
+    private DataProcessorService service;
+    
+    @MockBean
+    private DataRepository dataRepository;
+    
+    @Test
+    @DisplayName("测试数据处理")
+    void testProcess() {
+        // given
+        ProcessRequest request = new ProcessRequest("test");
+        when(dataRepository.findById(any())).thenReturn(Optional.of(new Data()));
+        
+        // when
+        ProcessResponse response = service.process(request);
+        
+        // then
+        assertThat(response.getStatus()).isEqualTo("success");
+        verify(dataRepository).findById(any());
+    }
+}
+```
+
+## 检查清单
+> required: true
+
+### 结构检查
+- [ ] 是否创建了标准的Maven/Gradle项目结构
+- [ ] 是否正确设置了包结构
+- [ ] 是否分离了源码和测试
+- [ ] 是否创建了必要的配置文件
+- [ ] 是否添加了README和文档
+
+### 配置检查
+- [ ] 是否正确配置了application.yml
+- [ ] 是否分离了开发和生产环境配置
+- [ ] 是否使用了环境变量注入
+- [ ] 是否添加了配置类验证
+- [ ] 是否正确设置了数据库连接
+
+### 开发检查
+- [ ] 是否添加了必要的注解
+- [ ] 是否添加了API文档注解
+- [ ] 是否创建了单元测试
+- [ ] 是否配置了日志
+- [ ] 是否设置了代码格式化
+
+### 依赖检查
+- [ ] 是否添加了必要的Spring Boot starter
+- [ ] 是否添加了数据库驱动
+- [ ] 是否添加了测试依赖
+- [ ] 是否添加了lombok
+- [ ] 是否设置了正确的依赖范围
+
+### 安全检查
+- [ ] 是否配置了Spring Security
+- [ ] 是否使用了HTTPS
+- [ ] 是否正确处理了敏感信息
+- [ ] 是否添加了跨域配置
+- [ ] 是否实现了认证授权 

@@ -1,0 +1,122 @@
+---
+description: Java项目目录专用README文档的维护指南
+globs: README_*.md, **/README_*.md
+---
+# Java项目目录专用README规范
+
+> file_patterns: ["README_*.md", "**/README_*.md"]
+> description: Java项目各目录专用README文档的标准规范
+
+## 命名规范
+> required: true
+
+### 文件命名
+```bash
+# 格式：README_<目录名大写>.md
+
+src/main/java/com/company/                对应README/
+├── controller/                          README_CONTROLLER.md
+├── service/                             README_SERVICE.md
+├── repository/                          README_REPOSITORY.md
+├── domain/                              README_DOMAIN.md
+└── infrastructure/                      README_INFRASTRUCTURE.md
+```
+
+## 文档结构
+> required: true
+
+### 核心内容模板
+```markdown
+# [目录名]
+
+## 🎯 目录用途
+- 本层/目录的职责说明
+- 与其他层的交互关系
+- 关键接口和设计模式说明
+- 业务领域边界定义
+
+## 📁 目录结构
+```bash
+[目录名]/
+├── user/                 # 用户相关模块
+│   ├── UserController.java    # 用户接口层
+│   └── dto/                   # 数据传输对象
+├── order/                # 订单相关模块
+│   ├── OrderController.java   # 订单接口层
+│   └── dto/                   # 数据传输对象
+└── common/               # 公共组件
+    └── response/             # 统一响应处理
+```
+
+## 🔧 关键配置
+- 包依赖关系
+- 组件注入配置
+- 切面配置（如果有）
+- 相关中间件配置
+
+## 💡 使用示例
+```java
+// Controller层示例
+@RestController
+@RequestMapping("/api/v1/users")
+public class UserController {
+    @Autowired
+    private UserService userService;
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.findById(id));
+    }
+}
+
+// Service层示例
+@Service
+@Transactional
+public class UserServiceImpl implements UserService {
+    @Autowired
+    private UserRepository userRepository;
+    
+    public UserResponse findById(Long id) {
+        return userRepository.findById(id)
+            .map(UserMapper::toResponse)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+}
+```
+```
+
+### 更新维护
+```markdown
+## 📝 更新记录
+- [日期] [修改人]: [变更内容]
+- 示例：[2024-03-01] [张三]: 添加用户认证接口
+```
+
+## 检查清单
+> required: true
+
+### 基础检查
+- [ ] README文件名是否符合规范（README_大写目录名.md）
+- [ ] 是否包含核心章节（用途、结构、配置、示例）
+- [ ] 示例代码是否符合最新业务需求
+- [ ] 是否包含必要的配置说明和依赖关系
+
+### 架构检查
+- [ ] 是否符合分层架构原则
+- [ ] 是否遵循单一职责原则
+- [ ] 是否清晰描述了与其他层的依赖关系
+- [ ] 是否包含必要的设计模式说明
+- [ ] 是否定义了明确的业务边界
+
+### 代码规范检查
+- [ ] 示例代码是否符合Java编码规范
+- [ ] 是否包含必要的注解说明
+- [ ] 是否包含异常处理示例
+- [ ] 是否包含接口文档注解(@Api, @ApiOperation等)
+
+### 更新检查
+- [ ] 是否记录了最近的架构变更
+- [ ] 是否更新了受影响的示例代码
+- [ ] 是否更新了配置说明
+- [ ] 是否同步更新了相关接口文档
+- [ ] 是否更新了依赖关系说明

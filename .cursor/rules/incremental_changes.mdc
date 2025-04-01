@@ -1,0 +1,189 @@
+---
+description: Java代码渐进式修改指南
+globs: *.java, *.xml, *.yml, *.properties, *.md
+---
+# Java代码渐进式修改规范
+
+> file_patterns: ["*.java", "*.xml", "*.yml", "*.properties", "*.md"]
+> description: Java项目代码渐进式修改的核心规范
+
+## 修改基本原则
+> required: true
+
+### 渐进式修改示例
+```java
+// ❌ 避免：一次性大规模修改
+@Service
+public class UserService {
+    public UserResponse processUser(UserRequest request) {
+        return new UserResponse(
+            newValidator.validate(request),
+            newProcessor.process(request),
+            newFormatter.format(request)
+        );
+    }
+}
+
+// ✅ 推荐：分步骤渐进修改
+// 步骤1：只改处理逻辑，保持原有验证和格式化
+@Service
+public class UserService {
+    @Autowired
+    private NewUserProcessor newProcessor;  // 新处理逻辑
+    @Autowired
+    private LegacyValidator validator;      // 保持旧验证
+    @Autowired
+    private LegacyFormatter formatter;      // 保持旧格式化
+    
+    public UserResponse processUser(UserRequest request) {
+        var validatedData = validator.validate(request);
+        var processedData = newProcessor.process(validatedData);  // 新处理逻辑
+        return formatter.format(processedData);
+    }
+}
+
+// 步骤2：改验证逻辑，保持原有格式化
+@Service
+public class UserService {
+    @Autowired
+    private NewUserProcessor processor;
+    @Autowired
+    private NewValidator validator;        // 新验证逻辑
+    @Autowired
+    private LegacyFormatter formatter;     // 保持旧格式化
+    
+    public UserResponse processUser(UserRequest request) {
+        var validatedData = validator.validate(request);  // 新验证逻辑
+        var processedData = processor.process(validatedData);
+        return formatter.format(processedData);
+    }
+}
+
+// 步骤3：完成所有更新
+@Service
+public class UserService {
+    @Autowired
+    private NewUserProcessor processor;
+    @Autowired
+    private NewValidator validator;
+    @Autowired
+    private NewFormatter formatter;       // 新格式化
+    
+    public UserResponse processUser(UserRequest request) {
+        var validatedData = validator.validate(request);
+        var processedData = processor.process(validatedData);
+        return formatter.format(processedData);           // 新格式化
+    }
+}
+```
+
+## 配置修改规范
+> required: true
+
+### 配置渐进示例
+```yaml
+# application.yml
+# ❌ 避免：直接替换配置
+spring:
+  datasource:
+    url: jdbc:mysql://new-db:3306/db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+
+# ✅ 推荐：渐进式更新配置
+spring:
+  # 保持旧配置
+  datasource:
+    url: jdbc:mysql://old-db:3306/db
+    driver-class-name: com.mysql.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      
+  # 新配置使用新前缀
+  new-datasource:
+    url: jdbc:mysql://new-db:3306/db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      
+  # 迁移说明
+  _migration: "2024-03: v2.0将启用new-datasource配置"
+
+# 特性开关
+features:
+  use-new-datasource: false  # 控制新旧配置切换
+```
+
+## 测试规范
+> required: true
+
+### 测试示例
+```java
+@SpringBootTest
+class UserServiceTest {
+    @Autowired
+    private UserService userService;
+    
+    // 1. 保留旧测试
+    @Test
+    @DisplayName("验证原有功能保持不变")
+    void testLegacyFeature() {
+        UserRequest request = new UserRequest("test");
+        UserResponse response = userService.processUser(request);
+        assertThat(response.getStatus()).isEqualTo("success");
+    }
+    
+    // 2. 添加新测试
+    @Test
+    @DisplayName("验证新功能同时保持向后兼容")
+    void testNewFeature() {
+        UserRequest request = new UserRequest("test");
+        UserResponse response = userService.processUser(request);
+        
+        // 新功能测试
+        assertThat(response.getNewStatus()).isEqualTo("success");
+        // 向后兼容测试
+        assertThat(response.getStatus()).isEqualTo("success");
+    }
+    
+    // 3. 添加特性开关测试
+    @Test
+    @DisplayName("验证特性开关控制")
+    void testFeatureToggle() {
+        // 使用@TestPropertySource或配置文件控制特性开关
+        assertThat(featureProperties.isUseNewDatasource())
+            .as("特性开关状态检查")
+            .isFalse();
+    }
+}
+```
+
+## 检查清单
+> required: true
+
+### 代码检查
+- [ ] 是否遵循渐进式修改原则
+- [ ] 是否保持向后兼容性
+- [ ] 是否添加了新旧功能的单元测试
+- [ ] 是否更新了API文档（Swagger/OpenAPI）
+- [ ] 是否更新了数据库迁移脚本
+- [ ] 提交是否足够小且聚焦
+
+### 配置检查
+- [ ] 是否添加了特性开关
+- [ ] 是否保留了旧配置
+- [ ] 是否提供了配置迁移说明
+- [ ] 是否更新了配置文档
+
+### 部署检查
+- [ ] 是否考虑了数据库向后兼容
+- [ ] 是否准备了回滚方案
+- [ ] 是否更新了部署文档
+- [ ] 是否通知了相关团队
+
+### 测试覆盖
+- [ ] 单元测试是否覆盖新旧功能
+- [ ] 集成测试是否包含特性开关测试
+- [ ] 性能测试是否覆盖新实现
+- [ ] 是否包含向后兼容性测试

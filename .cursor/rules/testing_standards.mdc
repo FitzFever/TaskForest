@@ -1,0 +1,241 @@
+---
+description: Java测试规范指南
+globs: *Test.java, *Tests.java, *IT.java, test/**/*.java, src/test/**/*.java
+---
+# Java测试规范
+
+> file_patterns: ["*Test.java", "*Tests.java", "*IT.java", "test/**/*.java", "src/test/**/*.java"]
+> description: Java项目测试规范和实现指南
+
+## 测试目录规范
+> required: true
+
+### 标准结构
+```bash
+项目根目录/
+├── src/
+│   ├── main/java/                # 主代码目录
+│   │   └── com/company/project/
+│   │       ├── domain/          # 领域模型
+│   │       ├── service/         # 业务服务
+│   │       └── repository/      # 数据访问
+│   └── test/java/               # 测试代码目录
+│       └── com/company/project/
+│           ├── domain/          # 领域模型测试
+│           ├── service/         # 业务服务测试
+│           └── repository/      # 数据访问测试
+├── src/test/resources/          # 测试资源目录
+│   ├── application-test.yml     # 测试配置
+│   └── data/                    # 测试数据
+└── pom.xml                      # Maven配置文件
+
+# 示例：
+src/test/java/com/company/project/
+├── service/                     # 服务层测试
+│   ├── UserServiceTest.java    # 单元测试
+│   └── UserServiceIT.java      # 集成测试
+└── repository/                  # 数据访问层测试
+    └── UserRepositoryTest.java  # 仓库测试
+```
+
+### 命名规范
+```java
+// 测试类命名
+public class UserServiceTest {}     // 单元测试类以Test结尾
+public class UserServiceIT {}       // 集成测试类以IT结尾
+public class UserRepositoryTest {}  // 仓库测试类
+
+// 测试方法命名
+@Test
+void shouldCreateUserSuccessfully() {}  // should + 预期行为
+@Test
+void givenValidUser_whenSave_thenSuccess() {}  // given_when_then格式
+```
+
+## 测试实现规范
+> required: true
+
+### 基本测试模板
+```java
+@SpringBootTest
+class UserServiceTest {
+    @Autowired
+    private UserService userService;
+    
+    @MockBean
+    private UserRepository userRepository;
+    
+    @Test
+    @DisplayName("创建用户 - 成功场景")
+    void shouldCreateUserSuccessfully() {
+        // 准备测试数据
+        UserDTO userDTO = UserDTO.builder()
+            .name("测试用户")
+            .email("test@example.com")
+            .build();
+            
+        User user = User.builder()
+            .id(1L)
+            .name("测试用户")
+            .email("test@example.com")
+            .build();
+            
+        // 模拟依赖行为
+        when(userRepository.save(any(User.class)))
+            .thenReturn(user);
+            
+        // 执行被测方法
+        UserDTO result = userService.createUser(userDTO);
+        
+        // 验证结果
+        assertThat(result)
+            .isNotNull()
+            .satisfies(u -> {
+                assertThat(u.getName()).isEqualTo("测试用户");
+                assertThat(u.getEmail()).isEqualTo("test@example.com");
+            });
+            
+        // 验证依赖调用
+        verify(userRepository).save(any(User.class));
+    }
+    
+    @Test
+    @DisplayName("创建用户 - 邮箱格式错误")
+    void shouldThrowException_whenEmailInvalid() {
+        // 准备无效数据
+        UserDTO userDTO = UserDTO.builder()
+            .name("测试用户")
+            .email("invalid-email")
+            .build();
+            
+        // 验证异常抛出
+        assertThatThrownBy(() -> userService.createUser(userDTO))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("邮箱格式不正确");
+    }
+}
+```
+
+### 集成测试示例
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class UserControllerIT {
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    @Test
+    @DisplayName("创建用户API - 成功场景")
+    void shouldCreateUser() throws Exception {
+        // 准备测试数据
+        UserDTO userDTO = UserDTO.builder()
+            .name("测试用户")
+            .email("test@example.com")
+            .build();
+            
+        // 执行API调用
+        mockMvc.perform(post("/api/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(userDTO)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.name").value("测试用户"))
+            .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+}
+```
+
+### 数据库测试示例
+```java
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class UserRepositoryTest {
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Test
+    @DisplayName("保存用户 - 成功场景")
+    void shouldSaveUser() {
+        // 准备测试数据
+        User user = User.builder()
+            .name("测试用户")
+            .email("test@example.com")
+            .build();
+            
+        // 执行保存操作
+        User savedUser = userRepository.save(user);
+        
+        // 验证结果
+        assertThat(savedUser.getId()).isNotNull();
+        assertThat(savedUser.getName()).isEqualTo("测试用户");
+        assertThat(savedUser.getEmail()).isEqualTo("test@example.com");
+    }
+}
+```
+
+### 关键原则
+1. 测试必须独立且可重复执行
+2. 每个测试方法只验证一个功能点
+3. 使用`@BeforeEach`和`@AfterEach`管理测试资源
+4. 正确使用Mock和Stub模拟外部依赖
+5. 验证正常和异常场景
+6. 使用合适的测试注解和配置
+
+## 测试覆盖率要求
+> required: true
+
+- 核心业务逻辑：最低85%覆盖
+- 数据访问层：最低90%覆盖
+- 工具类：最低75%覆盖
+- 必须测试所有公共方法
+- 必须测试所有异常处理路径
+- 必须测试所有业务边界条件
+
+## 测试执行
+```bash
+# 执行所有测试
+mvn test
+
+# 执行特定测试类
+mvn test -Dtest=UserServiceTest
+
+# 执行集成测试
+mvn verify
+
+# 生成覆盖率报告
+mvn jacoco:report
+```
+
+## 测试检查清单
+> required: true
+
+### 基础检查
+- [ ] 测试类和方法命名是否符合规范
+- [ ] 测试目录结构是否正确
+- [ ] 是否包含必要的测试文档
+- [ ] 是否正确配置了测试环境
+- [ ] 是否正确处理了测试资源
+
+### 单元测试检查
+- [ ] 是否正确使用了Mock对象
+- [ ] 是否验证了所有关键路径
+- [ ] 是否包含了边界条件测试
+- [ ] 是否验证了异常处理
+- [ ] 是否使用了恰当的断言
+
+### 集成测试检查
+- [ ] 是否正确配置了测试数据库
+- [ ] 是否测试了所有API端点
+- [ ] 是否验证了安全控制
+- [ ] 是否测试了事务行为
+- [ ] 是否清理了测试数据
+
+### 性能测试检查
+- [ ] 是否进行了基准测试
+- [ ] 是否测试了并发场景
+- [ ] 是否验证了响应时间
+- [ ] 是否测试了资源使用
+- [ ] 是否进行了负载测试 

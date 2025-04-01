@@ -1,0 +1,172 @@
+---
+description: Java项目结构规范指南
+globs: *.java, pom.xml, build.gradle
+---
+# Java项目结构规范
+
+> file_patterns: ["*.java", "pom.xml", "build.gradle"]
+> description: Java项目结构和组织的核心规范
+
+## 多模块结构
+> required: true
+
+### 标准布局
+```bash
+项目根目录/
+├── common/                        # 公共模块
+│   ├── common-core/              # 核心工具
+│   │   └── src/
+│   │       └── main/java/
+│   │           └── com/company/common/
+│   │               ├── utils/    # 工具类
+│   │               └── model/    # 公共模型
+│   └── common-security/          # 安全模块
+├── service/                      # 业务服务模块
+│   ├── user-service/            # 用户服务
+│   │   └── src/
+│   │       └── main/java/
+│   │           └── com/company/user/
+│   │               ├── controller/
+│   │               ├── service/
+│   │               └── repository/
+│   └── order-service/           # 订单服务
+├── api/                         # API接口模块
+│   ├── user-api/               # 用户服务接口
+│   └── order-api/              # 订单服务接口
+└── infrastructure/             # 基础设施模块
+    ├── gateway/               # 网关服务
+    └── auth/                  # 认证服务
+```
+
+### 关键规则
+1. 每个模块都是独立的Maven/Gradle项目
+2. 服务模块依赖对应的API模块
+3. 公共依赖放在common模块
+4. 严格控制依赖方向，避免循环依赖
+
+## 模块组织
+> required: true
+
+### ✅ 推荐结构
+```java
+// common-core模块
+// com.company.common.utils.DataProcessor
+@Component
+@Slf4j
+public class DataProcessor {
+    /**
+     * 数据处理器：专注于数据处理逻辑
+     */
+    public ProcessResult process(ProcessRequest data) {
+        log.info("Processing data: {}", data);
+        return doProcess(data);
+    }
+}
+
+// user-service模块
+// com.company.user.service.UserService
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    /**
+     * 用户服务：只处理用户相关逻辑
+     */
+    private final DataProcessor dataProcessor;
+    private final UserRepository userRepository;
+    
+    @Transactional
+    public UserDTO processUserData(UserRequest request) {
+        // 业务逻辑处理
+        return UserDTO.from(userRepository.save(user));
+    }
+}
+```
+
+### ❌ 避免结构
+```java
+// 避免：功能混杂
+@Service
+public class MixedService {
+    /**
+     * 反面示例：单个服务包含多个不相关功能
+     */
+    public void handleUser() {}     // 用户逻辑
+    public void processData() {}    // 数据处理
+    public void sendEmail() {}      // 邮件功能
+}
+```
+
+## 依赖管理
+> required: true
+
+### 模块依赖
+```xml
+<!-- user-service/pom.xml -->
+<dependencies>
+    <!-- API模块依赖 -->
+    <dependency>
+        <groupId>com.company</groupId>
+        <artifactId>user-api</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    
+    <!-- 公共模块依赖 -->
+    <dependency>
+        <groupId>com.company</groupId>
+        <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+</dependencies>
+```
+
+### 包结构规范
+```bash
+com.company.{module}/
+├── controller/           # REST接口层
+│   └── dto/             # 数据传输对象
+├── service/             # 业务逻辑层
+│   ├── impl/           # 接口实现
+│   └── interfaces/     # 服务接口
+├── repository/          # 数据访问层
+│   └── entity/         # 数据库实体
+├── domain/             # 领域模型
+└── config/             # 模块配置
+```
+
+## 检查清单
+> required: true
+
+### 结构检查
+- [ ] 模块划分是否符合业务边界
+- [ ] 是否避免模块间循环依赖
+- [ ] 是否遵循依赖倒置原则
+- [ ] 包结构是否符合分层架构
+- [ ] 是否避免代码重复
+
+### 模块检查
+- [ ] 每个模块是否职责单一
+- [ ] 公共功能是否下沉到common模块
+- [ ] 是否正确管理模块版本
+- [ ] 是否定义了模块间接口
+- [ ] 是否提供了API文档
+
+### 代码检查
+- [ ] 类文件是否符合单一职责
+- [ ] 是否使用了依赖注入
+- [ ] 是否添加了完整注释
+- [ ] 是否遵循阿里巴巴Java规范
+- [ ] 是否编写了单元测试
+
+### 依赖检查
+- [ ] 是否合理控制依赖范围
+- [ ] 是否统一管理依赖版本
+- [ ] 是否避免依赖冲突
+- [ ] 是否移除未使用的依赖
+- [ ] 是否正确设置了依赖传递
+
+### 部署检查
+- [ ] 是否配置了多环境构建
+- [ ] 是否添加了构建插件
+- [ ] 是否配置了资源过滤
+- [ ] 是否设置了打包规则
+- [ ] 是否添加了部署脚本 

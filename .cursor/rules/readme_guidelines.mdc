@@ -1,0 +1,101 @@
+---
+description: Java后端项目README文档编写规范
+globs:  README.md,**/README.md
+---
+# Java后端项目README文档规范
+
+> file_patterns: ["README.md", "**/README.md"]
+> description: Java后端项目README文档的编写和维护规范
+
+## 核心原则
+> required: true
+
+### 内容要求
+```markdown
+# 项目名称
+
+## 🎯 功能概述
+- 核心功能说明
+- 关键特性列表
+- 技术架构特点
+- 业务领域说明
+
+## ⚙️ 快速开始
+```java
+// 最常用的使用场景示例
+@RestController
+@RequestMapping("/api/v1")
+public class DemoController {
+    @Autowired
+    private DemoService demoService;
+    
+    @GetMapping("/demo")
+    public ResponseEntity<DemoResponse> process(@Valid @RequestBody DemoRequest request) {
+        return ResponseEntity.ok(demoService.process(request));
+    }
+}
+```
+
+## 🔧 环境配置
+- JDK >= 17
+- Spring Boot >= 3.x
+- Maven/Gradle
+- 配置文件：application.yml, application-{env}.yml
+```
+
+### 结构组织
+```markdown
+## 📁 项目结构
+```bash
+项目根目录/
+├── src/
+│   ├── main/
+│   │   ├── java/com/company/project/
+│   │   │   ├── controller/     # REST API接口层
+│   │   │   ├── service/        # 业务逻辑层
+│   │   │   ├── repository/     # 数据访问层
+│   │   │   ├── domain/         # 领域模型
+│   │   │   ├── dto/           # 数据传输对象
+│   │   │   └── config/        # 配置类
+│   │   └── resources/
+│   │       ├── application.yml # 主配置文件
+│   │       └── db/migration/   # 数据库脚本
+│   └── test/                   # 测试代码
+├── docs/                       # 项目文档
+└── pom.xml                     # 依赖管理
+```
+
+## 📚 详细文档
+- [API文档](mdc:swagger-ui.html)
+- [部署指南](mdc:docs/DEPLOY.md)
+- [开发规范](mdc:docs/DEVELOPMENT.md)
+```
+
+## 文档维护
+> required: true
+
+### 更新规范
+```markdown
+## 📝 更新记录
+- [2024-03-01] 升级Spring Boot版本至3.2.x
+- [2024-02-28] 优化数据库连接池配置
+- [2024-02-27] 修复认证模块Bug
+
+## 🚀 后续计划
+- [ ] 微服务架构改造
+- [ ] 性能优化
+- [ ] 安全加固
+```
+
+## 检查清单
+> required: true
+
+### 基础检查
+- [ ] 是否包含功能概述和技术架构说明
+- [ ] 是否有API调用示例
+- [ ] 是否列出环境要求和依赖版本
+- [ ] 是否说明项目结构
+- [ ] 是否提供API文档链接
+- [ ] 是否包含数据库配置说明
+- [ ] 是否提供部署指南
+- [ ] 是否说明配置文件管理方式 
