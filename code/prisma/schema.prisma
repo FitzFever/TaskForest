@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  type        String    // TaskType enum in application code
+  status      String    // TaskStatus enum in application code
+  priority    String    // Priority enum in application code
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+  parentId    String?
+  tags        String    // JSON string of tags array
+  treeType    String    // TreeType enum in application code
+  growthStage Int       @default(0)
+  tree        Tree?
+
+  parent   Task?  @relation("TaskToTask", fields: [parentId], references: [id])
+  children Task[] @relation("TaskToTask")
+
+  @@index([parentId])
+}
+
+model Tree {
+  id         String   @id @default(uuid())
+  taskId     String   @unique
+  type       String   // TreeType enum in application code
+  stage      Int      @default(0)
+  positionX  Float    @default(0)
+  positionY  Float    @default(0)
+  positionZ  Float    @default(0)
+  rotationX  Float    @default(0)
+  rotationY  Float    @default(0)
+  rotationZ  Float    @default(0)
+  scaleX     Float    @default(1)
+  scaleY     Float    @default(1)
+  scaleZ     Float    @default(1)
+  createdAt  DateTime @default(now())
+  lastGrowth DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+} 
