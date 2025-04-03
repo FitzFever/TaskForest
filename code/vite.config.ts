@@ -7,9 +7,17 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    electron({
-      entry: 'src/main/main.ts',
-    }),
+    electron([
+      {
+        entry: 'src/main/main.ts',
+      },
+      {
+        entry: 'src/main/preload.ts',
+        onstart(options) {
+          options.reload();
+        },
+      },
+    ]),
   ],
   resolve: {
     alias: {

@@ -3,15 +3,15 @@
 ## 第一周：项目初始化与基础架构
 
 ### 1. 项目基础设置 (张强 & 陈学)
-- [ ] 初始化 Electron + React + TypeScript 项目
-- [ ] 配置 ESLint, Prettier, husky
+- [x] 初始化 Electron + React + TypeScript 项目
+- [x] 配置 ESLint, Prettier, husky
 - [ ] 设置 CI/CD 流程
-- [ ] 配置开发环境热重载
-- [ ] 搭建基础项目结构
+- [x] 配置开发环境热重载
+- [x] 搭建基础项目结构
 
 ### 2. 数据库设计与实现 (陈学)
-- [ ] 设计数据库 Schema
-- [ ] 配置 Prisma ORM
+- [x] 设计数据库 Schema
+- [x] 配置 Prisma ORM
 - [ ] 实现数据库迁移脚本
 - [ ] 编写基础 CRUD 操作
 - [ ] 实现数据备份功能
