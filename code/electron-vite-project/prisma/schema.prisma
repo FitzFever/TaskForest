@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 任务模型
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  status      String    @default("待办") // 待办, 进行中, 已完成
+  priority    String    @default("中") // 低, 中, 高
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deadline    DateTime?
+  completedAt DateTime?
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  treeId      Int?      @unique
+  tree        Tree?     @relation(fields: [treeId], references: [id])
+}
+
+// 任务分类模型
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String   @default("#1890ff")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+}
+
+// 树木模型
+model Tree {
+  id          Int      @id @default(autoincrement())
+  type        String   // 树木类型: oak, pine, cherry, palm, apple, maple, willow
+  growthStage Int      @default(1) // 1-5, 表示生长阶段
+  position    String   @default("0,0,0") // x,y,z坐标
+  scale       String   @default("1,1,1") // x,y,z缩放
+  rotation    String   @default("0,0,0") // x,y,z旋转
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  task        Task?
+}
