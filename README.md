@@ -2,6 +2,16 @@
 
 TaskForest是一个创新的任务管理应用，通过将任务完成度可视化为一片森林，激励用户完成目标。每当完成一个任务，就会有一棵虚拟的树成长一步，最终形成一片属于自己的成就森林。
 
+<div align="center">
+
+[安装指南](#安装指南) | 
+[功能文档](./product/TaskForest产品说明文档.md) | 
+[开发任务](./code/docs/development_tasks.md) | 
+[项目计划](./TaskForest项目计划书.md) | 
+[贡献指南](#参与贡献)
+
+</div>
+
 ## 项目特点
 
 - 🌳 **成长森林**：任务完成后，虚拟树木会逐步成长，形成个人专属的成就森林
@@ -21,7 +31,7 @@ TaskForest是一个创新的任务管理应用，通过将任务完成度可视�
 - 📊 **Prisma & SQLite**：数据存储和ORM
 - 🧠 **OpenAI API**：AI功能集成
 
-## 快速开始
+## 安装指南
 
 ### 环境需求
 
@@ -29,7 +39,7 @@ TaskForest是一个创新的任务管理应用，通过将任务完成度可视�
 - npm 或 pnpm
 - Git
 
-### 安装与启动步骤
+### 快速启动步骤
 
 1. **克隆仓库**
 ```bash
@@ -70,20 +80,22 @@ npm run electron:dev
 
 ```
 TaskForest/
-├─ code/
-│  ├─ electron-vite-project/      # 主项目目录
-│  │  ├─ electron/                # Electron主进程代码
-│  │  ├─ prisma/                  # 数据库Schema和迁移
-│  │  └─ src/                     # 渲染进程代码
-│  │     ├─ components/           # React组件
-│  │     ├─ lib/                  # 工具和服务
-│  │     └─ assets/               # 静态资源
-│  └─ docs/                       # 项目文档
-├─ design/                        # 设计资源
-└─ product/                       # 产品文档
+├─ code/                            # 代码目录
+│  ├─ electron-vite-project/        # 主项目目录
+│  │  ├─ electron/                  # Electron主进程代码
+│  │  ├─ prisma/                    # 数据库Schema和迁移
+│  │  ├─ src/                       # 渲染进程代码
+│  │  └─ README.md                  # 项目具体说明
+│  └─ docs/                         # 技术文档
+│     └─ development_tasks.md       # 开发任务清单
+├─ design/                          # 设计资源
+├─ product/                         # 产品文档
+│  ├─ TaskForest产品说明文档.md     # 产品详细说明
+│  └─ TaskForest流程图说明.md       # 流程图说明
+└─ TaskForest项目计划书.md          # 项目整体计划
 ```
 
-### 开发命令
+## 开发命令
 
 - `npm run dev` - 启动Vite开发服务器
 - `npm run electron:dev` - 启动Electron应用程序(开发模式)
@@ -109,6 +121,8 @@ TaskForest/
 - 🔄 任务与树木关联逻辑
 - 🔄 任务状态管理和分类功能
 
+更多详细开发任务请查看[开发任务清单](./code/docs/development_tasks.md)。
+
 ## 参与贡献
 
 1. Fork项目
@@ -117,6 +131,13 @@ TaskForest/
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建Pull Request
 
+## 团队成员
+
+- **张强** - 前端开发 - 负责UI组件和3D场景实现
+- **陈学** - 全栈开发 - 负责数据库设计和接口实现
+
+完整团队信息请参阅[项目计划书](./TaskForest项目计划书.md#团队成员详细要求)。
+
 ## 许可证
 
-此项目采用MIT许可证 - 详情请参见LICENSE文件
+此项目采用MIT许可证 - 详情请参见[LICENSE](./LICENSE)文件
