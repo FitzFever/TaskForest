@@ -15,7 +15,11 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node --esm prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:all": "node tests/run-tests.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
@@ -34,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
@@ -43,7 +48,10 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "globals": "^13.24.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "prisma": "^5.6.0",
+    "ts-jest": "^29.3.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.1.0",

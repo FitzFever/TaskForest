@@ -1,4 +1,4 @@
-import { Tree } from '../types/Tree';
+import { Tree, CreateTreeData } from '../types/Tree';
 
 /**
  * TreeService - 处理与树相关的所有API调用
@@ -9,6 +9,7 @@ class TreeService {
    */
   static async getTrees(): Promise<Tree[]> {
     try {
+      // @ts-ignore
       const trees = await window.electron.getTrees();
       return trees as Tree[];
     } catch (error) {
@@ -22,6 +23,7 @@ class TreeService {
    */
   static async createTree(type: string, taskId: number): Promise<Tree | null> {
     try {
+      // @ts-ignore
       const tree = await window.electron.createTree({
         type,
         growthStage: 1,
@@ -41,6 +43,7 @@ class TreeService {
    */
   static async growTree(treeId: number): Promise<boolean> {
     try {
+      // @ts-ignore
       await window.electron.growTree(treeId);
       return true;
     } catch (error) {
@@ -54,6 +57,7 @@ class TreeService {
    */
   static async deleteTree(treeId: number): Promise<boolean> {
     try {
+      // @ts-ignore
       await window.electron.deleteTree(treeId);
       return true;
     } catch (error) {
