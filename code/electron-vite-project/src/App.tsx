@@ -1,181 +1,166 @@
-import { useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Sky } from '@react-three/drei'
-import { Layout, Menu, Button, List, Typography } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Layout, Menu, Button, Alert, message, Typography, Card, Row, Col } from 'antd'
 import { 
   ScheduleOutlined, 
   AppstoreOutlined, 
   BarChartOutlined, 
   SettingOutlined,
-  PlusOutlined
+  ExperimentOutlined
 } from '@ant-design/icons'
-import * as THREE from 'three'
 import './App.css'
+import TaskList from './components/TaskList'
+import ForestScene from './components/ForestScene'
 
 const { Header, Sider, Content } = Layout
 const { Title } = Typography
 
-// 简单的地面组件
-function Ground() {
-  return (
-    <mesh 
-      rotation={[-Math.PI / 2, 0, 0]} 
-      position={[0, -0.5, 0]} 
-      receiveShadow
-    >
-      <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial color="#8cba80" />
-    </mesh>
-  )
+// 页面内容
+enum ContentView {
+  TASKS = 'tasks',
+  FOREST = 'forest',
+  STATS = 'stats',
+  SETTINGS = 'settings',
+  TEST = 'test'
 }
 
-// 简单的树模型
-function Tree(props: { position?: [number, number, number] }) {
-  const { position = [0, 0, 0] } = props
+// 测试组件视图
+const TestView = () => {
+  return (
+    <div style={{ padding: '20px' }}>
+      <Title level={3}>测试页面</Title>
+      <Alert
+        message="测试模式"
+        description="这是一个简单的测试页面，用于验证应用程序能够正常渲染。如果您能看到此页面，则表示应用程序正在正常工作。"
+        type="info"
+        showIcon
+        style={{ marginBottom: '20px' }}
+      />
+      
+      <Row gutter={[16, 16]}>
+        <Col span={8}>
+          <Card title="UI组件测试" style={{ height: '200px' }}>
+            <p>这是一个简单的卡片组件</p>
+            <Button type="primary">测试按钮</Button>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="颜色测试" style={{ height: '200px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ height: '30px', background: 'red' }}></div>
+              <div style={{ height: '30px', background: 'green' }}></div>
+              <div style={{ height: '30px', background: 'blue' }}></div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="状态测试" style={{ height: '200px' }}>
+            <TestCounter />
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+// 简单的计数器组件测试
+const TestCounter = () => {
+  const [count, setCount] = useState(0);
   
   return (
-    <group position={position}>
-      {/* 树干 */}
-      <mesh position={[0, 0.75, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.5, 1.5]} />
-        <meshStandardMaterial color="brown" />
-      </mesh>
-      {/* 树冠 */}
-      <mesh position={[0, 2, 0]} castShadow>
-        <coneGeometry args={[1, 2, 8]} />
-        <meshStandardMaterial color="green" />
-      </mesh>
-    </group>
-  )
-}
-
-// 3D场景组件
-function Forest() {
-  return (
-    <Canvas shadows camera={{ position: [5, 5, 5], fov: 75 }}>
-      <ambientLight intensity={0.5} />
-      <directionalLight 
-        position={[10, 10, 5]} 
-        intensity={1} 
-        castShadow 
-        shadow-mapSize-width={2048} 
-        shadow-mapSize-height={2048}
-      />
-      <OrbitControls />
-      <Sky sunPosition={[100, 10, 100]} />
-      <Ground />
-      <Tree position={[-2, 0, -2]} />
-      <Tree position={[0, 0, 0]} />
-      <Tree position={[2, 0, 2]} />
-    </Canvas>
-  )
-}
-
-// 示例任务数据
-const mockTasks = [
-  { id: 1, title: '完成TaskForest基础搭建', status: '进行中', priority: '高' },
-  { id: 2, title: '实现3D树木模型加载', status: '待办', priority: '中' },
-  { id: 3, title: '设计任务管理界面', status: '待办', priority: '中' },
-  { id: 4, title: '配置数据库存储', status: '已完成', priority: '高' },
-  { id: 5, title: '添加任务创建功能', status: '待办', priority: '低' },
-]
+    <div>
+      <p>计数器: {count}</p>
+      <Button onClick={() => setCount(count + 1)}>增加</Button>
+      <Button onClick={() => setCount(count - 1)} style={{ marginLeft: '8px' }}>减少</Button>
+    </div>
+  );
+};
 
 function App() {
-  const [collapsed, setCollapsed] = useState(false)
-  const [selectedMenuItem, setSelectedMenuItem] = useState('tasks')
+  const [selectedView, setSelectedView] = useState<ContentView>(ContentView.TEST)
+  const [has3DError, setHas3DError] = useState(false);
+
+  // 应用启动时显示提示
+  useEffect(() => {
+    message.info('应用已启动。如果3D页面显示为黑屏，请尝试切换到测试页面。');
+  }, []);
 
   const renderContent = () => {
-    switch (selectedMenuItem) {
-      case 'tasks':
-        return (
-          <div style={{ padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <Title level={3}>任务列表</Title>
-              <Button type="primary" icon={<PlusOutlined />}>
-                新建任务
-              </Button>
-            </div>
-            <List
-              bordered
-              dataSource={mockTasks}
-              renderItem={(task) => (
-                <List.Item 
-                  actions={[
-                    <Button key="edit" type="link">编辑</Button>,
-                    <Button key="delete" type="link" danger>删除</Button>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={task.title}
-                    description={`优先级: ${task.priority} | 状态: ${task.status}`}
-                  />
-                </List.Item>
-              )}
-            />
-          </div>
-        )
-      case 'forest':
-        return (
-          <div style={{ height: '100%' }}>
-            <Forest />
-          </div>
-        )
-      default:
-        return <div>其他功能正在开发中...</div>
+    try {
+      switch (selectedView) {
+        case ContentView.TASKS:
+          return <TaskList />
+        case ContentView.FOREST:
+          return <ForestScene />
+        case ContentView.STATS:
+          return <div>统计数据页面（开发中）</div>
+        case ContentView.SETTINGS:
+          return <div>设置页面（开发中）</div>
+        case ContentView.TEST:
+          return <TestView />
+        default:
+          return <TestView />
+      }
+    } catch (error) {
+      console.error('渲染页面错误:', error);
+      setHas3DError(true);
+      return <TestView />
     }
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        theme="light"
-      >
-        <div style={{ height: 32, margin: 16, textAlign: 'center' }}>
+    <Layout style={{ height: '100vh' }}>
+      <Sider width={200} theme="light">
+        <div style={{ padding: '16px', textAlign: 'center' }}>
           <Title level={4} style={{ margin: 0 }}>TaskForest</Title>
         </div>
+        
         <Menu
           mode="inline"
-          defaultSelectedKeys={['tasks']}
-          onClick={({ key }) => setSelectedMenuItem(key)}
-          items={[
-            {
-              key: 'tasks',
-              icon: <ScheduleOutlined />,
-              label: '任务管理',
-            },
-            {
-              key: 'forest',
-              icon: <AppstoreOutlined />,
-              label: '我的森林',
-            },
-            {
-              key: 'stats',
-              icon: <BarChartOutlined />,
-              label: '数据统计',
-            },
-            {
-              key: 'settings',
-              icon: <SettingOutlined />,
-              label: '设置',
-            },
-          ]}
-        />
+          selectedKeys={[selectedView]}
+          style={{ height: '100%', borderRight: 0 }}
+          onSelect={({ key }) => setSelectedView(key as ContentView)}
+        >
+          <Menu.Item key={ContentView.TEST}>
+            测试页面
+          </Menu.Item>
+          <Menu.Item key={ContentView.TASKS}>
+            任务列表
+          </Menu.Item>
+          <Menu.Item key={ContentView.FOREST}>
+            我的森林
+          </Menu.Item>
+          <Menu.Item key={ContentView.STATS}>
+            统计数据
+          </Menu.Item>
+          <Menu.Item key={ContentView.SETTINGS}>
+            设置
+          </Menu.Item>
+        </Menu>
       </Sider>
+      
       <Layout>
-        <Header style={{ padding: 0, background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ padding: '0 24px' }}>
-            <Title level={4} style={{ margin: 0, lineHeight: '64px' }}>
-              {selectedMenuItem === 'tasks' && '任务管理'}
-              {selectedMenuItem === 'forest' && '我的森林'}
-              {selectedMenuItem === 'stats' && '数据统计'}
-              {selectedMenuItem === 'settings' && '设置'}
-            </Title>
-          </div>
+        <Header style={{ background: '#fff', padding: '0 16px', display: 'flex', alignItems: 'center' }}>
+          <Title level={3} style={{ margin: 0 }}>
+            {selectedView === ContentView.TASKS && '任务列表'}
+            {selectedView === ContentView.FOREST && '我的森林'}
+            {selectedView === ContentView.STATS && '统计数据'}
+            {selectedView === ContentView.SETTINGS && '设置'}
+            {selectedView === ContentView.TEST && '测试页面'}
+          </Title>
         </Header>
-        <Content style={{ margin: '0', overflow: 'initial', height: 'calc(100vh - 64px)' }}>
+        
+        {has3DError && (
+          <Alert
+            message="渲染警告"
+            description="3D页面可能无法正常显示。请尝试使用测试页面或任务列表页面。"
+            type="warning"
+            showIcon
+            style={{ margin: '0 16px' }}
+            closable
+          />
+        )}
+        
+        <Content style={{ padding: '0', height: '100%', overflow: 'auto' }}>
           {renderContent()}
         </Content>
       </Layout>

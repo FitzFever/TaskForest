@@ -1,145 +1,134 @@
-# TaskForest 项目实现
+# TaskForest - 3D任务管理应用
 
-这是TaskForest应用的主要实现目录，包含Electron应用、React前端和数据库实现。
+TaskForest是一款将任务管理与游戏化体验结合的桌面应用。通过将任务转化为树木的生长过程，为用户提供直观、有趣且富有成就感的任务管理体验。
 
-<div align="center">
+## 🎯 功能概述
 
-[安装指南](#安装指南) | 
-[项目结构](#项目结构) | 
-[开发命令](#开发命令) | 
-[数据库](#数据库设计) | 
-[3D实现](#3d实现) | 
-[API文档](#api文档)
+- **任务可视化**: 每个任务对应一棵树，任务完成度反映为树木的生长阶段
+- **多种树木类型**: 不同类型的任务对应不同的树种，增加任务分类的趣味性
+- **3D森林场景**: 所有完成的任务构成一片个人成就森林
+- **任务管理系统**: 创建、编辑、完成和删除任务
+- **数据持久化**: 使用Prisma ORM和SQLite数据库保存数据
 
-</div>
+## 🔧 环境要求
 
-## 项目简介
+- Node.js >= 16
+- npm >= 8 或 pnpm >= 7
+- Electron >= 24
+- SQLite
 
-TaskForest是一个将任务管理游戏化的应用，通过3D森林可视化展示任务完成情况。应用使用Electron、React、TypeScript和Three.js构建，采用SQLite和Prisma进行数据管理。
+## ⚙️ 快速开始
 
-## 安装指南
+### 安装依赖
 
-### 环境需求
-
-- Node.js 18+
-- npm 或 pnpm
-- Git
-
-### 快速启动步骤
-
-1. **安装依赖**
 ```bash
-# 必须使用legacy-peer-deps解决依赖冲突
-npm install --legacy-peer-deps
+# 使用npm
+npm install
+
+# 或使用pnpm
+pnpm install
 ```
 
-2. **初始化数据库**
+### 数据库初始化
+
 ```bash
-# 确保.env文件中设置了正确的DATABASE_URL
-# 默认为 DATABASE_URL="file:./dev.db"
+# 使用npx
 npx prisma migrate dev --name init
+
+# 或使用pnpm
+pnpm dlx prisma migrate dev --name init
 ```
 
-3. **启动开发服务器**
+### 开发模式启动
+
 ```bash
-npm run electron:dev
+# 使用npm
+npm run dev
+
+# 或使用pnpm
+pnpm dev
 ```
 
-### 常见问题解决
+### 构建应用
 
-- **依赖错误**: 安装依赖时遇到错误，请使用 `--legacy-peer-deps` 标志
-- **数据库错误**: 检查 `.env` 文件中的 `DATABASE_URL` 配置
-- **应用启动问题**: 确保所有依赖都已正确安装，并查看控制台错误
+```bash
+# 使用npm
+npm run build
 
-## 项目结构
+# 或使用pnpm
+pnpm build
+```
+
+## 📁 项目结构
 
 ```
 electron-vite-project/
-├── electron/               # Electron主进程代码
-│   ├── main.ts             # 主进程入口
-│   └── preload.ts          # 预加载脚本
-├── prisma/                 # 数据库相关
-│   └── schema.prisma       # 数据库模型定义
-├── src/                    # 渲染进程代码
-│   ├── components/         # React组件
-│   ├── lib/                # 工具和服务
-│   │   └── db.ts           # 数据库服务
-│   ├── App.tsx             # 主应用组件
-│   └── main.tsx            # 渲染进程入口
-├── public/                 # 静态资源
-├── .env                    # 环境变量
-├── package.json            # 项目配置
-└── vite.config.ts          # Vite配置
+├── electron/             # Electron主进程代码
+│   ├── main.ts           # 主进程入口
+│   └── preload.ts        # 预加载脚本
+├── prisma/               # 数据库模型和迁移
+│   └── schema.prisma     # 数据库模式定义
+├── src/                  # 渲染进程代码
+│   ├── components/       # React组件
+│   │   ├── ForestScene.tsx    # 3D森林场景
+│   │   ├── TaskForm.tsx       # 任务表单
+│   │   ├── TaskList.tsx       # 任务列表
+│   │   └── TreeModel.tsx      # 树木模型
+│   ├── lib/              # 实用工具
+│   │   └── db.ts         # 数据库服务
+│   ├── App.tsx           # 应用主组件
+│   └── main.tsx          # 渲染进程入口
+├── models/               # 3D模型文件(.glb)
+├── public/               # 静态资源
+└── vite.config.ts        # Vite配置
 ```
 
-## 开发命令
+## 📝 使用指南
 
-- `npm run dev` - 启动Vite开发服务器
-- `npm run electron:dev` - 启动Electron应用(开发模式)
-- `npm run build` - 构建Web应用
-- `npm run electron:build` - 构建Electron应用
-- `npm run lint` - 运行ESLint检查代码
-- `npm test` - 运行测试
+### 主要功能
 
-## 数据库设计
+1. **任务管理**:
+   - 创建新任务，选择任务类型（对应不同树种）
+   - 设置任务优先级、截止日期等
+   - 编辑和删除已有任务
+   - 标记任务为完成
 
-使用Prisma ORM和SQLite，主要模型包括：
+2. **我的森林**:
+   - 查看所有树木的3D视图
+   - 点击树木查看对应任务信息
+   - 观察树木随任务进度生长变化
 
-- **Task**: 任务模型，包含标题、描述、状态等
-- **Category**: 任务分类模型
-- **Tree**: 树木模型，与任务关联，包含生长阶段、位置等
+### 树木生长阶段
 
-数据库服务在 `src/lib/db.ts` 中实现，提供CRUD操作。
+每棵树有5个生长阶段:
+- **阶段1**: 种子阶段（任务创建）
+- **阶段2**: 幼苗阶段前期（任务进行25%）
+- **阶段3**: 幼苗阶段后期（任务进行50%）
+- **阶段4**: 成长阶段（任务进行75%）
+- **阶段5**: 成熟阶段（任务完成）
 
-## 3D实现
+## 🚀 开发计划
 
-使用Three.js和React Three Fiber实现3D森林：
+- [ ] 添加更多树木种类
+- [ ] 实现季节变化效果
+- [ ] 添加数据统计与可视化
+- [ ] 支持任务导入/导出
+- [ ] 实现用户账户系统
 
-- 基础场景在 `src/components/Forest.tsx` 中实现
-- 树木模型为低多边形设计，支持生长动画
-- 使用OrbitControls提供交互式摄像机控制
+## 👨‍💻 贡献指南
 
-## API文档
+1. Fork本仓库
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建Pull Request
 
-### 任务API
+## 📄 许可证
 
-```typescript
-// 创建任务
-TaskService.createTask({
-  title: string,
-  description?: string,
-  status?: string,
-  priority?: string,
-  deadline?: Date,
-  categoryId?: number
-})
+MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
-// 获取所有任务
-TaskService.getAllTasks()
+## 🔗 相关资源
 
-// 完成任务
-TaskService.completeTask(id: number)
-```
-
-### 树木API
-
-```typescript
-// 创建树木
-TreeService.createTree({
-  type: string,
-  growthStage?: number,
-  position?: string
-})
-
-// 增加树木生长阶段
-TreeService.growTree(id: number)
-```
-
-详细API文档请参阅数据库服务实现 `src/lib/db.ts`。
-
-## 贡献指南
-
-1. 请确保遵循项目的代码风格和TypeScript类型检查
-2. 提交前运行lint和测试 (`npm run lint && npm test`)
-3. 请为新功能编写单元测试
-4. 提交PR时详细描述你的更改和实现思路
+- [TreeModel_3D模型动画规范.md](../design/TaskForest_3D模型动画规范.md): 3D模型动画规范
+- [TaskForest_3D视觉设计计划.md](../design/TaskForest_3D视觉设计计划.md): 3D视觉设计计划
+- [README_设计资源指引.md](../design/README_设计资源指引.md): 设计资源指引
