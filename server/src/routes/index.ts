@@ -1,20 +1,22 @@
 /**
- * API路由主入口
+ * API Routes - Main entry point for all API routes
  */
 import { Router } from 'express';
-import taskRoutes from './taskRoutes';
+import taskRoutes from './taskRoutes.js';
+import treeRoutes from './treeRoutes.js';
 // 在此导入其他路由
-// import treeRoutes from './treeRoutes';
-// import aiRoutes from './aiRoutes';
-// import settingsRoutes from './settingsRoutes';
+// import aiRoutes from './aiRoutes.js';
+// import settingsRoutes from './settingsRoutes.js';
 
 const router = Router();
 
-// 挂载任务路由
+// Mount task routes
 router.use('/tasks', taskRoutes);
 
+// Mount tree routes
+router.use('/trees', treeRoutes);
+
 // 挂载其他路由
-// router.use('/trees', treeRoutes);
 // router.use('/ai', aiRoutes);
 // router.use('/settings', settingsRoutes);
 

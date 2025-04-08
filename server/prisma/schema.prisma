@@ -11,60 +11,33 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 任务类型枚举
-enum TaskType {
-  NORMAL     // 普通任务
-  RECURRING  // 重复任务
-  PROJECT    // 项目任务
-  LEARNING   // 学习任务
-  WORK       // 工作任务
-  LEISURE    // 休闲任务
-}
-
-// 任务状态枚举
-enum TaskStatus {
-  TODO         // 待办
-  IN_PROGRESS  // 进行中
-  COMPLETED    // 已完成
-  CANCELLED    // 已取消
-}
-
-// 树木类型枚举
-enum TreeType {
-  OAK     // 橡树 (普通任务)
-  PINE    // 松树 (重复任务)
-  CHERRY  // 樱花树 (重要任务)
-  PALM    // 棕榈树 (休闲任务)
-  APPLE   // 苹果树 (学习任务)
-  MAPLE   // 枫树 (工作任务)
-  WILLOW  // 柳树 (项目任务)
-}
-
 // 任务模型
 model Task {
-  id          String     @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String?
-  type        TaskType
-  status      TaskStatus @default(TODO)
-  priority    Int        @default(3)
+  // 使用字符串替代枚举
+  type        String    @default("NORMAL") // NORMAL, RECURRING, PROJECT, LEARNING, WORK, LEISURE
+  status      String    @default("TODO") // TODO, IN_PROGRESS, COMPLETED, CANCELLED
+  priority    Int       @default(3)
   dueDate     DateTime
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   completedAt DateTime?
   parentId    String?
-  tags        String[]
-  treeType    TreeType
+  // 使用逗号分隔的字符串替代字符串数组
+  tags        String    @default("")
+  treeType    String    @default("OAK") // OAK, PINE, CHERRY, PALM, APPLE, MAPLE, WILLOW
   tree        Tree?
-  parent      Task?      @relation("TaskToTask", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Task[]     @relation("TaskToTask")
+  parent      Task?     @relation("TaskToTask", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Task[]    @relation("TaskToTask")
 }
 
 // 树木模型
 model Tree {
   id          String   @id @default(uuid())
   taskId      String   @unique
-  type        TreeType
+  type        String   @default("OAK") // OAK, PINE, CHERRY, PALM, APPLE, MAPLE, WILLOW
   stage       Int      @default(0)
   positionX   Float    @default(0)
   positionY   Float    @default(0)
@@ -81,25 +54,25 @@ model Tree {
 
 // 用户设置模型
 model Settings {
-  id          String  @id @default(uuid())
-  theme       String  @default("light")
+  id                    String   @id @default(uuid())
+  theme                 String   @default("light")
   
   // 通知设置
-  notificationsEnabled    Boolean @default(true)
-  dueDateReminderHours    Int     @default(24)
-  dailyDigestEnabled      Boolean @default(true)
+  notificationsEnabled  Boolean  @default(true)
+  dueDateReminderHours  Int      @default(24)
+  dailyDigestEnabled    Boolean  @default(true)
   
   // 显示设置
-  taskListView            String  @default("kanban")
-  defaultSortField        String  @default("dueDate")
-  defaultSortOrder        String  @default("asc")
+  taskListView          String   @default("kanban")
+  defaultSortField      String   @default("dueDate")
+  defaultSortOrder      String   @default("asc")
   
   // 森林设置
-  renderQuality           String  @default("high")
-  autoRotate              Boolean @default(true)
-  weatherEffects          Boolean @default(true)
-  ambientSound            Boolean @default(true)
+  renderQuality         String   @default("high")
+  autoRotate            Boolean  @default(true)
+  weatherEffects        Boolean  @default(true)
+  ambientSound          Boolean  @default(true)
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 } 

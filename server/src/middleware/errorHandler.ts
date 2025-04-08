@@ -1,49 +1,68 @@
+/**
+ * 全局错误处理中间件
+ * 统一处理应用中的错误响应格式
+ */
 import { Request, Response, NextFunction } from 'express';
-import { config } from '../config';
+import { config } from '../config.js';
 
-// 自定义错误类
-export class AppError extends Error {
+/**
+ * 自定义错误类，包含状态码和错误类型
+ */
+export class ApiError extends Error {
   statusCode: number;
-  isOperational: boolean;
+  type: string;
+  details?: any;
 
-  constructor(message: string, statusCode: number) {
+  constructor(statusCode: number, message: string, type: string = 'INTERNAL_ERROR', details?: any) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = true;
-
-    Error.captureStackTrace(this, this.constructor);
+    this.type = type;
+    this.details = details;
+    this.name = 'ApiError';
   }
 }
 
 // 错误处理中间件
-export const errorHandler = (
-  err: Error | AppError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  // 默认状态码和错误信息
+export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('Error:', err);
+
+  // 默认错误响应
   let statusCode = 500;
   let message = '服务器内部错误';
-  let stack: string | undefined = undefined;
+  let type = 'INTERNAL_ERROR';
+  let details: any = undefined;
 
-  // 如果是自定义操作错误，使用其状态码和消息
-  if ('statusCode' in err && 'isOperational' in err) {
+  // 处理自定义API错误
+  if (err instanceof ApiError) {
     statusCode = err.statusCode;
     message = err.message;
-  }
-
-  // 开发环境下提供错误堆栈
-  if (config.environment === 'development' || config.environment === 'test') {
-    stack = err.stack;
+    type = err.type;
+    details = err.details;
+  } 
+  // 处理Prisma错误
+  else if (err.name === 'PrismaClientKnownRequestError') {
+    statusCode = 400;
+    message = '数据库操作错误';
+    type = 'DATABASE_ERROR';
+    details = err.message;
+  } 
+  // 处理Express验证错误
+  else if (err.name === 'ValidationError') {
+    statusCode = 400;
+    message = '请求参数验证失败';
+    type = 'VALIDATION_ERROR';
+    details = err.message;
   }
 
   // 发送错误响应
   res.status(statusCode).json({
-    status: 'error',
-    statusCode,
+    code: statusCode,
     message,
-    stack,
-    timestamp: new Date().toISOString()
+    error: {
+      type,
+      message,
+      details
+    },
+    timestamp: Date.now()
   });
 }; 

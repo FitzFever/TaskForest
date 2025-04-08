@@ -20,6 +20,68 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 - **桌面容器**：Electron
 - **AI 集成**：OpenAI API
 
+## 快速启动
+
+项目提供了便捷的启动脚本，支持 Windows 和 Unix/Linux/macOS 系统。
+
+### Windows 系统
+
+```bash
+# 开发模式启动前后端
+start.bat
+
+# 仅启动前端
+start.bat /f
+
+# 仅启动后端
+start.bat /b
+
+# 生产模式启动
+start.bat /p
+
+# 显示帮助信息
+start.bat /h
+```
+
+### Unix/Linux/macOS 系统
+
+```bash
+# 先赋予脚本执行权限
+chmod +x start.sh
+
+# 开发模式启动前后端
+./start.sh
+
+# 仅启动前端
+./start.sh -f
+
+# 仅启动后端
+./start.sh -b
+
+# 生产模式启动
+./start.sh -p
+
+# 显示帮助信息
+./start.sh -h
+```
+
+### 手动启动
+
+如果你不想使用启动脚本，也可以手动启动项目：
+
+```bash
+# 安装依赖
+pnpm install
+cd client && pnpm install && cd ..
+cd server && pnpm install && cd ..
+
+# 启动前端
+cd client && pnpm dev
+
+# 启动后端
+cd server && pnpm dev
+```
+
 ## 项目架构
 
 ```
@@ -69,6 +131,8 @@ taskforest/
 │   ├── development/         # 开发规范
 │   ├── architecture/        # 架构文档
 │   └── design/              # 设计文档
+├── start.sh                 # Unix/Linux/macOS启动脚本
+├── start.bat                # Windows启动脚本
 └── README.md                # 项目总览文档
 ```
 
@@ -83,32 +147,31 @@ taskforest/
 - [API 文档](./docs/api/api_reference.md) - API 接口参考
 - [开发任务](./docs/development_tasks.md) - 开发任务清单
 
-## 开始使用
+## 环境要求
 
-### 环境要求
 - Node.js >= 18
 - npm >= 8 或 pnpm >= 7
 - Git
 
-### 安装与运行
-```bash
-# 克隆项目
-git clone https://github.com/yourusername/taskforest.git
-cd taskforest
-
-# 安装依赖
-pnpm install
-
-# 启动开发环境
-pnpm dev
-
-# 构建应用
-pnpm build
-```
-
 ## 贡献指南
 
 请参阅 [贡献指南](./docs/development/contributing.md) 了解如何为项目做出贡献。
+
+## 常见问题解决
+
+1. **启动脚本提示"无法识别的命令"**
+   - 确保已安装Node.js和pnpm
+   - 在Unix/Linux/macOS系统上，确保已设置脚本执行权限：`chmod +x start.sh`
+
+2. **前端启动后显示空白页面**
+   - 检查浏览器控制台是否有错误
+   - 确认后端服务是否正常运行
+   - 尝试清除浏览器缓存
+
+3. **后端服务启动失败**
+   - 检查端口3000是否被占用
+   - 确认数据库配置是否正确
+   - 检查日志输出以定位具体错误
 
 ## 许可证
 
