@@ -66,5 +66,10 @@
     "prisma": "^5.0.0",
     "typescript": "^5.8.2",
     "vite": "^6.2.3"
-  }
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "license": "ISC"
 }
