@@ -73,17 +73,63 @@ function setupIpcHandlers() {
   });
   electron.ipcMain.handle("create-task", async (_, taskData) => {
     try {
+<<<<<<< HEAD
       const createdTask = await prisma.task.create({
         data: taskData,
+=======
+      if (!prisma) {
+        console.error("Prisma客户端未初始化，尝试重新初始化...");
+        await initDatabase();
+        if (!prisma) {
+          throw new Error("数据库连接不可用");
+        }
+      }
+      if (!taskData.title) {
+        console.error("任务标题不能为空");
+        throw new Error("任务标题不能为空");
+      }
+      console.log("开始在数据库中创建任务...");
+      const taskCreateData = {
+        title: taskData.title,
+        description: taskData.description || "",
+        type: taskData.type || "REGULAR",
+        status: taskData.status || "TODO",
+        priority: taskData.priority || "MEDIUM",
+        treeType: taskData.treeType || "oak",
+        growthStage: 1,
+        // 初始生长阶段为1
+        tags: taskData.tags ? JSON.stringify(taskData.tags) : "[]",
+        dueDate: taskData.deadline ? new Date(taskData.deadline) : null
+      };
+      console.log("格式化后的任务数据:", JSON.stringify(taskCreateData, null, 2));
+      const createdTask = await prisma.task.create({
+        data: taskCreateData,
+>>>>>>> d53a2f1 (reconstruction)
         include: {
-          category: true
+          tree: true
         }
       });
+<<<<<<< HEAD
       if (taskData.treeType) {
         const tree = await prisma.tree.create({
           data: {
             type: taskData.treeType,
             position: `${Math.random() * 10 - 5},0,${Math.random() * 10 - 5}`,
+=======
+      console.log("任务基本信息创建成功:", JSON.stringify(createdTask, null, 2));
+      console.log(`创建关联的树木，类型: ${taskCreateData.treeType}, 任务ID: ${createdTask.id}`);
+      try {
+        const posX = Math.random() * 20 - 10;
+        const posZ = Math.random() * 20 - 10;
+        const tree = await prisma.tree.create({
+          data: {
+            type: taskCreateData.treeType || "oak",
+            stage: 1,
+            positionX: posX,
+            positionY: 0,
+            positionZ: posZ,
+            rotationY: Math.random() * Math.PI * 2,
+>>>>>>> d53a2f1 (reconstruction)
             task: {
               connect: {
                 id: createdTask.id
@@ -91,12 +137,26 @@ function setupIpcHandlers() {
             }
           }
         });
+<<<<<<< HEAD
         await prisma.task.update({
           where: { id: createdTask.id },
           data: { treeId: tree.id }
         });
       }
       return createdTask;
+=======
+        console.log("树木创建成功:", JSON.stringify(tree, null, 2));
+        const taskWithTree = await prisma.task.findUnique({
+          where: { id: createdTask.id },
+          include: { tree: true }
+        });
+        console.log("返回完整任务数据:", JSON.stringify(taskWithTree, null, 2));
+        return taskWithTree;
+      } catch (treeError) {
+        console.error("创建树木失败:", treeError);
+        return createdTask;
+      }
+>>>>>>> d53a2f1 (reconstruction)
     } catch (error) {
       console.error("创建任务失败:", error);
       throw new Error("创建任务失败");
@@ -130,28 +190,55 @@ function setupIpcHandlers() {
       throw new Error("删除任务失败");
     }
   });
-  electron.ipcMain.handle("complete-task", async (_, id) => {
+  electron.ipcMain.handle("complete-task", async (event, taskId) => {
+    console.log("==================== 接收到complete-task请求 ====================");
+    console.log("请求来源:", event.sender.getURL());
+    console.log("任务ID:", taskId);
     try {
+      if (!prisma) {
+        console.error("Prisma客户端未初始化");
+        throw new Error("数据库连接不可用");
+      }
+      const task = await prisma.task.findUnique({
+        where: { id: taskId },
+        include: { tree: true }
+      });
+      if (!task) {
+        console.error(`任务不存在: ${taskId}`);
+        throw new Error("任务不存在");
+      }
+      console.log("找到任务:", JSON.stringify(task, null, 2));
       const updatedTask = await prisma.task.update({
-        where: { id },
+        where: { id: taskId },
         data: {
-          status: "已完成",
+          status: "COMPLETED",
           completedAt: /* @__PURE__ */ new Date()
         },
-        include: {
-          tree: true
-        }
+        include: { tree: true }
       });
-      if (updatedTask.tree) {
-        await prisma.tree.update({
-          where: { id: updatedTask.tree.id },
-          data: { growthStage: 5 }
+      console.log("任务已标记为完成:", JSON.stringify(updatedTask, null, 2));
+      if (task.tree) {
+        console.log("更新树木生长阶段:", task.tree.id);
+        const currentStage = task.tree.stage || 0;
+        const newStage = Math.min(currentStage + 1, 5);
+        const updatedTree = await prisma.tree.update({
+          where: { id: task.tree.id },
+          data: {
+            stage: newStage,
+            lastGrowth: /* @__PURE__ */ new Date()
+          }
         });
+        console.log("树木生长阶段已更新:", JSON.stringify(updatedTree, null, 2));
       }
-      return updatedTask;
+      const finalTask = await prisma.task.findUnique({
+        where: { id: taskId },
+        include: { tree: true }
+      });
+      console.log("返回最终任务数据:", JSON.stringify(finalTask, null, 2));
+      return finalTask;
     } catch (error) {
       console.error("完成任务失败:", error);
-      throw new Error("完成任务失败");
+      throw new Error(`完成任务失败: ${error instanceof Error ? error.message : "未知错误"}`);
     }
   });
   electron.ipcMain.handle("get-trees", async () => {
