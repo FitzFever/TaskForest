@@ -53,19 +53,22 @@ export async function createTree(req: Request, res: Response) {
     const treeData: CreateTreeDto = req.body;
     
     // 验证请求体数据
-    if (!treeData.species || !treeData.userId) {
-      return res.status(400).json({ message: '缺少必要字段: species, userId' });
+    if (!treeData.taskId || !treeData.species) {
+      return res.status(400).json({ message: '缺少必要字段: taskId, species' });
     }
     
-    const { species, userId, stage = 1, healthState = 100, taskId } = treeData;
+    const { species, taskId, stage = 1, healthState = 100, positionX = 0, positionY = 0, positionZ = 0, rotationY = 0 } = treeData;
     
     const newTree = await prisma.tree.create({
       data: {
         type: species,
-        userId,
+        taskId,
         stage,
         healthState,
-        taskId
+        positionX,
+        positionY,
+        positionZ,
+        rotationY
       }
     });
     
@@ -103,7 +106,11 @@ export async function updateTree(req: Request, res: Response) {
         type: treeData.species,
         stage: treeData.stage,
         healthState: treeData.healthState,
-        lastGrowth: treeData.lastWatered
+        lastGrowth: treeData.lastWatered,
+        positionX: treeData.positionX,
+        positionY: treeData.positionY,
+        positionZ: treeData.positionZ,
+        rotationY: treeData.rotationY
       }
     });
     

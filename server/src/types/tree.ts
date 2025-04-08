@@ -18,7 +18,6 @@ export interface Tree {
   createdAt: Date;
   lastGrowth: Date;
   healthState: number;
-  userId: string;
 }
 
 // 创建树木DTO
@@ -27,7 +26,6 @@ export interface CreateTreeDto {
   species: string; // 对应Tree的type字段
   stage?: number;
   healthState?: number;
-  userId: string;
   positionX?: number;
   positionY?: number;
   positionZ?: number;
@@ -40,7 +38,6 @@ export interface UpdateTreeDto {
   stage?: number;
   healthState?: number;
   lastWatered?: Date; // 对应Tree的lastGrowth字段
-  userId?: string;
   positionX?: number;
   positionY?: number;
   positionZ?: number;

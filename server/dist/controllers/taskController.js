@@ -1,4 +1,4 @@
-import taskService from '../services/taskService';
+import taskService from '../services/taskService.js';
 /**
  * 获取任务列表
  * @route GET /api/tasks

@@ -2,10 +2,13 @@
  * 任务服务
  * 负责实现任务相关的业务逻辑
  */
-import { PrismaClient, Task, TaskStatus, Prisma } from '@prisma/client';
+import { PrismaClient, Task, Prisma } from '@prisma/client';
 
 // 创建Prisma客户端实例
 const prisma = new PrismaClient();
+
+// 任务状态类型定义
+type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 // 任务过滤条件接口
 interface TaskFilter {
@@ -52,7 +55,7 @@ const getTasks = async (filter: TaskFilter): Promise<TaskListResult> => {
   
   // 添加状态过滤
   if (status) {
-    where.status = status as TaskStatus;
+    where.status = status;
   }
   
   // 添加类型过滤
@@ -75,9 +78,11 @@ const getTasks = async (filter: TaskFilter): Promise<TaskListResult> => {
   
   // 添加标签过滤
   if (tags && tags.length > 0) {
-    where.tags = {
-      hasSome: tags,
-    };
+    // 使用contains来检查标签 (因为我们用逗号分隔存储标签)
+    const tagConditions = tags.map(tag => ({
+      tags: { contains: tag }
+    }));
+    where.OR = tagConditions;
   }
   
   // 计算分页
@@ -208,7 +213,7 @@ const deleteTask = async (id: string): Promise<void> => {
  * @param status 新状态
  * @returns 更新结果
  */
-const updateTaskStatus = async (id: string, status: TaskStatus): Promise<{ id: string; status: TaskStatus; updatedAt: Date }> => {
+const updateTaskStatus = async (id: string, status: string): Promise<{ id: string; status: string; updatedAt: Date }> => {
   // 如果状态是已完成，则设置completedAt字段
   const completedAt = status === 'COMPLETED' ? new Date() : null;
   
@@ -233,7 +238,7 @@ const updateTaskStatus = async (id: string, status: TaskStatus): Promise<{ id: s
  * @param id 任务ID
  * @returns 完成结果
  */
-const completeTask = async (id: string): Promise<{ id: string; status: TaskStatus; completedAt: Date; updatedAt: Date; growthStage: number }> => {
+const completeTask = async (id: string): Promise<{ id: string; status: string; completedAt: Date; updatedAt: Date; growthStage: number }> => {
   // 先获取任务信息
   const task = await prisma.task.findUnique({
     where: { id },

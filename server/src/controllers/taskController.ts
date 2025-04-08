@@ -3,7 +3,7 @@
  * 负责处理任务相关的HTTP请求
  */
 import { Request, Response } from 'express';
-import taskService from '../services/taskService';
+import taskService from '../services/taskService.js';
 
 /**
  * 获取任务列表

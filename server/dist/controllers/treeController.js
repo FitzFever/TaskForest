@@ -17,8 +17,8 @@ export async function getTrees(req, res) {
  */
 export async function getTreeById(req, res) {
     try {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
+        const id = req.params.id;
+        if (!id) {
             return res.status(400).json({ message: '无效的树木ID' });
         }
         const tree = await prisma.tree.findUnique({
@@ -41,19 +41,20 @@ export async function createTree(req, res) {
     try {
         const treeData = req.body;
         // 验证请求体数据
-        if (!treeData.name || !treeData.species || !treeData.userId) {
-            return res.status(400).json({ message: '缺少必要字段: name, species, userId' });
+        if (!treeData.taskId || !treeData.species) {
+            return res.status(400).json({ message: '缺少必要字段: taskId, species' });
         }
-        const { name, species, userId, growthStage = 1, health = 100, completedTasks = 0, lastWatered = new Date() } = treeData;
+        const { species, taskId, stage = 1, healthState = 100, positionX = 0, positionY = 0, positionZ = 0, rotationY = 0 } = treeData;
         const newTree = await prisma.tree.create({
             data: {
-                name,
-                species,
-                userId,
-                growthStage,
-                health,
-                completedTasks,
-                lastWatered
+                type: species,
+                taskId,
+                stage,
+                healthState,
+                positionX,
+                positionY,
+                positionZ,
+                rotationY
             }
         });
         res.status(201).json(newTree);
@@ -68,9 +69,9 @@ export async function createTree(req, res) {
  */
 export async function updateTree(req, res) {
     try {
-        const id = parseInt(req.params.id);
+        const id = req.params.id;
         const treeData = req.body;
-        if (isNaN(id)) {
+        if (!id) {
             return res.status(400).json({ message: '无效的树木ID' });
         }
         // 先检查树木是否存在
@@ -82,7 +83,16 @@ export async function updateTree(req, res) {
         }
         const updatedTree = await prisma.tree.update({
             where: { id },
-            data: treeData
+            data: {
+                type: treeData.species,
+                stage: treeData.stage,
+                healthState: treeData.healthState,
+                lastGrowth: treeData.lastWatered,
+                positionX: treeData.positionX,
+                positionY: treeData.positionY,
+                positionZ: treeData.positionZ,
+                rotationY: treeData.rotationY
+            }
         });
         res.status(200).json(updatedTree);
     }
@@ -96,8 +106,8 @@ export async function updateTree(req, res) {
  */
 export async function deleteTree(req, res) {
     try {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
+        const id = req.params.id;
+        if (!id) {
             return res.status(400).json({ message: '无效的树木ID' });
         }
         // 先检查树木是否存在
@@ -122,8 +132,8 @@ export async function deleteTree(req, res) {
  */
 export async function growTree(req, res) {
     try {
-        const id = parseInt(req.params.id);
-        if (isNaN(id)) {
+        const id = req.params.id;
+        if (!id) {
             return res.status(400).json({ message: '无效的树木ID' });
         }
         // 默认任务已完成
@@ -136,21 +146,18 @@ export async function growTree(req, res) {
             return res.status(404).json({ message: '未找到指定树木' });
         }
         // 计算新的生长状态
-        const newGrowthStage = taskCompleted ? Math.min(tree.growthStage + 1, 5) : tree.growthStage;
-        const newCompletedTasks = taskCompleted ? tree.completedTasks + 1 : tree.completedTasks;
+        const newStage = taskCompleted ? Math.min(tree.stage + 1, 5) : tree.stage;
         // 更新树木
         const updatedTree = await prisma.tree.update({
             where: { id },
             data: {
-                growthStage: newGrowthStage,
-                completedTasks: newCompletedTasks,
-                lastWatered: new Date()
+                stage: newStage,
+                lastGrowth: new Date()
             }
         });
         res.status(200).json({
             tree: updatedTree,
-            message: `树木成功生长到第${updatedTree.growthStage}阶段`,
-            completedTasks: updatedTree.completedTasks
+            message: `树木成功生长到第${updatedTree.stage}阶段`,
         });
     }
     catch (error) {

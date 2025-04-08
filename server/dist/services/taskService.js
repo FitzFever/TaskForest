@@ -35,9 +35,11 @@ const getTasks = async (filter) => {
     }
     // 添加标签过滤
     if (tags && tags.length > 0) {
-        where.tags = {
-            hasSome: tags,
-        };
+        // 使用contains来检查标签 (因为我们用逗号分隔存储标签)
+        const tagConditions = tags.map(tag => ({
+            tags: { contains: tag }
+        }));
+        where.OR = tagConditions;
     }
     // 计算分页
     const skip = (page - 1) * limit;

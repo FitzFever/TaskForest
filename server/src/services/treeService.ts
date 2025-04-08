@@ -1,44 +1,9 @@
 /**
- * 树木服务类
+ * 树木服务
  * 提供树木管理的业务逻辑
  */
 import { prisma } from '../db.js';
-
-// 树木模型接口
-export interface Tree {
-  id: number;
-  name: string;
-  species: string;
-  growthStage: number;
-  health: number;
-  completedTasks: number;
-  lastWatered: Date;
-  userId: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// 创建树木DTO
-export interface CreateTreeDto {
-  name: string;
-  species: string;
-  userId: number;
-  growthStage?: number;
-  health?: number;
-  completedTasks?: number;
-  lastWatered?: Date;
-}
-
-// 更新树木DTO
-export interface UpdateTreeDto {
-  name?: string;
-  species?: string;
-  growthStage?: number;
-  health?: number;
-  completedTasks?: number;
-  lastWatered?: Date;
-  userId?: number;
-}
+import { Tree as TreeType, CreateTreeDto, UpdateTreeDto } from '../types/tree.js';
 
 /**
  * 树木服务类
@@ -47,67 +12,84 @@ export interface UpdateTreeDto {
 export class TreeService {
   /**
    * 获取所有树木
-   * @returns {Promise<Tree[]>} 树木列表
+   * @returns {Promise<TreeType[]>} 树木列表
    */
-  async getAllTrees(): Promise<Tree[]> {
-    return await prisma.tree.findMany();
+  async getAllTrees(): Promise<TreeType[]> {
+    const trees = await prisma.tree.findMany();
+    return trees as unknown as TreeType[];
   }
 
   /**
    * 根据ID获取单个树木
-   * @param {number} id 树木ID
-   * @returns {Promise<Tree | null>} 找到的树木或null
+   * @param {string} id 树木ID
+   * @returns {Promise<TreeType | null>} 找到的树木或null
    */
-  async getTreeById(id: number): Promise<Tree | null> {
-    return await prisma.tree.findUnique({
+  async getTreeById(id: string): Promise<TreeType | null> {
+    const tree = await prisma.tree.findUnique({
       where: { id }
     });
+    return tree as unknown as TreeType | null;
   }
 
   /**
    * 创建新树木
    * @param {CreateTreeDto} treeData 树木数据
-   * @returns {Promise<Tree>} 创建的树木
+   * @returns {Promise<TreeType>} 创建的树木
    */
-  async createTree(treeData: CreateTreeDto): Promise<Tree> {
-    const { name, species, userId, growthStage = 1, health = 100, completedTasks = 0, lastWatered = new Date() } = treeData;
+  async createTree(treeData: CreateTreeDto): Promise<TreeType> {
+    const { species, taskId, stage = 1, healthState = 100, positionX = 0, positionY = 0, positionZ = 0, rotationY = 0 } = treeData;
     
-    return await prisma.tree.create({
+    const newTree = await prisma.tree.create({
       data: {
-        name,
-        species,
-        userId,
-        growthStage,
-        health,
-        completedTasks,
-        lastWatered
+        type: species,
+        taskId,
+        stage,
+        healthState,
+        positionX,
+        positionY,
+        positionZ,
+        rotationY
       }
     });
+    
+    return newTree as unknown as TreeType;
   }
 
   /**
    * 更新树木
-   * @param {number} id 树木ID
+   * @param {string} id 树木ID
    * @param {UpdateTreeDto} treeData 更新数据
-   * @returns {Promise<Tree | null>} 更新后的树木或null
+   * @returns {Promise<TreeType | null>} 更新后的树木或null
    */
-  async updateTree(id: number, treeData: UpdateTreeDto): Promise<Tree | null> {
+  async updateTree(id: string, treeData: UpdateTreeDto): Promise<TreeType | null> {
     // 先检查树木是否存在
     const tree = await this.getTreeById(id);
     if (!tree) return null;
 
-    return await prisma.tree.update({
+    const updateData: any = {};
+    if (treeData.species) updateData.type = treeData.species;
+    if (treeData.stage !== undefined) updateData.stage = treeData.stage;
+    if (treeData.healthState !== undefined) updateData.healthState = treeData.healthState;
+    if (treeData.lastWatered) updateData.lastGrowth = treeData.lastWatered;
+    if (treeData.positionX !== undefined) updateData.positionX = treeData.positionX;
+    if (treeData.positionY !== undefined) updateData.positionY = treeData.positionY;
+    if (treeData.positionZ !== undefined) updateData.positionZ = treeData.positionZ;
+    if (treeData.rotationY !== undefined) updateData.rotationY = treeData.rotationY;
+
+    const updatedTree = await prisma.tree.update({
       where: { id },
-      data: treeData
+      data: updateData
     });
+
+    return updatedTree as unknown as TreeType;
   }
 
   /**
    * 删除树木
-   * @param {number} id 树木ID
+   * @param {string} id 树木ID
    * @returns {Promise<boolean>} 是否成功删除
    */
-  async deleteTree(id: number): Promise<boolean> {
+  async deleteTree(id: string): Promise<boolean> {
     // 先检查树木是否存在
     const tree = await this.getTreeById(id);
     if (!tree) return false;
@@ -120,37 +102,43 @@ export class TreeService {
 
   /**
    * 树木生长
-   * @param {number} id 树木ID
+   * @param {string} id 树木ID
    * @param {boolean} taskCompleted 是否完成了任务
-   * @returns {Promise<Tree | null>} 更新后的树木或null
+   * @returns {Promise<TreeType | null>} 更新后的树木或null
    */
-  async growTree(id: number, taskCompleted: boolean = true): Promise<Tree | null> {
+  async growTree(id: string, taskCompleted: boolean = true): Promise<TreeType | null> {
     // 先检查树木是否存在
     const tree = await this.getTreeById(id);
     if (!tree) return null;
 
-    // 只有在完成任务的情况下才增加成长和更新完成任务数量
+    // 只有在完成任务的情况下才增加成长
     if (taskCompleted) {
       // 最大生长阶段为5
-      const newGrowthStage = Math.min(tree.growthStage + 1, 5);
-      const newCompletedTasks = tree.completedTasks + 1;
+      const newStage = Math.min(tree.stage + 1, 5);
       
-      return await prisma.tree.update({
+      const updatedTree = await prisma.tree.update({
         where: { id },
         data: {
-          growthStage: newGrowthStage,
-          completedTasks: newCompletedTasks,
-          lastWatered: new Date()
+          stage: newStage,
+          lastGrowth: new Date()
         }
       });
+      
+      return updatedTree as unknown as TreeType;
     }
     
     // 如果没有完成任务，只更新最后浇水时间
-    return await prisma.tree.update({
+    const updatedTree = await prisma.tree.update({
       where: { id },
       data: {
-        lastWatered: new Date()
+        lastGrowth: new Date()
       }
     });
+    
+    return updatedTree as unknown as TreeType;
   }
-} 
+}
+
+// 导出单例实例
+const treeService = new TreeService();
+export default treeService; 
