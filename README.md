@@ -142,7 +142,9 @@ taskforest/
 - [详细设计文档](./docs/design/detailed_design.md) - 模块和接口详细设计
 - [前端项目说明](./client/README.md) - 前端项目详细说明
 - [后端项目说明](./server/README.md) - 后端项目详细说明
+- [开发快速指南](./docs/guides/development_quick_start.md) - 快速上手开发流程
 - [开发规范](./docs/development/standards.md) - 开发规范和流程
+- [故障排除指南](./docs/development/troubleshooting.md) - 开发常见问题解决方案
 - [贡献指南](./docs/development/contributing.md) - 项目贡献指南
 - [API 文档](./docs/api/api_reference.md) - API 接口参考
 - [开发任务](./docs/development_tasks.md) - 开发任务清单
@@ -166,12 +168,20 @@ taskforest/
 2. **前端启动后显示空白页面**
    - 检查浏览器控制台是否有错误
    - 确认后端服务是否正常运行
-   - 尝试清除浏览器缓存
+   - 检查前端配置文件是否正确 (参考 [故障排除指南](./docs/development/troubleshooting.md#前端配置问题))
 
 3. **后端服务启动失败**
    - 检查端口3000是否被占用
    - 确认数据库配置是否正确
-   - 检查日志输出以定位具体错误
+   - ESM模块相关问题 (参考 [故障排除指南](./docs/development/troubleshooting.md#esm-模块问题))
+   - Prisma类型问题 (参考 [故障排除指南](./docs/development/troubleshooting.md#prisma-与类型系统问题))
+
+4. **类型错误或编译失败**
+   - 检查TypeScript配置
+   - 确保导入路径包含正确的扩展名
+   - 详细解决方案请参考 [故障排除指南](./docs/development/troubleshooting.md)
+
+详细问题解决方案请参阅 [开发常见问题解决指南](./docs/development/troubleshooting.md)。
 
 ## 许可证
 
