@@ -2,36 +2,67 @@
  * 任务优先级枚举
  */
 export enum TaskPriority {
-  LOW = '低',
-  MEDIUM = '中',
-  HIGH = '高',
-  URGENT = '紧急'
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3,
+  URGENT = 4
 }
 
 /**
  * 任务状态枚举
  */
 export enum TaskStatus {
-  TODO = '待处理',
-  IN_PROGRESS = '进行中',
-  COMPLETED = '已完成',
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED'
 }
 
 /**
- * 任务类型定义
+ * 任务类型枚举
+ */
+export enum TaskType {
+  NORMAL = 'NORMAL',
+  RECURRING = 'RECURRING',
+  PROJECT = 'PROJECT',
+  LEARNING = 'LEARNING',
+  WORK = 'WORK',
+  LEISURE = 'LEISURE'
+}
+
+/**
+ * 树木类型枚举
+ */
+export enum TreeType {
+  OAK = 'OAK',
+  PINE = 'PINE',
+  CHERRY = 'CHERRY',
+  PALM = 'PALM',
+  APPLE = 'APPLE',
+  MAPLE = 'MAPLE',
+  WILLOW = 'WILLOW'
+}
+
+/**
+ * 任务接口
  */
 export interface Task {
-  id: number;
+  id: string | number;
   title: string;
   description?: string;
-  priority: TaskPriority;
+  type: TaskType;
   status: TaskStatus;
-  completed: boolean;
+  priority: TaskPriority;
+  dueDate?: string;
   deadline?: string;
-  completedAt?: string;
-  categoryId?: number;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string;
+  completed?: boolean;
+  tags?: string[];
+  treeType?: TreeType;
+  growthStage?: number;
+  categoryId?: number;
   category?: {
     id: number;
     name: string;
@@ -41,15 +72,63 @@ export interface Task {
 }
 
 /**
- * 创建任务的请求数据类型
+ * 创建任务请求接口
  */
-export interface CreateTaskData {
+export interface CreateTaskRequest {
   title: string;
   description?: string;
+  type: TaskType;
   priority: TaskPriority;
+  dueDate?: string;
   deadline?: string;
+  tags?: string[];
+  treeType?: TreeType;
   categoryId?: number;
-  treeType?: string;
+}
+
+/**
+ * 更新任务请求接口
+ */
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  type?: TaskType;
+  priority?: TaskPriority;
+  dueDate?: string;
+  deadline?: string;
+  tags?: string[];
+  treeType?: TreeType;
+  categoryId?: number;
+}
+
+/**
+ * 任务列表响应接口
+ */
+export interface TaskListResponse {
+  code: number;
+  data: {
+    tasks: Task[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  };
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * 任务统计接口
+ */
+export interface TaskStats {
+  total: number;
+  completed: number;
+  inProgress: number;
+  todo: number;
+  cancelled: number;
+  completionRate: number;
 }
 
 /**

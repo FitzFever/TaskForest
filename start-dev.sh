@@ -13,43 +13,49 @@ echo "===================================="
 
 # 启动后端API服务
 echo -e "${YELLOW}启动后端API服务...${NC}"
-cd "$(dirname "$0")" # 确保在server目录中
+cd server
 node src/dev.js &
-BACKEND_PID=$!
+API_PID=$!
 
-# 等待后端启动
+# 等待API服务启动
 sleep 2
 
-# 检查后端是否正常运行
-if curl -s http://localhost:9000/api/health > /dev/null; then
-  echo -e "${GREEN}后端API服务已成功启动!${NC}"
-else
-  echo -e "${RED}后端API服务启动失败!${NC}"
-  kill $BACKEND_PID 2>/dev/null
-  exit 1
+# 检查API服务是否成功启动
+curl -s http://localhost:9000/api/health > /dev/null
+if [ $? -ne 0 ]; then
+    echo -e "${RED}后端API服务启动失败!${NC}"
+    kill $API_PID
+    exit 1
 fi
 
+echo -e "${GREEN}✓ 后端API服务已启动${NC}"
+echo -e "${BLUE}API地址: http://localhost:9000${NC}"
+
 # 启动前端服务
-echo -e "${YELLOW}启动前端服务...${NC}"
+echo -e "\n启动前端开发服务器..."
 cd ../client
 
-# 确保前端使用的是API服务而非模拟数据
-echo "REACT_APP_DEV_API_URL=http://localhost:9000/api" > .env.development.local
-echo "REACT_APP_USE_MOCK=false" >> .env.development.local
-echo -e "${GREEN}已创建前端环境配置文件${NC}"
+# 创建或更新前端环境变量
+cat > .env.development.local << EOL
+VITE_API_URL=http://localhost:9000/api
+EOL
 
 pnpm dev &
-FRONTEND_PID=$!
+CLIENT_PID=$!
 
-echo -e "\n${GREEN}开发环境已启动!${NC}"
-echo -e "前端服务: ${BLUE}http://localhost:5173${NC}"
-echo -e "后端API: ${BLUE}http://localhost:9000/api${NC}"
-echo -e "API健康检查: ${BLUE}http://localhost:9000/api/health${NC}"
-echo -e "\n${YELLOW}按 Ctrl+C 停止所有服务${NC}"
-echo "===================================="
+# 等待前端服务启动
+sleep 3
 
-# 处理Ctrl+C信号
-trap "echo -e '\n${YELLOW}正在停止服务...${NC}'; kill $BACKEND_PID 2>/dev/null; kill $FRONTEND_PID 2>/dev/null; echo -e '${GREEN}服务已停止${NC}'; exit 0" INT
+echo -e "${GREEN}✓ 前端开发服务器已启动${NC}"
+
+# 显示服务地址
+echo -e "\n${GREEN}开发环境已就绪!${NC}"
+echo -e "${BLUE}前端地址: http://localhost:5173${NC}"
+echo -e "${BLUE}API地址: http://localhost:9000${NC}"
+echo -e "${BLUE}API健康检查: http://localhost:9000/api/health${NC}"
+
+# 捕获Ctrl+C信号
+trap "echo -e '\n正在停止服务...' && kill $API_PID $CLIENT_PID && echo -e '${GREEN}服务已停止${NC}' && exit 0" INT
 
 # 保持脚本运行
 wait 

@@ -1,0 +1,25 @@
+.taskList {
+  margin-top: 24px;
+}
+
+.titleCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoIcon {
+  color: #1890ff;
+  cursor: pointer;
+}
+
+.treeStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.treeStatus span {
+  color: #666;
+  font-size: 12px;
+} 

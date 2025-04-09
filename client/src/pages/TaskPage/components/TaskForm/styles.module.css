@@ -1,0 +1,20 @@
+.taskForm {
+  padding: 16px 0;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+}
+
+.formRow :global(.ant-form-item) {
+  flex: 1;
+}
+
+.datePicker {
+  width: 100%;
+}
+
+.tagSelect {
+  width: 100%;
+} 

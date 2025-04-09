@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, List, Input, Modal, Form, DatePicker, Select, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import * as taskService from '../services/taskService';
+import { Task, TaskStatus, TaskPriority, TaskType, CreateTaskRequest } from '../types/Task';
 
-// 模拟任务数据
-const MOCK_TASKS = [
-  { id: 1, title: '完成产品设计文档', status: 'TODO', priority: '高', dueDate: '2025-04-15' },
-  { id: 2, title: '实现用户认证功能', status: 'IN_PROGRESS', priority: '中', dueDate: '2025-04-20' },
-  { id: 3, title: '修复导航栏显示问题', status: 'COMPLETED', priority: '低', dueDate: '2025-04-10' },
-];
+// 删除模拟任务数据
 
 const Home: React.FC = () => {
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  // 模拟从API获取任务
+  // 从API获取任务
   useEffect(() => {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        // 实际项目中这里会调用API
-        // const response = await api.getTasks();
-        // setTasks(response.data);
+        // 调用真实API
+        const response = await taskService.getTasks();
+        console.log('获取到的任务响应:', response); // 添加日志输出
+        // 访问正确的数据路径
+        if (response && response.data && response.data.code === 200) {
+          setTasks(response.data.data.tasks);
+        } else {
+          throw new Error('API响应格式错误');
+        }
         setLoading(false);
       } catch (error) {
         console.error('获取任务失败:', error);
@@ -39,24 +42,69 @@ const Home: React.FC = () => {
     setLoading(true);
     
     try {
-      // 模拟API调用
-      const newTask = {
-        id: Date.now(),
+      // 调用真实API创建任务
+      const taskRequest: CreateTaskRequest = {
         title: values.title,
-        status: 'TODO',
-        priority: values.priority,
+        description: values.description || '',
+        priority: values.priority === '高' ? TaskPriority.HIGH : 
+                 values.priority === '中' ? TaskPriority.MEDIUM : TaskPriority.LOW,
         dueDate: values.dueDate.format('YYYY-MM-DD'),
+        type: TaskType.NORMAL, // 使用枚举
+        tags: []
       };
       
-      setTasks([...tasks, newTask]);
-      message.success('任务创建成功');
-      setModalVisible(false);
-      form.resetFields();
+      const createResponse = await taskService.createTask(taskRequest);
+      if (createResponse && createResponse.data && (createResponse.data.code === 201 || createResponse.data.code === 200)) {
+        message.success('任务创建成功');
+        setModalVisible(false);
+        form.resetFields();
+        
+        // 重新加载任务列表
+        const response = await taskService.getTasks();
+        if (response && response.data && response.data.code === 200) {
+          setTasks(response.data.data.tasks);
+        }
+      } else {
+        throw new Error('创建任务失败');
+      }
     } catch (error) {
       console.error('创建任务失败:', error);
       message.error('创建任务失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 处理完成任务
+  const handleCompleteTask = async (taskId: string) => {
+    try {
+      const completeResponse = await taskService.completeTask(taskId);
+      if (completeResponse && completeResponse.data && completeResponse.data.code === 200) {
+        message.success('任务已完成');
+        
+        // 重新加载任务列表
+        const response = await taskService.getTasks();
+        if (response && response.data && response.data.code === 200) {
+          setTasks(response.data.data.tasks);
+        } else {
+          throw new Error('获取任务列表失败');
+        }
+      } else {
+        throw new Error('完成任务失败');
+      }
+    } catch (error) {
+      console.error('完成任务失败:', error);
+      message.error('完成任务失败');
+    }
+  };
+
+  // 获取任务状态显示
+  const getStatusText = (status: string) => {
+    switch(status) {
+      case TaskStatus.TODO: return <span style={{ color: '#faad14' }}>待办</span>;
+      case TaskStatus.IN_PROGRESS: return <span style={{ color: '#1890ff' }}>进行中</span>;
+      case TaskStatus.COMPLETED: return <span style={{ color: '#52c41a' }}>已完成</span>;
+      default: return <span>{status}</span>;
     }
   };
 
@@ -82,19 +130,23 @@ const Home: React.FC = () => {
             <List.Item
               actions={[
                 <Button key="edit" type="link">编辑</Button>,
-                task.status !== 'COMPLETED' ? (
-                  <Button key="complete" type="link">完成</Button>
+                task.status !== TaskStatus.COMPLETED ? (
+                  <Button 
+                    key="complete" 
+                    type="link"
+                    onClick={() => handleCompleteTask(task.id.toString())}
+                  >
+                    完成
+                  </Button>
                 ) : null,
               ]}
             >
               <List.Item.Meta
                 title={task.title}
-                description={`优先级: ${task.priority} | 截止日期: ${task.dueDate}`}
+                description={`优先级: ${TaskPriority[task.priority]} | 截止日期: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '无'}`}
               />
               <div>
-                {task.status === 'TODO' && <span style={{ color: '#faad14' }}>待办</span>}
-                {task.status === 'IN_PROGRESS' && <span style={{ color: '#1890ff' }}>进行中</span>}
-                {task.status === 'COMPLETED' && <span style={{ color: '#52c41a' }}>已完成</span>}
+                {getStatusText(task.status)}
               </div>
             </List.Item>
           )}
@@ -119,6 +171,13 @@ const Home: React.FC = () => {
             rules={[{ required: true, message: '请输入任务标题' }]}
           >
             <Input placeholder="请输入任务标题" />
+          </Form.Item>
+          
+          <Form.Item
+            name="description"
+            label="任务描述"
+          >
+            <Input.TextArea rows={3} placeholder="请输入任务描述" />
           </Form.Item>
           
           <Form.Item

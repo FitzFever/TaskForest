@@ -4,6 +4,7 @@ import { OrbitControls, Environment, Stars } from '@react-three/drei';
 import { Card, Spin, Row, Col, Button, Alert, Divider, Typography, Tooltip } from 'antd';
 import { useTreeStore } from '../store';
 import { TreeType } from '../types/Tree';
+import * as treeService from '../services/treeService'; // 导入树木服务
 
 const { Title, Text } = Typography;
 
@@ -171,79 +172,42 @@ const ForestScene: React.FC = () => {
   const [use3D, setUse3D] = useState(true);
   const [renderError, setRenderError] = useState(false);
 
-  // 模拟从API获取树木数据
+  // 从API获取树木数据
   useEffect(() => {
     const fetchTrees = async () => {
       try {
         setLoading(true);
         
-        // 这里应该是实际的API调用
-        // const response = await treeService.getTrees();
-        // setTrees(response.data);
+        // 使用树木服务获取数据
+        const response = await treeService.getAllTrees();
+        console.log('API树木数据:', response);
         
-        // 模拟数据
-        setTimeout(() => {
-          setTrees([
-            {
-              id: 1,
-              type: TreeType.OAK,
-              growthStage: 3,
-              positionX: -5,
-              positionZ: 2,
-              createdAt: new Date().toISOString(),
-              taskId: 1,
-              task: {
-                id: 1,
-                title: '完成TaskForest项目设计',
-                priority: 2 as any,
-                status: 1 as any,
-                completed: false,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              }
-            },
-            {
-              id: 2,
-              type: TreeType.PINE,
-              growthStage: 2,
-              positionX: 3,
-              positionZ: -2,
-              createdAt: new Date().toISOString(),
-              taskId: 2,
-              task: {
-                id: 2,
-                title: '实现树木生长动画',
-                priority: 1 as any,
-                status: 0 as any,
-                completed: false,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              }
-            },
-            {
-              id: 3,
-              type: TreeType.CHERRY,
-              growthStage: 5,
-              positionX: 0,
-              positionZ: 5,
-              createdAt: new Date().toISOString(),
-              taskId: 3,
-              task: {
-                id: 3,
-                title: '编写API文档',
-                priority: 0 as any,
-                status: 2 as any,
-                completed: true,
-                completedAt: new Date().toISOString(),
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              }
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
+        // 将API树木数据转换为应用格式
+        const treesData = response.trees.map(apiTree => ({
+          id: Number(apiTree.id.replace('tree-', '')),
+          type: apiTree.type as TreeType,
+          growthStage: apiTree.stage,
+          positionX: apiTree.position.x,
+          positionZ: apiTree.position.z,
+          createdAt: apiTree.createdAt,
+          taskId: Number(apiTree.taskId),
+          task: apiTree.task ? {
+            id: Number(apiTree.task.id),
+            title: apiTree.task.title,
+            priority: 1 as any, // 默认值
+            status: 0 as any, // 默认值
+            completed: apiTree.task.status === 'COMPLETED',
+            completedAt: apiTree.task.status === 'COMPLETED' ? new Date().toISOString() : undefined,
+            createdAt: apiTree.createdAt,
+            updatedAt: apiTree.lastGrowth
+          } : undefined
+        }));
+        
+        setTrees(treesData);
+        setLoading(false);
       } catch (err) {
-        setError('获取树木失败');
+        console.error('获取树木失败:', err);
+        setError('获取树木数据失败，请稍后重试');
         setLoading(false);
       }
     };
@@ -260,8 +224,29 @@ const ForestScene: React.FC = () => {
   };
 
   // 处理树木生长
-  const handleGrowTree = (treeId: number) => {
-    growTree(treeId);
+  const handleGrowTree = async (treeId: number) => {
+    try {
+      // 获取当前树木数据
+      const tree = trees.find(t => t.id === treeId);
+      if (!tree) return;
+      
+      // 确保不超过最大生长阶段
+      if (tree.growthStage >= 5) return;
+      
+      // 调用API更新树木阶段
+      const treeIdString = `tree-${treeId}`;
+      const updatedApiTree = await treeService.updateTree(treeIdString, {
+        stage: tree.growthStage + 1
+      });
+      
+      console.log('树木生长结果:', updatedApiTree);
+      
+      // 更新本地状态
+      growTree(treeId);
+    } catch (error) {
+      console.error('促进树木生长失败:', error);
+      setError('促进树木生长失败，请稍后重试');
+    }
   };
 
   // 处理渲染错误

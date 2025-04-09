@@ -154,38 +154,38 @@ export const createTaskDataToRequest = (taskData: CreateTaskData): CreateTaskReq
   let type: string;
   switch(taskData.priority) {
     case TaskPriority.LOW:
-      type = '低';
+      type = 'NORMAL';
       break;
     case TaskPriority.MEDIUM:
-      type = '中';
+      type = 'WORK';
       break;
     case TaskPriority.HIGH:
-      type = '高';
+      type = 'PROJECT';
       break;
     case TaskPriority.URGENT:
-      type = '紧急';
+      type = 'LEARNING';
       break;
     default:
-      type = '中';
+      type = 'NORMAL';
   }
 
-  // 将前端优先级枚举映射到API的数字优先级
+  // 将前端优先级枚举映射到API的优先级(1-5)
   let priorityValue: number;
   switch(taskData.priority) {
     case TaskPriority.LOW:
-      priorityValue = 0;
-      break;
-    case TaskPriority.MEDIUM:
       priorityValue = 1;
       break;
-    case TaskPriority.HIGH:
+    case TaskPriority.MEDIUM:
       priorityValue = 2;
       break;
+    case TaskPriority.HIGH:
+      priorityValue = 4;
+      break;
     case TaskPriority.URGENT:
-      priorityValue = 3;
+      priorityValue = 5;
       break;
     default:
-      priorityValue = 1; // 默认中优先级
+      priorityValue = 2; // 默认中优先级
   }
 
   console.log('正在转换任务数据为API请求格式:', taskData);
@@ -196,11 +196,8 @@ export const createTaskDataToRequest = (taskData: CreateTaskData): CreateTaskReq
     description: taskData.description || '',
     type: type,
     priority: priorityValue,
-    // API要求dueDate是ISO格式的字符串
     dueDate: taskData.deadline || new Date().toISOString(),
-    // 将树木类型添加到请求中
-    treeType: taskData.treeType || 'OAK',
-    // 添加默认的标签数组
+    treeType: taskData.treeType?.toUpperCase() || 'OAK',
     tags: []
   };
 

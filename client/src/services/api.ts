@@ -17,24 +17,8 @@ export interface IApiResponse<T> {
  * 获取API基础URL
  */
 const getBaseUrl = (): string => {
-  // 打印所有环境变量，帮助debug
-  console.log('环境变量列表:', {
-    VITE_REACT_APP_DEV_API_URL: import.meta.env.VITE_REACT_APP_DEV_API_URL,
-    VITE_REACT_APP_API_URL: import.meta.env.VITE_REACT_APP_API_URL,
-    VITE_REACT_APP_USE_MOCK: import.meta.env.VITE_REACT_APP_USE_MOCK,
-    NODE_ENV: import.meta.env.MODE,
-    DEV: import.meta.env.DEV,
-    PROD: import.meta.env.PROD
-  });
-
-  const isProduction = import.meta.env.PROD;
-  // 使用环境变量或配置文件中设置的API URL，如果没有则使用默认值
-  const baseURL = isProduction 
-    ? import.meta.env.VITE_REACT_APP_API_URL || '/api'
-    : import.meta.env.VITE_REACT_APP_DEV_API_URL || 'http://localhost:9000/api';
-  
-  console.log(`当前环境: ${isProduction ? 'production' : 'development'}, API基础URL: ${baseURL}`);
-  return baseURL;
+  // 使用相对路径，让Vite代理处理
+  return '/api';
 };
 
 /**
@@ -81,39 +65,40 @@ api.interceptors.response.use(
     
     console.log(`API响应: [${status}]`, data);
     
-    // 处理两种可能的响应格式:
-    // 1. { code, data, message, timestamp } 标准格式
-    // 2. 直接返回数据
-    
-    if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
-      // 标准响应格式
+    // 处理标准响应格式 { code, data, message, timestamp }
+    if (data && typeof data === 'object' && 'code' in data) {
       const apiResponse = data as IApiResponse<unknown>;
       
+      console.log(`API业务状态码: ${apiResponse.code}, 消息: ${apiResponse.message}`);
+      
       // 处理业务逻辑错误
-      if (apiResponse.code !== 200) {
+      if (apiResponse.code !== 200 && apiResponse.code !== 201) {
         console.error(`业务错误: [${apiResponse.code}] ${apiResponse.message}`);
         return Promise.reject(new Error(apiResponse.message));
       }
       
-      return apiResponse.data;
+      // 返回原始axios响应，保持一致性
+      return response;
     }
     
-    // 直接返回数据
-    return data;
+    // 直接返回原始axios响应
+    return response;
   },
   error => {
     if (error.response) {
       // 服务器返回错误状态码
-      console.error(`API错误: [${error.response.status}]`, error.response.data);
+      const errorMessage = error.response.data?.message || '请求失败';
+      console.error(`API错误: [${error.response.status}] ${errorMessage}`);
+      return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
       // 请求发送但未收到响应
-      console.error('API错误: 无响应', error.request);
+      console.error('API错误: 服务器无响应');
+      return Promise.reject(new Error('服务器无响应'));
     } else {
       // 请求配置错误
       console.error('API错误:', error.message);
+      return Promise.reject(error);
     }
-    
-    return Promise.reject(error);
   }
 );
 
