@@ -5,9 +5,10 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "start": "node dist/app.js",
-    "dev": "tsc && node dist/app.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "dev:api": "node src/dev.js",
+    "dev:api:debug": "node --trace-warnings src/dev.js",
     "build": "tsc",
     "lint": "eslint src --ext ts",
     "format": "prettier --write \"src/**/*.ts\"",

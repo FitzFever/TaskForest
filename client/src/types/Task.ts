@@ -105,16 +105,21 @@ export interface UpdateTaskRequest {
  * 任务列表响应接口
  */
 export interface TaskListResponse {
-  code: number;
-  data: {
-    tasks: Task[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-      pages: number;
-    };
+  tasks: Task[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
   };
+}
+
+/**
+ * API响应接口
+ */
+export interface ApiResponse<T> {
+  code: number;
+  data: T;
   message: string;
   timestamp: number;
 }

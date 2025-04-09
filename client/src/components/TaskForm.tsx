@@ -155,6 +155,18 @@ const TaskForm: React.FC<TaskFormProps> = ({
       </Form.Item>
 
       <Form.Item
+        name="tags"
+        label="标签"
+      >
+        <Select
+          mode="tags"
+          style={{ width: '100%' }}
+          placeholder="请输入标签，按回车确认"
+          tokenSeparators={[',']}
+        />
+      </Form.Item>
+
+      <Form.Item
         name="treeType"
         label="树木类型"
         rules={[{ required: true, message: '请选择树木类型' }]}

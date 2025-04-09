@@ -28,4 +28,42 @@
 
 .tagContainer {
   margin: 8px 0;
+}
+
+/* 新增样式 */
+.filterCard {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #fafafa;
+}
+
+.clickableTag {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.clickableTag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.taskDescription {
+  margin: 10px 0;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 16px;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 16px;
 } 
