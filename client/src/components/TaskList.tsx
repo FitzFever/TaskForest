@@ -1,7 +1,13 @@
-import React, { useEffect } from 'react';
-import { List, Card, Tag, Button, Typography, Space, Spin, Empty } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { List, Card, Tag, Button, Typography, Space, Spin, Empty, Modal, message } from 'antd';
 import { useTaskStore } from '../store';
-import { TaskStatus, TaskPriority } from '../types/Task';
+import { TaskStatus, TaskPriority, Task, CreateTaskData } from '../types/Task';
+import * as taskService from '../services/taskService';
+import TaskForm from './TaskForm';
+import { PlusOutlined, EditOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import styles from './TaskList.module.css';
+import { TreeType } from '../types/Tree';
+import taskAdapter from '../adapters/taskAdapter';
 
 const { Title, Text } = Typography;
 
@@ -18,9 +24,14 @@ const statusColors = {
   [TaskStatus.TODO]: 'default',
   [TaskStatus.IN_PROGRESS]: 'processing',
   [TaskStatus.COMPLETED]: 'success',
+  'CANCELLED': 'error', // 使用字符串而不是枚举值
 };
 
 const TaskList: React.FC = () => {
+  // Modal状态
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
   // 从store获取状态和方法
   const { 
     tasks,
@@ -33,55 +44,22 @@ const TaskList: React.FC = () => {
     setTasks,
   } = useTaskStore();
 
-  // 模拟从API获取任务数据
+  // 从API获取任务数据
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
         
-        // 这里应该是实际的API调用
-        // const response = await taskService.getTasks();
-        // setTasks(response.data);
+        // 调用API获取任务列表
+        const response = await taskService.getAllTasks();
+        // 将后端任务数据映射为前端格式
+        const frontendTasks = (response.tasks || []).map(taskAdapter.apiTaskToFrontendTask);
+        setTasks(frontendTasks);
         
-        // 模拟数据
-        setTimeout(() => {
-          setTasks([
-            {
-              id: 1,
-              title: '完成TaskForest项目设计',
-              description: '设计TaskForest项目的UI和业务逻辑',
-              priority: TaskPriority.HIGH,
-              status: TaskStatus.IN_PROGRESS,
-              completed: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 2,
-              title: '实现树木生长动画',
-              description: '为完成的任务添加树木生长动画效果',
-              priority: TaskPriority.MEDIUM,
-              status: TaskStatus.TODO,
-              completed: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            {
-              id: 3,
-              title: '编写API文档',
-              description: '为TaskForest项目编写详细的API文档',
-              priority: TaskPriority.LOW,
-              status: TaskStatus.COMPLETED,
-              completed: true,
-              completedAt: new Date().toISOString(),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
+        setLoading(false);
       } catch (err) {
         setError('获取任务列表失败');
+        console.error('获取任务列表失败', err);
         setLoading(false);
       }
     };
@@ -90,8 +68,88 @@ const TaskList: React.FC = () => {
   }, [setLoading, setError, setTasks]);
 
   // 处理任务点击
-  const handleTaskClick = (task) => {
+  const handleTaskClick = (task: Task) => {
     selectTask(task);
+  };
+
+  // 处理任务删除
+  const handleDeleteTask = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止冒泡，避免触发卡片点击
+    
+    try {
+      setLoading(true);
+      await taskService.deleteTask(id.toString()); // 转换为字符串ID
+      // 从本地状态中移除被删除的任务
+      setTasks(tasks.filter(task => task.id !== id));
+      setLoading(false);
+    } catch (err) {
+      setError('删除任务失败');
+      console.error('删除任务失败', err);
+      setLoading(false);
+    }
+  };
+
+  // 处理完成任务
+  const handleCompleteTask = async (id: number) => {
+    try {
+      await taskService.completeTask(id.toString());
+      // 更新本地任务状态
+      setTasks(tasks.map(task => 
+        task.id === id 
+          ? { ...task, status: TaskStatus.COMPLETED, completed: true, completedAt: new Date().toISOString() } 
+          : task
+      ));
+      message.success('任务完成！');
+    } catch (error) {
+      console.error('完成任务失败:', error);
+      message.error('完成任务失败');
+    }
+  };
+
+  // 处理编辑任务
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+  };
+
+  // 处理创建任务按钮点击
+  const handleCreateTask = () => {
+    setShowCreateForm(true);
+  };
+
+  // 处理任务创建成功
+  const handleTaskSuccess = (task: Task) => {
+    console.log('任务创建成功，更新列表:', task);
+    // 手动获取最新任务列表
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        
+        // 调用API获取任务列表
+        const response = await taskService.getAllTasks();
+        // 将后端任务数据映射为前端格式
+        const frontendTasks = (response.tasks || []).map(taskAdapter.apiTaskToFrontendTask);
+        setTasks(frontendTasks);
+        
+        setLoading(false);
+      } catch (err) {
+        setError('获取任务列表失败');
+        console.error('获取任务列表失败', err);
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+    setShowCreateForm(false);
+    message.success('任务创建成功！');
+  };
+
+  // 处理任务更新成功
+  const handleTaskEditSuccess = (updatedTask: Task) => {
+    setTasks(tasks.map(task => 
+      task.id === updatedTask.id ? updatedTask : task
+    ));
+    setEditingTask(null);
+    message.success('任务更新成功！');
   };
 
   // 显示加载中
@@ -120,70 +178,110 @@ const TaskList: React.FC = () => {
     );
   }
 
-  // 显示空列表
-  if (tasks.length === 0) {
-    return (
-      <div style={{ padding: '20px' }}>
-        <Title level={3}>我的任务</Title>
-        <Empty 
-          description="暂无任务，点击下方按钮创建任务" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <Button type="primary">创建任务</Button>
-        </div>
-      </div>
-    );
-  }
-
   // 渲染任务列表
   return (
-    <div style={{ padding: '20px' }}>
-      <Title level={3}>我的任务</Title>
-
-      <List
-        grid={{ gutter: 16, column: 3 }}
-        dataSource={tasks}
-        renderItem={(task) => (
-          <List.Item>
-            <Card 
-              title={task.title}
-              hoverable
-              onClick={() => handleTaskClick(task)}
-              style={{ 
-                borderLeft: `3px solid ${priorityColors[task.priority]}`,
-                backgroundColor: selectedTask?.id === task.id ? '#f0f7ff' : 'white'
-              }}
-              extra={
-                <Space>
-                  <Tag color={statusColors[task.status]}>
-                    {task.status}
-                  </Tag>
+    <div className={styles.taskList}>
+      <div className={styles.header}>
+        <Title level={4}>任务列表</Title>
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />} 
+          onClick={handleCreateTask}
+        >
+          新建任务
+        </Button>
+      </div>
+      
+      {tasks.length === 0 ? (
+        <Empty description="暂无任务" />
+      ) : (
+        <List
+          grid={{ gutter: 16, column: 3 }}
+          dataSource={tasks}
+          renderItem={task => (
+            <List.Item>
+              <Card 
+                title={task.title}
+                onClick={() => handleTaskClick(task)}
+                extra={
+                  <Space>
+                    <Button 
+                      type="text" 
+                      size="small" 
+                      icon={<EditOutlined />} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditTask(task);
+                      }}
+                    />
+                    <Button 
+                      type="text" 
+                      size="small" 
+                      danger 
+                      icon={<DeleteOutlined />} 
+                      onClick={(e) => handleDeleteTask(task.id, e)}
+                    />
+                  </Space>
+                }
+              >
+                <p>{task.description || '无描述'}</p>
+                <div>
                   <Tag color={priorityColors[task.priority]}>
                     {task.priority}
                   </Tag>
-                </Space>
-              }
-            >
-              <p>{task.description || '暂无描述'}</p>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                marginTop: '10px' 
-              }}>
-                <Text type="secondary">
-                  创建于: {new Date(task.createdAt).toLocaleDateString()}
-                </Text>
-                {task.completedAt && (
-                  <Text type="success">
-                    完成于: {new Date(task.completedAt).toLocaleDateString()}
-                  </Text>
-                )}
-              </div>
-            </Card>
-          </List.Item>
-        )}
-      />
+                  <Tag color={statusColors[task.status]}>
+                    {task.status}
+                  </Tag>
+                  {task.deadline && <Tag>截止: {task.deadline}</Tag>}
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  {task.status !== TaskStatus.COMPLETED && (
+                    <Button 
+                      type="primary" 
+                      size="small" 
+                      icon={<CheckOutlined />} 
+                      onClick={() => handleCompleteTask(task.id)}
+                    >
+                      完成
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </List.Item>
+          )}
+        />
+      )}
+      
+      {/* 创建任务表单 */}
+      <Modal
+        title="创建新任务"
+        open={showCreateForm}
+        footer={null}
+        onCancel={() => setShowCreateForm(false)}
+      >
+        <TaskForm 
+          type="create"
+          onSuccess={handleTaskSuccess}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </Modal>
+      
+      {/* 编辑任务表单 */}
+      {editingTask && (
+        <Modal
+          title="编辑任务"
+          open={!!editingTask}
+          footer={null}
+          onCancel={() => setEditingTask(null)}
+        >
+          <TaskForm 
+            type="edit"
+            initialValues={editingTask}
+            onSuccess={handleTaskEditSuccess}
+            onCancel={() => setEditingTask(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

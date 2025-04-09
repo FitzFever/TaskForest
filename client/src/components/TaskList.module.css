@@ -1,0 +1,31 @@
+.taskList {
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.taskCard {
+  margin-bottom: 16px;
+  transition: all 0.3s;
+}
+
+.taskCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.taskActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.tagContainer {
+  margin: 8px 0;
+} 
