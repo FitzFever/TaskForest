@@ -10,6 +10,11 @@ import {
   deleteTree, 
   growTree 
 } from '../controllers/treeController.js';
+import {
+  getTreeHealth,
+  updateTreeHealth,
+  batchUpdateTreesHealth
+} from '../controllers/treeHealthController.js';
 
 const router = Router();
 
@@ -30,5 +35,16 @@ router.delete('/:id', deleteTree);
 
 // 树木生长
 router.post('/:id/grow', growTree);
+
+// 树木健康状态相关路由
+
+// 获取树木健康状态
+router.get('/:id/health', getTreeHealth);
+
+// 更新树木健康状态
+router.put('/:id/health', updateTreeHealth);
+
+// 批量更新所有树木健康状态
+router.post('/health/batch-update', batchUpdateTreesHealth);
 
 export default router; 
