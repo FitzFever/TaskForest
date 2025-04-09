@@ -62,6 +62,7 @@ export interface Task {
   tags?: string[];
   treeType?: TreeType;
   growthStage?: number;
+  progress?: number;
   categoryId?: number;
   category?: {
     id: number;

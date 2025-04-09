@@ -12,7 +12,7 @@ import {
   ApartmentOutlined,
   AimOutlined
 } from '@ant-design/icons';
-import { Task, TaskStatus, TaskPriority } from '../types/task';
+import { Task, TaskStatus, TaskPriority } from '../types/Task';
 import * as taskService from '../services/taskService';
 import * as treeService from '../services/treeService';
 import TreeHealthPanel from './TreeHealthPanel';
@@ -76,7 +76,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [task, setTask] = useState<Task | null>(null);
-  const [treeId, setTreeId] = useState<string | null>(null);
+  const [treeId, setTreeId] = useState<string | undefined>(undefined);
   
   // 获取任务详情
   useEffect(() => {
@@ -86,8 +86,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
       // 获取任务详情
       taskService.getTask(taskId)
         .then(response => {
-          if (response && response.code === 200) {
-            setTask(response.data);
+          if (response && response.data.code === 200) {
+            setTask(response.data.data);
             
             // 获取关联的树木ID
             treeService.getTreeByTaskId(taskId)
@@ -119,7 +119,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
     if (task) {
       setTask({
         ...task,
-        progress
+        progress // Task接口已添加progress属性
       });
     }
     
@@ -132,7 +132,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   // 重置组件状态
   const handleClose = () => {
     setTask(null);
-    setTreeId(null);
+    setTreeId(undefined);
     onClose();
   };
 

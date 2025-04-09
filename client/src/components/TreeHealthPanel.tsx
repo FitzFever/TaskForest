@@ -2,7 +2,7 @@
  * 树木健康状态显示面板组件
  */
 import React, { useEffect, useState } from 'react';
-import { Card, Progress, Tag, Tooltip, Statistic, Divider, Alert, Button, Typography, Slider } from 'antd';
+import { Card, Progress, Tag, Tooltip, Statistic, Divider, Alert, Button, Typography, Slider, List } from 'antd';
 import { 
   HeartOutlined, 
   ClockCircleOutlined, 
@@ -10,7 +10,10 @@ import {
   UpCircleOutlined, 
   DownCircleOutlined, 
   MinusCircleOutlined, 
-  AlertOutlined 
+  AlertOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { TreeHealthDetails, TaskTreeHealth, HealthTrend, HealthCategory } from '../services/treeHealthService';
 import * as treeHealthService from '../services/treeHealthService';
@@ -295,41 +298,55 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
             )}
           </div>
         )}
-        
-        {/* 进度更新控件 */}
-        {(taskId || (treeHealth?.task?.id && onProgressUpdate)) && (
-          <div style={{ marginTop: 24 }}>
-            <Divider orientation="left">更新进度</Divider>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Progress
-                type="circle"
-                percent={updateProgress || 0}
-                size={80}
-                style={{ marginRight: 16 }}
-              />
-              <div style={{ flex: 1 }}>
-                <Slider
-                  value={updateProgress || 0}
-                  onChange={(value) => setUpdateProgress(value)}
-                  min={0}
-                  max={100}
-                  step={1}
-                />
-                <Button 
-                  type="primary" 
-                  onClick={handleProgressUpdate} 
-                  loading={loading}
-                  disabled={updateProgress === null || 
-                    (taskHealth && updateProgress === taskHealth.progress) ||
-                    (treeHealth?.task && updateProgress === treeHealth.task.progress)}
-                  style={{ marginTop: 8 }}
-                >
-                  更新进度
-                </Button>
+      </div>
+    );
+  };
+
+  // 渲染不同健康状态的具体效果
+  const renderHealthEffects = () => {
+    if (!treeHealth && !taskHealth) return null;
+    
+    // 确定显示的健康状态数据
+    const healthCategory = treeHealth?.healthCategory || (taskHealth?.tree.healthCategory || HealthCategory.HEALTHY);
+    
+    const effectsList = {
+      [HealthCategory.HEALTHY]: [
+        { icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />, effect: '枝繁叶茂，生机勃勃' },
+        { icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />, effect: '树木生长旺盛，叶片翠绿' },
+        { icon: <InfoCircleOutlined style={{ color: '#1890ff' }} />, effect: '任务进度正常，距离截止日期充足' }
+      ],
+      [HealthCategory.SLIGHTLY_WILTED]: [
+        { icon: <InfoCircleOutlined style={{ color: '#faad14' }} />, effect: '部分叶片发黄，生长减缓' },
+        { icon: <WarningOutlined style={{ color: '#faad14' }} />, effect: '树木活力下降，但仍有生机' },
+        { icon: <WarningOutlined style={{ color: '#faad14' }} />, effect: '任务进度落后，需要关注' }
+      ],
+      [HealthCategory.MODERATELY_WILTED]: [
+        { icon: <WarningOutlined style={{ color: '#fa8c16' }} />, effect: '大量叶片发黄，枝干干枯' },
+        { icon: <WarningOutlined style={{ color: '#fa8c16' }} />, effect: '树木明显缺乏活力，生长停滞' },
+        { icon: <AlertOutlined style={{ color: '#fa8c16' }} />, effect: '任务严重延期，接近截止日期' }
+      ],
+      [HealthCategory.SEVERELY_WILTED]: [
+        { icon: <AlertOutlined style={{ color: '#f5222d' }} />, effect: '叶片脱落，枝干干裂' },
+        { icon: <AlertOutlined style={{ color: '#f5222d' }} />, effect: '树木濒临死亡，急需抢救' },
+        { icon: <AlertOutlined style={{ color: '#f5222d' }} />, effect: '任务严重超期，需要立即处理' }
+      ]
+    };
+    
+    return (
+      <div style={{ marginTop: 16 }}>
+        <Divider orientation="left">健康状态效果</Divider>
+        <List
+          size="small"
+          dataSource={effectsList[healthCategory] || []}
+          renderItem={item => (
+            <List.Item>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {item.icon}
+                <span style={{ marginLeft: 8 }}>{item.effect}</span>
               </div>
-            </div>
-          </div>
-        )}
+            </List.Item>
+          )}
+        />
       </div>
     );
   };
@@ -339,7 +356,43 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
       {error ? (
         <Alert message={error} type="error" />
       ) : (
-        renderTreeHealthInfo()
+        <>
+          {renderTreeHealthInfo()}
+          {renderHealthEffects()}
+          {(taskId || (treeHealth?.task?.id && onProgressUpdate)) && (
+            <div style={{ marginTop: 24 }}>
+              <Divider orientation="left">更新进度</Divider>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Progress
+                  type="circle"
+                  percent={updateProgress || 0}
+                  size={80}
+                  style={{ marginRight: 16 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <Slider
+                    value={updateProgress || 0}
+                    onChange={(value) => setUpdateProgress(value)}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                  <Button 
+                    type="primary" 
+                    onClick={handleProgressUpdate} 
+                    loading={loading}
+                    disabled={updateProgress === null || 
+                      (taskHealth && updateProgress === taskHealth.progress) ||
+                      (treeHealth?.task && updateProgress === treeHealth.task.progress)}
+                    style={{ marginTop: 8 }}
+                  >
+                    更新进度
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </Card>
   );
