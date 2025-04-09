@@ -198,4 +198,164 @@ model Tree {
 
 ## 贡献
 
-请参阅[贡献指南](../docs/development/contributing.md)了解如何为后端项目做出贡献。 
+请参阅[贡献指南](../docs/development/contributing.md)了解如何为后端项目做出贡献。
+
+# TaskForest 后端服务
+
+TaskForest 后端服务提供了任务管理的 REST API，支持任务的 CRUD 操作、任务状态管理、任务统计和树木数据管理等功能。
+
+## 技术栈
+
+- **Node.js**: 运行环境
+- **Express**: Web 框架
+- **MongoDB** (计划中): 数据库
+- **SQLite** (当前开发阶段): 轻量级数据库
+- **JSON Server** (当前开发阶段): 模拟 REST API
+- **TypeScript**: 类型安全
+- **Jest**: 单元测试
+- **Swagger**: API 文档
+
+## 项目结构
+
+```
+server/
+├── src/                 # 源代码目录
+│   ├── config/          # 配置文件
+│   ├── controllers/     # 控制器
+│   ├── middlewares/     # 中间件
+│   ├── models/          # 数据模型
+│   ├── routes/          # 路由定义
+│   ├── services/        # 业务逻辑层
+│   ├── types/           # TypeScript 类型
+│   ├── utils/           # 工具函数
+│   ├── app.ts           # 应用入口
+│   ├── server.ts        # 服务器启动
+│   └── dev.js           # 开发模式服务器
+├── tests/               # 测试目录
+├── .eslintrc.js         # ESLint 配置
+├── .prettierrc          # Prettier 配置
+├── tsconfig.json        # TypeScript 配置
+├── jest.config.js       # Jest 配置
+└── package.json         # 项目依赖
+```
+
+## 开发进度
+
+### 已完成功能 ✅
+
+- 基础项目设置与配置
+- 开发服务器设置（JSON Server）
+- 任务管理 API（CRUD 操作）
+- 任务状态管理 API
+- 任务查询与筛选接口
+- 任务分页与排序
+- 基础错误处理
+- CORS 配置
+- 任务统计 API
+- 树木数据关联 API
+
+### 进行中 🔄
+
+- 真实数据库集成 (40%)
+- API 文档生成 (30%)
+- 单元测试覆盖 (20%)
+- 健康检查与监控 (50%)
+- 性能优化 (10%)
+- 安全增强 (15%)
+
+### 待实现 ⬜
+
+- 用户认证与授权
+- 数据备份与恢复
+- 日志系统
+- 高级查询优化
+- WebSocket 实时通知
+- 定时任务
+- 部署脚本
+
+## API 端点
+
+### 任务相关
+
+- `GET /api/tasks`: 获取任务列表
+- `GET /api/tasks/:id`: 获取单个任务详情
+- `POST /api/tasks`: 创建新任务
+- `PUT /api/tasks/:id`: 更新任务
+- `PATCH /api/tasks/:id/status`: 更新任务状态
+- `PATCH /api/tasks/:id/complete`: 完成任务
+- `DELETE /api/tasks/:id`: 删除任务
+
+### 统计相关
+
+- `GET /api/stats`: 获取任务统计信息
+
+### 树木相关
+
+- `GET /api/trees`: 获取树木列表
+- `GET /api/trees/:id`: 获取单个树木详情
+- `GET /api/tasks/:id/tree`: 获取任务关联的树木
+
+## 快速开始
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 开发模式
+
+```bash
+npm run dev
+```
+
+### 构建项目
+
+```bash
+npm run build
+```
+
+### 运行测试
+
+```bash
+npm test
+```
+
+## 环境变量
+
+开发前需要设置以下环境变量：
+
+```
+PORT=9000                 # 服务运行端口
+NODE_ENV=development      # 环境 (development, production, test)
+DB_CONNECTION=            # 数据库连接字符串 (未来使用)
+JWT_SECRET=               # JWT 密钥 (未来使用)
+```
+
+## 调试与测试
+
+### API 测试
+
+可以使用 Postman 或 curl 进行 API 测试：
+
+```bash
+# 获取所有任务
+curl http://localhost:9000/api/tasks
+
+# 创建新任务
+curl -X POST http://localhost:9000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"新任务","description":"任务描述","status":"TODO","priority":"MEDIUM"}'
+```
+
+### 数据库调试
+
+在开发阶段，我们使用 JSON Server 模拟数据库。数据文件位于 `server/data/db.json`。
+
+## 贡献指南
+
+1. 确保遵循项目的代码风格和 TypeScript 类型定义
+2. 提交前运行代码检查和单元测试
+3. 遵循 RESTful API 设计原则
+4. 编写必要的 API 文档和测试用例
+5. 提交 PR 前先与相关团队成员讨论设计决策 
