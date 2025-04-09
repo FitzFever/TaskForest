@@ -389,6 +389,158 @@ pnpm dev
   - 环境信息
   - 相关截图或录屏
 
+## 11. API交互及错误处理规范
+
+### 11.1 状态码处理
+
+- 前端拦截器必须同时接受多种成功状态码（如200、201）：
+  ```typescript
+  // ✅ 推荐：兼容多种成功状态码
+  if (apiResponse.code !== 200 && apiResponse.code !== 201) {
+    return Promise.reject(new Error(apiResponse.message));
+  }
+  
+  // ❌ 避免：仅检查单一状态码
+  if (apiResponse.code !== 200) {
+    return Promise.reject(new Error(apiResponse.message));
+  }
+  ```
+
+### 11.2 响应数据解析
+
+- 总是验证响应数据结构的完整性：
+  ```typescript
+  // ✅ 推荐：验证完整响应路径
+  if (response && response.data && response.data.code === 200) {
+    setTasks(response.data.data.tasks);
+  } else {
+    throw new Error('获取任务列表失败');
+  }
+  ```
+
+- 使用可选链操作符处理嵌套数据：
+  ```typescript
+  const tasks = response?.data?.data?.tasks || [];
+  ```
+
+### 11.3 错误处理最佳实践
+
+#### 11.3.1 日志记录
+
+- 在API拦截器中记录详细日志：
+  ```typescript
+  // 记录HTTP状态和业务状态码
+  console.log(`API响应: [${status}]`, data);
+  console.log(`API业务状态码: ${apiResponse.code}, 消息: ${apiResponse.message}`);
+  ```
+
+- 错误信息应包含足够上下文：
+  ```typescript
+  console.error('创建任务失败:', error);
+  console.error(`业务错误: [${apiResponse.code}] ${apiResponse.message}`);
+  ```
+
+#### 11.3.2 统一错误处理
+
+- 捕获异常时提供用户友好的提示：
+  ```typescript
+  try {
+    // 操作代码
+  } catch (error: any) {
+    console.error('操作失败:', error);
+    const errorMessage = error.response?.data?.message || error.message || '操作失败，请重试';
+    message.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+  ```
+
+#### 11.3.3 前端防御性编程
+
+- 调用API前进行预检：
+  ```typescript
+  // 确保必要参数存在
+  if (!taskId) {
+    console.error('任务ID未提供');
+    message.error('无法完成操作：任务ID未提供');
+    return;
+  }
+  
+  // 防范无效输入
+  const validatedData = validateTaskData(taskData);
+  if (!validatedData) {
+    message.error('任务数据无效');
+    return;
+  }
+  ```
+
+### 11.4 API调试方法
+
+#### 11.4.1 接口测试
+
+- 使用curl命令行验证接口:
+  ```bash
+  # 带参数的GET请求
+  curl -s 'http://localhost:9000/api/tasks?page=1&limit=10'
+  
+  # POST请求
+  curl -s -X POST -H "Content-Type: application/json" \
+    -d '{"title":"测试任务","description":"测试"}' \
+    http://localhost:9000/api/tasks
+  
+  # PATCH请求
+  curl -s -X PATCH http://localhost:9000/api/tasks/1001/complete
+  ```
+
+#### 11.4.2 问题定位流程
+
+1. 先检查网络请求（查看Network面板或日志）
+2. 验证请求参数是否符合API期望
+3. 检查响应数据格式是否与前端解析逻辑一致
+4. 检查API拦截器的错误处理逻辑
+5. 对比API文档与实际实现的差异
+
+### 11.5 前后端一致性维护
+
+#### 11.5.1 API文档同步
+
+- 修改后端API时，立即更新API文档
+- 前端实现应严格遵循API文档规范
+- 发现不一致时，应及时沟通并修正
+
+#### 11.5.2 接口变更处理
+
+- 版本化API端点，避免破坏性变更
+- 使用特性标志控制新旧接口切换
+- 保持向后兼容性，渐进式弃用旧接口
+
+### 11.6 典型问题排查清单
+
+- [ ] 检查API响应状态码是否为预期（201 vs 200）
+- [ ] 确认响应数据结构与前端解析逻辑匹配
+- [ ] 验证请求参数格式（尤其是日期和枚举值）
+- [ ] 检查API拦截器是否正确处理成功/失败情况
+- [ ] 确认错误处理逻辑完整且用户友好
+- [ ] 验证HTTP方法是否正确（GET, POST, PATCH, PUT, DELETE）
+
+### 11.7 实际案例总结
+
+在TaskForest项目中，我们遇到了以下典型问题及其解决方案：
+
+1. **不同状态码处理**：API创建任务返回201，但拦截器只接受200，导致明明成功但前端报错
+   - **解决**：修改API拦截器同时接受200和201
+
+2. **请求方法不匹配**：API完成任务使用PATCH，但前端发送POST请求
+   - **解决**：根据API文档修正前端请求方法
+
+3. **响应数据路径解析错误**：前端直接使用`response.tasks`而非`response.data.data.tasks`
+   - **解决**：根据实际响应结构调整数据访问路径
+
+4. **错误处理不完善**：缺少对API响应的验证逻辑
+   - **解决**：添加完整的响应验证和错误处理
+
+记住，大多数API交互问题可以通过详细日志、对照API文档和实际HTTP交互内容来快速定位和解决。
+
 ## 总结
 
 遵循本文档中的规范和最佳实践，将帮助团队创建高质量、可维护的代码库，提高开发效率，减少技术债务，确保TaskForest项目的长期成功。
