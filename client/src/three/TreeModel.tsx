@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
+import { ThreeEvent } from '@react-three/fiber';
 import { TreeType } from '../types/Tree';
 import { modelLoader } from './ModelLoader';
+import { HealthCategory } from '../services/treeHealthService';
+import { applyHealthTransitionEffect, applyGrowthStageEffect, HealthTransitionType } from './TreeAnimations';
 
 // TreeModel组件的props定义
 export interface TreeModelProps {
@@ -13,6 +16,7 @@ export interface TreeModelProps {
   scale?: [number, number, number];
   onClick?: (event: any) => void;
   isHighlighted?: boolean;
+  healthState?: number; // 新增：树木健康值 (0-100)
 }
 
 /**
@@ -26,7 +30,8 @@ export const TreeModel: React.FC<TreeModelProps> = ({
   rotation = [0, 0, 0],
   scale = [1, 1, 1],
   onClick,
-  isHighlighted = false
+  isHighlighted = false,
+  healthState = 100 // 默认健康值为100
 }) => {
   // 引用模型组
   const groupRef = useRef<THREE.Group>(null);
@@ -36,6 +41,13 @@ export const TreeModel: React.FC<TreeModelProps> = ({
   // 动画状态
   const [isSwaying, setIsSwaying] = useState(true);
   const [isRotating, setIsRotating] = useState(false);
+  
+  // 记录上一次的健康状态和生长阶段，用于动画效果
+  const prevHealthState = useRef<number>(healthState);
+  const prevGrowthStage = useRef<number>(growthStage);
+  
+  // 获取场景对象，用于粒子效果
+  const { scene } = useThree();
   
   // 计算缩放比例，根据生长阶段调整
   const treeScale = scale.map(s => s * (0.4 + growthStage * 0.15)) as [number, number, number];
@@ -64,6 +76,9 @@ export const TreeModel: React.FC<TreeModelProps> = ({
             });
           }
           
+          // 根据健康状态调整模型颜色
+          updateModelHealth(modelCopy, healthState);
+          
           setModel(modelCopy);
         } else {
           throw new Error('模型加载失败');
@@ -77,71 +92,184 @@ export const TreeModel: React.FC<TreeModelProps> = ({
     };
     
     loadModel();
-  }, [type, growthStage]);
-
-  // 处理点击事件
-  const handleClick = (event: any) => {
-    if (onClick) {
-      if (event.stopPropagation) {
-        event.stopPropagation(); // 防止事件冒泡
+  }, [type, growthStage, healthState]);
+  
+  // 检查并应用健康状态或生长阶段变化的动画效果
+  useEffect(() => {
+    // 确保模型已加载且能获取场景
+    if (!model || loading) return;
+    
+    // 检查健康状态变化
+    if (prevHealthState.current !== healthState) {
+      // 确定状态变化类型
+      let transitionType: HealthTransitionType;
+      if (healthState > prevHealthState.current) {
+        transitionType = HealthTransitionType.RECOVERY;
+      } else if (healthState < 50 && prevHealthState.current >= 50) {
+        transitionType = HealthTransitionType.CRITICAL;
+      } else {
+        transitionType = HealthTransitionType.DECLINE;
       }
-      onClick(event);
       
-      // 点击时切换旋转状态
-      setIsRotating(!isRotating);
+      // 应用健康状态变化动画
+      applyHealthTransitionEffect(
+        model,
+        scene,
+        prevHealthState.current,
+        healthState,
+        transitionType
+      );
+      
+      // 更新上一次健康状态
+      prevHealthState.current = healthState;
+    }
+    
+    // 检查生长阶段变化
+    if (prevGrowthStage.current !== growthStage) {
+      // 应用生长阶段变化动画
+      applyGrowthStageEffect(
+        model,
+        scene,
+        prevGrowthStage.current,
+        growthStage
+      );
+      
+      // 更新上一次生长阶段
+      prevGrowthStage.current = growthStage;
+    }
+  }, [model, loading, healthState, growthStage, scene]);
+  
+  // 更新模型健康状态
+  const updateModelHealth = (modelObject: THREE.Group, health: number) => {
+    const healthColor = getHealthColor(health);
+    
+    modelObject.traverse((object) => {
+      if ((object as THREE.Mesh).isMesh) {
+        const mesh = object as THREE.Mesh;
+        if (mesh.material) {
+          // 对叶子部分应用健康状态颜色
+          if (mesh.name.includes('leaf') || mesh.name.includes('leaves') || 
+              (mesh.name.includes('crown') && !mesh.name.includes('trunk'))) {
+            if (Array.isArray(mesh.material)) {
+              mesh.material.forEach(mat => {
+                if (mat instanceof THREE.MeshStandardMaterial) {
+                  // 保持原色并与健康状态色调混合
+                  const originalColor = new THREE.Color(mat.color);
+                  const targetColor = new THREE.Color(healthColor);
+                  // 混合原始颜色和健康状态颜色
+                  const mixFactor = health < 50 ? 0.7 : 0.3; // 健康状态较差时，颜色影响更明显
+                  mat.color.set(
+                    originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
+                    originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
+                    originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
+                  );
+                }
+              });
+            } else if (mesh.material instanceof THREE.MeshStandardMaterial) {
+              const originalColor = new THREE.Color(mesh.material.color);
+              const targetColor = new THREE.Color(healthColor);
+              // 混合原始颜色和健康状态颜色
+              const mixFactor = health < 50 ? 0.7 : 0.3; // 健康状态较差时，颜色影响更明显
+              mesh.material.color.set(
+                originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
+                originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
+                originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
+              );
+            }
+          }
+        }
+      }
+    });
+  };
+  
+  // 根据健康状态获取颜色
+  const getHealthColor = (health: number): string => {
+    if (health >= 75) return '#4CAF50'; // 健康 - 绿色
+    if (health >= 50) return '#CDDC39'; // 轻微枯萎 - 青柠色
+    if (health >= 25) return '#FFC107'; // 中度枯萎 - 琥珀色
+    return '#FF5722'; // 严重枯萎 - 深橙色
+  };
+  
+  // 获取树木颜色 - 考虑健康状态
+  const getTreeColor = (): string => {
+    let baseColor;
+    
+    // 根据树木类型确定基础颜色
+    switch (type) {
+      case TreeType.OAK:
+        baseColor = '#618833';
+        break;
+      case TreeType.PINE:
+        baseColor = '#2D5824';
+        break;
+      case TreeType.CHERRY:
+        baseColor = '#E5A0A0';
+        break;
+      case TreeType.MAPLE:
+        baseColor = '#C74A28';
+        break;
+      default:
+        baseColor = '#4CAF50';
+    }
+    
+    // 如果健康状态不佳，调整颜色
+    if (healthState < 75) {
+      const healthColor = getHealthColor(healthState);
+      const originalColor = new THREE.Color(baseColor);
+      const targetColor = new THREE.Color(healthColor);
+      const mixFactor = healthState < 50 ? 0.6 : 0.3;
+      
+      const mixedColor = new THREE.Color(
+        originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
+        originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
+        originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
+      );
+      
+      return '#' + mixedColor.getHexString();
+    }
+    
+    return baseColor;
+  };
+  
+  // 获取树干颜色
+  const getTrunkColor = (): string => {
+    return '#8B4513'; // 棕色树干
+  };
+  
+  // 处理树木点击事件
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    if (onClick) {
+      onClick(event);
     }
   };
-
-  // 使用useFrame实现树木摇摆效果
+  
+  // 树木摇摆动画
   useFrame((_, delta) => {
-    if (!groupRef.current) return;
-    
-    // 自然摇摆效果
-    if (isSwaying) {
-      const time = Date.now() * 0.001;
-      const swayAmount = 0.005; // 摇摆幅度
+    if (groupRef.current && isSwaying) {
+      const speed = 0.5; // 摇摆速度
+      const now = Date.now() / 1000;
       
-      groupRef.current.rotation.x = Math.sin(time * 0.5) * swayAmount;
-      groupRef.current.rotation.z = Math.cos(time * 0.7) * swayAmount;
-    }
-    
-    // 点击后的旋转效果
-    if (isRotating) {
-      groupRef.current.rotation.y += delta * 2;
+      // 轻微不规则摇摆
+      const swayX = Math.sin(now * speed) * 0.01;
+      const swayZ = Math.cos(now * speed * 0.7) * 0.01;
+      
+      groupRef.current.rotation.x = rotation[0] + swayX;
+      groupRef.current.rotation.z = rotation[2] + swayZ;
+      
+      // 高亮效果
+      if (isHighlighted && groupRef.current.scale.x <= treeScale[0] * 1.1) {
+        groupRef.current.scale.multiplyScalar(1 + delta * 0.5);
+      } else if (!isHighlighted && groupRef.current.scale.x > treeScale[0]) {
+        groupRef.current.scale.multiplyScalar(1 - delta * 0.5);
+      }
+      
+      // 旋转动画
+      if (isRotating) {
+        groupRef.current.rotation.y += delta * 0.5;
+      }
     }
   });
-
-  // 根据树木类型获取材质颜色
-  const getTreeColor = (): string => {
-    if (isHighlighted) {
-      return '#ffff99'; // 高亮颜色
-    }
-    
-    switch (type) {
-      case TreeType.OAK:
-        return '#2e7d32'; // 深绿色
-      case TreeType.PINE:
-        return '#1b5e20'; // 松树绿
-      case TreeType.MAPLE:
-        return '#4caf50'; // 枫树绿
-      default:
-        return '#81c784'; // 默认浅绿色
-    }
-  };
-
-  // 树干颜色
-  const getTrunkColor = (): string => {
-    switch (type) {
-      case TreeType.OAK:
-        return '#5d4037'; // 橡树褐色
-      case TreeType.PINE:
-        return '#3e2723'; // 松树暗褐色
-      case TreeType.MAPLE:
-        return '#4e342e'; // 枫树红褐色
-      default:
-        return '#6d4c41'; // 默认褐色
-    }
-  };
 
   // 创建默认树木模型（加载失败时使用）
   const createFallbackTree = () => {
@@ -184,6 +312,18 @@ export const TreeModel: React.FC<TreeModelProps> = ({
             })}
           </>
         )}
+        
+        {/* 健康状态较差时的视觉效果 */}
+        {healthState < 50 && (
+          <mesh position={[0, height + crownRadius, 0]}>
+            <sphereGeometry args={[crownRadius * 1.1, 8, 8]} />
+            <meshStandardMaterial 
+              color={getHealthColor(healthState)} 
+              transparent={true} 
+              opacity={0.3} 
+            />
+          </mesh>
+        )}
       </>
     );
   };
@@ -208,6 +348,14 @@ export const TreeModel: React.FC<TreeModelProps> = ({
       ) : (
         // 显示加载的模型
         <primitive object={model} />
+      )}
+      
+      {/* 添加健康状态指示器 */}
+      {healthState < 75 && !loading && (
+        <mesh position={[0, 2, 0]}>
+          <sphereGeometry args={[0.2, 8, 8]} />
+          <meshStandardMaterial color={getHealthColor(healthState)} />
+        </mesh>
       )}
     </group>
   );

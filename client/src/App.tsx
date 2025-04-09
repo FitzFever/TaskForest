@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { Layout, Menu, Button, Spin } from 'antd';
-import { HomeOutlined, AppstoreOutlined, SettingOutlined } from '@ant-design/icons';
+import { HomeOutlined, AppstoreOutlined, SettingOutlined, ExperimentOutlined } from '@ant-design/icons';
 
 // 页面组件
 const Home = React.lazy(() => import('./pages/Home'));
 const Forest = React.lazy(() => import('./pages/Forest'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const TreeHealthSimulator = React.lazy(() => import('./components/TreeHealthSimulator'));
 
 const { Header, Content, Footer } = Layout;
 
@@ -44,6 +45,7 @@ const App: React.FC = () => {
           items={[
             { key: 'home', icon: <HomeOutlined />, label: <Link to="/">任务</Link> },
             { key: 'forest', icon: <AppstoreOutlined />, label: <Link to="/forest">森林</Link> },
+            { key: 'simulator', icon: <ExperimentOutlined />, label: <Link to="/tree-simulator">树木模拟器</Link> },
             { key: 'settings', icon: <SettingOutlined />, label: <Link to="/settings">设置</Link> },
           ]}
         />
@@ -54,6 +56,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/forest" element={<Forest />} />
+            <Route path="/tree-simulator" element={<TreeHealthSimulator />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </React.Suspense>

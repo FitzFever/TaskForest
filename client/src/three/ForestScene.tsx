@@ -15,6 +15,7 @@ export interface TreeData {
   rotation?: [number, number, number];
   scale?: [number, number, number];
   isHighlighted?: boolean;
+  healthState?: number; // 新增：树木健康值
 }
 
 // 森林场景属性接口
@@ -24,6 +25,7 @@ export interface ForestSceneProps {
   width?: string;
   height?: string;
   selectedTreeId?: number | string;
+  showHealthIndicators?: boolean; // 是否显示健康状态指示器
 }
 
 // 地面组件
@@ -119,7 +121,8 @@ const ForestScene: React.FC<ForestSceneProps> = ({
   onTreeClick,
   width = '100%',
   height = '500px',
-  selectedTreeId
+  selectedTreeId,
+  showHealthIndicators = true
 }) => {
   // 预加载常用树木模型
   useEffect(() => {
@@ -176,12 +179,45 @@ const ForestScene: React.FC<ForestSceneProps> = ({
             scale={tree.scale}
             onClick={handleTreeClick(tree.id)}
             isHighlighted={selectedTreeId === tree.id}
+            healthState={tree.healthState || 100} // 默认100表示完全健康
           />
         ))}
         
         {/* 环境贴图 */}
         <Environment preset="sunset" />
       </Canvas>
+      
+      {/* 健康状态信息图例，条件渲染 */}
+      {showHealthIndicators && (
+        <div style={{
+          position: 'absolute',
+          bottom: 10,
+          left: 10,
+          background: 'rgba(255,255,255,0.7)',
+          padding: '5px 10px',
+          borderRadius: 4,
+          fontSize: '12px',
+          display: 'flex',
+          gap: 10
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ display: 'inline-block', width: 12, height: 12, background: '#4CAF50', marginRight: 5, borderRadius: '50%' }}></span>
+            健康
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ display: 'inline-block', width: 12, height: 12, background: '#CDDC39', marginRight: 5, borderRadius: '50%' }}></span>
+            轻微枯萎
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ display: 'inline-block', width: 12, height: 12, background: '#FFC107', marginRight: 5, borderRadius: '50%' }}></span>
+            中度枯萎
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ display: 'inline-block', width: 12, height: 12, background: '#FF5722', marginRight: 5, borderRadius: '50%' }}></span>
+            严重枯萎
+          </div>
+        </div>
+      )}
     </div>
   );
 };
