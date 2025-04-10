@@ -15,7 +15,8 @@ export interface TreeData {
   rotation?: [number, number, number];
   scale?: [number, number, number];
   isHighlighted?: boolean;
-  healthState?: number; // 新增：树木健康值
+  healthState?: number; // 树木健康值
+  taskId?: string; // 关联的任务ID
 }
 
 // 森林场景属性接口

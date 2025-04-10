@@ -8,7 +8,9 @@ import {
   createTree, 
   updateTree, 
   deleteTree, 
-  growTree 
+  growTree,
+  bindTaskToTree,
+  unbindTaskFromTree
 } from '../controllers/treeController.js';
 import {
   getTreeHealth,
@@ -35,6 +37,12 @@ router.delete('/:id', deleteTree);
 
 // 树木生长
 router.post('/:id/grow', growTree);
+
+// 绑定树木到任务
+router.post('/:id/bind-task/:taskId', bindTaskToTree);
+
+// 解绑树木与任务
+router.post('/:id/unbind-task', unbindTaskFromTree);
 
 // 树木健康状态相关路由
 

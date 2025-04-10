@@ -1,13 +1,16 @@
-import React from 'react';
-import { Table, Tag, Space, Button, Tooltip } from 'antd';
+import React, { useState } from 'react';
+import { Table, Tag, Space, Button, Tooltip, Drawer, Progress } from 'antd';
 import { 
   CheckCircleOutlined, 
   DeleteOutlined, 
   EditOutlined,
   ClockCircleOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  HeartOutlined
 } from '@ant-design/icons';
-import { TaskStatus, TaskPriority } from '@/types/task';
+import { TaskStatus, TaskPriority } from '../../../../types/Task';
+import TreeHealthPanel from '../../../../components/TreeHealthPanel';
+import { getHealthColor, getHealthCategoryName } from '../../../../utils/healthUtils';
 import styles from './styles.module.css';
 
 interface TaskListProps {
@@ -25,6 +28,27 @@ const TaskList: React.FC<TaskListProps> = ({
   onComplete,
   onDelete
 }) => {
+  // 新增：用于控制健康面板抽屉
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [healthPanelVisible, setHealthPanelVisible] = useState(false);
+
+  // 显示健康面板
+  const showHealthPanel = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setHealthPanelVisible(true);
+  };
+
+  // 关闭健康面板
+  const closeHealthPanel = () => {
+    setHealthPanelVisible(false);
+  };
+
+  // 处理任务进度更新
+  const handleProgressUpdate = (taskId: string, progress: number) => {
+    console.log(`任务${taskId}进度更新为${progress}%`);
+    // 此处可添加更新任务列表的逻辑
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case TaskStatus.TODO:
@@ -108,7 +132,7 @@ const TaskList: React.FC<TaskListProps> = ({
       key: 'tags',
       render: (tags: string[]) => (
         <Space size={[0, 8]} wrap>
-          {tags.map((tag) => (
+          {tags && tags.map((tag) => (
             <Tag key={tag}>{tag}</Tag>
           ))}
         </Space>
@@ -119,8 +143,43 @@ const TaskList: React.FC<TaskListProps> = ({
       key: 'treeStatus',
       render: (_: any, record: any) => (
         <div className={styles.treeStatus}>
-          <span>类型: {record.treeType}</span>
-          <span>阶段: {record.growthStage}/4</span>
+          <div style={{ marginBottom: 4 }}>
+            <Space>
+              <span>类型: {record.treeType || '橡树'}</span>
+              <span>阶段: {record.growthStage || 0}/4</span>
+            </Space>
+          </div>
+
+          {/* 添加健康状态栏 */}
+          {record.healthState !== undefined && (
+            <div className={styles.healthStatus}>
+              <Tooltip title={`健康状态: ${record.healthState || 100}%`}>
+                <Progress 
+                  percent={record.healthState || 100} 
+                  size="small" 
+                  showInfo={false}
+                  strokeColor={getHealthColor(record.healthState || 100)}
+                  style={{ marginRight: 10, width: 80 }}
+                />
+              </Tooltip>
+              
+              <Space>
+                {record.healthCategory && (
+                  <Tag color={getHealthColor(record.healthState || 100)}>
+                    {getHealthCategoryName(record.healthCategory)}
+                  </Tag>
+                )}
+                <Button 
+                  type="link" 
+                  size="small" 
+                  icon={<HeartOutlined />} 
+                  onClick={() => showHealthPanel(record.id)}
+                >
+                  查看详情
+                </Button>
+              </Space>
+            </div>
+          )}
         </div>
       ),
     },
@@ -164,6 +223,22 @@ const TaskList: React.FC<TaskListProps> = ({
           showTotal: (total) => `共 ${total} 个任务`
         }}
       />
+
+      {/* 添加健康状态面板抽屉 */}
+      <Drawer
+        title="树木健康状态详情"
+        placement="right"
+        onClose={closeHealthPanel}
+        visible={healthPanelVisible}
+        width={350}
+      >
+        {selectedTaskId && (
+          <TreeHealthPanel
+            taskId={selectedTaskId}
+            onProgressUpdate={handleProgressUpdate}
+          />
+        )}
+      </Drawer>
     </div>
   );
 };

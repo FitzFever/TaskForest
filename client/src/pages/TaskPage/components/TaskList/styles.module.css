@@ -22,4 +22,10 @@
 .treeStatus span {
   color: #666;
   font-size: 12px;
+}
+
+.healthStatus {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
 } 

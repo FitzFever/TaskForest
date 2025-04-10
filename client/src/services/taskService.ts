@@ -56,104 +56,73 @@ export interface GetTasksParams {
 
 /**
  * 获取任务列表
+ * @param params 查询参数
+ * @returns 任务列表响应
  */
-export const getTasks = async (params?: GetTasksParams): Promise<AxiosResponse<ApiResponse<TaskListResponse>>> => {
-  console.group('TaskService.getTasks');
+export const getTasks = async (params?: GetTasksParams): Promise<any> => {
   try {
+    console.log('开始请求任务列表:', params);
+    
     // 构建查询参数
-    const queryParams: Record<string, any> = {};
-    console.log('原始参数:', params);
+    const queryParams = new URLSearchParams();
     
     if (params) {
-      if (params.search) {
-        // 确保搜索参数正确编码
-        queryParams.search = encodeURIComponent(params.search);
-        console.log('编码后的搜索参数:', queryParams.search);
-      }
-      if (params.status) {
-        queryParams.status = params.status;
-      }
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.status) queryParams.append('status', params.status);
+      if (params.priority) queryParams.append('priority', params.priority.toString());
+      if (params.search) queryParams.append('search', params.search);
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      
+      // 处理标签过滤
       if (params.tags && params.tags.length > 0) {
-        // 确保标签正确编码
-        console.log('处理标签参数（原始）:', params.tags);
-        
-        // 直接使用逗号分隔的字符串，符合API文档规范
-        const encodedTags = params.tags.map(tag => {
-          // 检查是否已经有tag:前缀
-          if (tag.startsWith('tag:')) {
-            // 保留tag:前缀，但编码其后的值
-            const prefix = 'tag:';
-            const value = tag.substring(4);
-            console.log(`  - 特殊标签 [${tag}] -> 前缀:${prefix}, 值:${value}`);
-            // 使用encodeURIComponent确保中文和特殊字符正确编码
-            const result = `${prefix}${encodeURIComponent(value)}`;
-            console.log(`  - 编码后 -> ${result}`);
-            return result;
-          }
-          // 普通标签直接编码
-          console.log(`  - 普通标签 [${tag}]`);
-          // 使用encodeURIComponent确保中文和特殊字符正确编码
-          const result = encodeURIComponent(tag);
-          console.log(`  - 编码后 -> ${result}`);
-          return result;
+        params.tags.forEach(tag => {
+          queryParams.append('tags', tag);
         });
-        
-        // 使用逗号拼接多个标签，符合API格式要求
-        queryParams.tags = encodedTags.join(',');
-        console.log('最终构建的标签参数:', queryParams.tags);
-      }
-      if (params.priority) {
-        queryParams.priority = params.priority;
-      }
-      if (params.startDate) {
-        queryParams.startDate = params.startDate;
-      }
-      if (params.endDate) {
-        queryParams.endDate = params.endDate;
-      }
-      if (params.treeType) {
-        queryParams.treeType = params.treeType;
-      }
-      if (params.sortBy) {
-        queryParams.sortBy = params.sortBy;
-      }
-      if (params.sortOrder) {
-        queryParams.sortOrder = params.sortOrder;
-      }
-      if (params.page) {
-        queryParams.page = params.page;
-      }
-      if (params.limit) {
-        queryParams.limit = params.limit;
       }
     }
     
-    // 构建完整请求URL以便调试
-    const url = '/tasks';
-    const fullRequestUrl = `${api.defaults.baseURL}${url}?${new URLSearchParams(queryParams).toString()}`;
-    console.log('完整请求URL:', fullRequestUrl);
-    console.log('控制台测试命令:', `curl -s '${fullRequestUrl}' | cat`);
+    // 构建请求URL
+    const url = `/tasks${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    console.log('请求URL:', url);
     
-    // 发送请求，附带查询参数
-    const response = await api.get(url, { params: queryParams });
-    console.log('API响应:', response.data);
-    return response;
+    const response = await api.get(url);
+    console.log('获取任务列表响应:', response);
+    
+    // 校验响应格式
+    if (response.data && response.data.data) {
+      console.log('有效任务数据:', response.data.data);
+      return response;
+    } else {
+      console.error('无效的任务数据结构:', response);
+      throw new Error('任务数据格式不正确');
+    }
   } catch (error) {
     console.error('获取任务列表失败:', error);
     throw error;
-  } finally {
-    console.groupEnd();
   }
 };
 
 /**
- * 获取任务统计信息
- * @returns 任务统计数据
+ * 获取任务统计
+ * @returns 任务统计信息
  */
-export const getTaskStats = async (): Promise<AxiosResponse<ApiResponse<any>>> => {
+export const getTaskStats = async (): Promise<any> => {
   try {
+    console.log('开始请求任务统计数据');
+    
     const response = await api.get('/tasks/stats');
-    return response;
+    console.log('获取任务统计响应:', response);
+    
+    // 校验响应格式
+    if (response.data && response.data.data) {
+      console.log('有效任务统计数据:', response.data.data);
+      return response;
+    } else {
+      console.error('无效的任务统计数据结构:', response);
+      throw new Error('任务统计数据格式不正确');
+    }
   } catch (error) {
     console.error('获取任务统计失败:', error);
     throw error;
