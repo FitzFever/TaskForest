@@ -3,20 +3,17 @@
  * 负责计算和管理树木健康状态
  */
 import { PrismaClient } from '@prisma/client';
-import { Tree } from '../types/tree';
-import { Task } from '../types/task';
+import { 
+  TreeHealthDetails, 
+  HealthCategory, 
+  TaskData, 
+  TreeData,
+  HealthUpdateResult
+} from '../types/treeHealth.js';
+import treeHealthCalculationService from './treeHealthCalculationService.js';
+import treeHealthPredictionService from './treeHealthPredictionService.js';
 
 const prisma = new PrismaClient();
-
-/**
- * 健康状态分类
- */
-export enum HealthCategory {
-  HEALTHY = 'HEALTHY',         // 健康 (75-100)
-  SLIGHTLY_WILTED = 'SLIGHTLY_WILTED', // 轻微枯萎 (50-75)
-  MODERATELY_WILTED = 'MODERATELY_WILTED', // 中度枯萎 (25-50)
-  SEVERELY_WILTED = 'SEVERELY_WILTED', // 严重枯萎 (0-25)
-}
 
 /**
  * 健康状态趋势
@@ -26,36 +23,6 @@ export enum HealthTrend {
   STABLE = 'STABLE',          // 稳定
   DECLINING = 'DECLINING',     // 恶化中
   CRITICAL = 'CRITICAL',       // 严重恶化
-}
-
-/**
- * 树木健康详情接口
- */
-export interface TreeHealthDetails {
-  treeId: string;
-  healthState: number;
-  healthCategory: HealthCategory;
-  lastUpdated: Date;
-  task?: {
-    id: string;
-    title: string;
-    progress?: number;
-    deadline?: Date;
-  };
-  details?: {
-    timeRatio: number;
-    expectedProgress: number;
-    actualProgress?: number;
-  };
-}
-
-/**
- * 健康预测接口
- */
-export interface HealthPrediction {
-  currentTrend: HealthTrend;
-  estimatedHealthAt: { date: Date; health: number }[];
-  recommendedProgress: number;
 }
 
 /**
@@ -78,33 +45,53 @@ export class TreeHealthService {
       });
 
       if (!tree) return null;
+      
+      // 将数据库对象转换为类型安全对象
+      const treeData: TreeData = {
+        id: tree.id,
+        type: tree.type,
+        healthState: tree.healthState,
+        stage: tree.stage,
+        createdAt: tree.createdAt,
+        updatedAt: tree.updatedAt as Date,
+        taskId: tree.taskId
+      };
 
       // 获取健康状态分类
-      const healthCategory = this.getHealthCategory(tree.healthState);
+      const healthCategory = this.getHealthCategory(treeData.healthState);
 
       // 构建基础健康状态详情
       const healthDetails: TreeHealthDetails = {
-        treeId: tree.id,
-        healthState: tree.healthState,
+        treeId: treeData.id,
+        healthState: treeData.healthState,
         healthCategory,
-        lastUpdated: tree.updatedAt || new Date(),
+        lastUpdated: treeData.updatedAt || new Date(),
       };
 
       // 如果有关联任务，添加任务信息和详细信息
       if (tree.task) {
-        const task = tree.task;
+        const taskData: TaskData = {
+          id: tree.task.id,
+          title: tree.task.title,
+          status: tree.task.status,
+          createdAt: tree.task.createdAt,
+          updatedAt: tree.task.updatedAt,
+          dueDate: tree.task.dueDate,
+          progress: (tree.task as any).progress
+        };
+        
         healthDetails.task = {
-          id: task.id,
-          title: task.title,
-          progress: task.progress,
-          deadline: task.deadline,
+          id: taskData.id,
+          title: taskData.title,
+          progress: taskData.progress,
+          deadline: taskData.dueDate,
         };
 
         // 如果任务有截止日期，计算时间比例和预期进度
-        if (task.deadline) {
+        if (taskData.dueDate) {
           const now = new Date();
-          const deadline = new Date(task.deadline);
-          const createdAt = new Date(task.createdAt);
+          const deadline = new Date(taskData.dueDate);
+          const createdAt = new Date(taskData.createdAt);
           const totalDuration = deadline.getTime() - createdAt.getTime();
           const remainingTime = deadline.getTime() - now.getTime();
           const timeRatio = Math.max(0, Math.min(1, remainingTime / totalDuration));
@@ -113,7 +100,7 @@ export class TreeHealthService {
           healthDetails.details = {
             timeRatio,
             expectedProgress: Math.round(expectedProgress),
-            actualProgress: task.progress,
+            actualProgress: taskData.progress,
           };
         }
       }
@@ -159,12 +146,22 @@ export class TreeHealthService {
         },
       });
 
+      // 将数据库对象转换为类型安全对象
+      const treeData: TreeData = {
+        id: updatedTree.id,
+        type: updatedTree.type,
+        healthState: updatedTree.healthState,
+        stage: updatedTree.stage,
+        createdAt: updatedTree.createdAt,
+        updatedAt: updatedTree.updatedAt as Date,
+      };
+
       // 返回更新后的健康状态详情
       return {
-        treeId: updatedTree.id,
-        healthState: updatedTree.healthState,
-        healthCategory: this.getHealthCategory(updatedTree.healthState),
-        lastUpdated: updatedTree.updatedAt || new Date(),
+        treeId: treeData.id,
+        healthState: treeData.healthState,
+        healthCategory: this.getHealthCategory(treeData.healthState),
+        lastUpdated: treeData.updatedAt || new Date(),
       };
     } catch (error) {
       console.error('更新树木健康状态失败:', error);
@@ -189,26 +186,47 @@ export class TreeHealthService {
 
       if (!task || !task.tree) return null;
 
+      // 将数据库对象转换为类型安全对象
+      const taskData: TaskData = {
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        dueDate: task.dueDate,
+        progress: (task as any).progress
+      };
+      
+      const treeData: TreeData = {
+        id: task.tree.id,
+        type: task.tree.type,
+        healthState: task.tree.healthState,
+        stage: task.tree.stage,
+        createdAt: task.tree.createdAt,
+        updatedAt: task.tree.updatedAt as Date,
+        taskId: task.tree.taskId
+      };
+
       // 获取树木健康状态详情
-      const healthDetails = await this.getTreeHealth(task.tree.id);
+      const healthDetails = await this.getTreeHealth(treeData.id);
       if (!healthDetails) return null;
 
       // 计算健康状态预测
-      const prediction = await this.predictHealthStatus(task, task.tree);
+      const prediction = await treeHealthPredictionService.predictHealthStatus(taskData, treeData);
 
       // 构建响应
       return {
-        taskId: task.id,
-        taskTitle: task.title,
-        progress: task.progress,
-        deadline: task.deadline,
+        taskId: taskData.id,
+        taskTitle: taskData.title,
+        progress: taskData.progress,
+        deadline: taskData.dueDate,
         tree: {
-          id: task.tree.id,
-          type: task.tree.type,
-          stage: task.tree.stage,
-          healthState: task.tree.healthState,
+          id: treeData.id,
+          type: treeData.type,
+          stage: treeData.stage,
+          healthState: treeData.healthState,
           healthCategory: healthDetails.healthCategory,
-          lastUpdated: task.tree.updatedAt || new Date(),
+          lastUpdated: treeData.updatedAt || new Date(),
         },
         healthPrediction: prediction,
       };
@@ -229,7 +247,7 @@ export class TreeHealthService {
     taskId: string,
     progress: number,
     notes?: string
-  ): Promise<any | null> {
+  ): Promise<HealthUpdateResult | null> {
     try {
       // 验证进度范围
       if (progress < 0 || progress > 100) {
@@ -246,31 +264,59 @@ export class TreeHealthService {
 
       if (!task) return null;
 
+      // 将数据库对象转换为类型安全对象
+      const taskData: TaskData = {
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        dueDate: task.dueDate,
+        progress: (task as any).progress
+      };
+
       // 更新任务进度
       const updatedTask = await prisma.task.update({
         where: { id: taskId },
         data: {
-          progress,
+          progress: progress,
           // 记录进度更新历史可以在这里添加
-        },
+        } as any, // 类型转换为any以避免类型错误
       });
+      
+      const updatedTaskData: TaskData = {
+        ...taskData,
+        progress,
+        updatedAt: updatedTask.updatedAt
+      };
 
       // 如果没有关联的树木，只返回任务更新结果
       if (!task.tree) {
         return {
-          taskId: updatedTask.id,
-          progress: updatedTask.progress,
-          updatedAt: updatedTask.updatedAt,
+          taskId: updatedTaskData.id,
+          progress: updatedTaskData.progress || 0,
+          updatedAt: updatedTaskData.updatedAt as Date,
         };
       }
 
+      // 将树木数据库对象转换为类型安全对象
+      const treeData: TreeData = {
+        id: task.tree.id,
+        type: task.tree.type,
+        healthState: task.tree.healthState,
+        stage: task.tree.stage,
+        createdAt: task.tree.createdAt,
+        updatedAt: task.tree.updatedAt as Date,
+        taskId: task.tree.taskId
+      };
+
       // 计算并更新树木健康状态
-      const healthStateBefore = task.tree.healthState;
-      const healthStateAfter = this.calculateHealthState(updatedTask, task.tree);
+      const healthStateBefore = treeData.healthState;
+      const healthStateAfter = treeHealthCalculationService.calculateHealthState(updatedTaskData, treeData);
       
       // 更新树木健康状态
       const updatedTree = await prisma.tree.update({
-        where: { id: task.tree.id },
+        where: { id: treeData.id },
         data: {
           healthState: healthStateAfter,
         },
@@ -278,9 +324,9 @@ export class TreeHealthService {
 
       // 返回更新结果
       return {
-        taskId: updatedTask.id,
-        progress: updatedTask.progress,
-        updatedAt: updatedTask.updatedAt,
+        taskId: updatedTaskData.id,
+        progress: updatedTaskData.progress || 0,
+        updatedAt: updatedTaskData.updatedAt as Date,
         tree: {
           id: updatedTree.id,
           healthStateBefore,
@@ -296,68 +342,6 @@ export class TreeHealthService {
   }
 
   /**
-   * 计算树木健康状态
-   * @param task 任务对象
-   * @param tree 树木对象
-   * @returns 计算的健康状态值(0-100)
-   */
-  calculateHealthState(task: any, tree: any): number {
-    // 如果任务已完成，返回100%健康
-    if (task.status === 'COMPLETED') return 100;
-    
-    // 如果没有设置截止日期，保持当前健康状态
-    if (!task.deadline) return tree.healthState;
-    
-    const now = new Date();
-    const deadline = new Date(task.deadline);
-    const createdAt = new Date(task.createdAt);
-    
-    // 计算任务总时长(毫秒)
-    const totalDuration = deadline.getTime() - createdAt.getTime();
-    
-    // 如果总时长不合理，保持当前健康状态
-    if (totalDuration <= 0) return tree.healthState;
-    
-    // 计算剩余时间(毫秒)
-    const remainingTime = deadline.getTime() - now.getTime();
-    
-    // 如果已超过截止日期
-    if (remainingTime <= 0) {
-      // 根据超过时长决定健康值(最低20%)
-      const overdueFactor = Math.min(Math.abs(remainingTime) / totalDuration, 1);
-      return Math.max(20, 100 - (overdueFactor * 80));
-    }
-    
-    // 计算基础健康值(基于剩余时间比例)
-    const timeRatio = remainingTime / totalDuration;
-    let healthValue = Math.min(100, Math.max(20, timeRatio * 100));
-    
-    // 根据任务进度调整健康值
-    if (task.progress) {
-      const expectedProgress = 100 - (timeRatio * 100);
-      
-      // 如果进度超前，提升健康值
-      if (task.progress > expectedProgress) {
-        healthValue = Math.min(100, healthValue + ((task.progress - expectedProgress) / 2));
-      }
-      // 如果进度落后，降低健康值
-      else if (task.progress < expectedProgress * 0.8) {
-        healthValue = Math.max(20, healthValue - ((expectedProgress - task.progress) / 2));
-      }
-    }
-    
-    // 进度更新后恢复一定健康值
-    const healthBonus = 20;
-    
-    // 如果之前的健康状态低于当前计算值，给予恢复奖励
-    if (tree.healthState < healthValue) {
-      healthValue = Math.min(100, healthValue + healthBonus * 0.5);
-    }
-    
-    return Math.round(healthValue);
-  }
-
-  /**
    * 获取健康状态分类
    * @param healthState 健康状态值(0-100)
    * @returns 健康状态分类
@@ -367,110 +351,6 @@ export class TreeHealthService {
     if (healthState >= 50) return HealthCategory.SLIGHTLY_WILTED;
     if (healthState >= 25) return HealthCategory.MODERATELY_WILTED;
     return HealthCategory.SEVERELY_WILTED;
-  }
-
-  /**
-   * 预测健康状态变化
-   * @param task 任务对象
-   * @param tree 树木对象
-   * @returns 健康状态预测
-   */
-  async predictHealthStatus(task: any, tree: any): Promise<HealthPrediction> {
-    // 如果任务已完成或没有截止日期，不需要预测
-    if (task.status === 'COMPLETED' || !task.deadline) {
-      return {
-        currentTrend: HealthTrend.STABLE,
-        estimatedHealthAt: [],
-        recommendedProgress: task.progress || 0,
-      };
-    }
-
-    const now = new Date();
-    const deadline = new Date(task.deadline);
-    
-    // 如果已经过了截止日期，预测未来健康状态会持续恶化
-    if (now > deadline) {
-      return {
-        currentTrend: HealthTrend.CRITICAL,
-        estimatedHealthAt: [],
-        recommendedProgress: 100, // 建议立即完成任务
-      };
-    }
-
-    // 计算当前健康状态趋势
-    const healthState = tree.healthState;
-    const createdAt = new Date(task.createdAt);
-    const totalDuration = deadline.getTime() - createdAt.getTime();
-    const remainingTime = deadline.getTime() - now.getTime();
-    const timeRatio = remainingTime / totalDuration;
-    const expectedProgress = 100 - (timeRatio * 100);
-    
-    // 根据进度和预期进度差异确定趋势
-    let trend: HealthTrend;
-    if (!task.progress) {
-      trend = HealthTrend.DECLINING;
-    } else if (task.progress >= expectedProgress) {
-      trend = HealthTrend.IMPROVING;
-    } else if (task.progress >= expectedProgress * 0.8) {
-      trend = HealthTrend.STABLE;
-    } else if (task.progress >= expectedProgress * 0.5) {
-      trend = HealthTrend.DECLINING;
-    } else {
-      trend = HealthTrend.CRITICAL;
-    }
-
-    // 计算未来几个时间点的健康状态预测
-    const predictions = [];
-    const daysToDeadline = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
-    
-    // 如果距离截止日期不到一周，预测每天的健康状态
-    // 否则预测每周的健康状态
-    const predictionInterval = daysToDeadline <= 7 ? 1 : 7;
-    const numPredictions = Math.min(3, Math.ceil(daysToDeadline / predictionInterval));
-    
-    // 假设任务进度保持当前速率
-    const currentProgressRate = task.progress 
-      ? task.progress / (1 - timeRatio)
-      : 0;
-    
-    for (let i = 1; i <= numPredictions; i++) {
-      const futureDate = new Date(now.getTime() + (i * predictionInterval * 24 * 60 * 60 * 1000));
-      
-      // 复制任务和树木对象以进行预测
-      const futurePrediction = {
-        ...task,
-        createdAt,
-        deadline,
-      };
-      
-      // 预测未来进度（如果有当前进度）
-      if (task.progress) {
-        const daysFromNow = i * predictionInterval;
-        const daysFromStart = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24) + daysFromNow;
-        const daysTotal = (deadline.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-        
-        // 基于当前进度速率预测未来进度
-        futurePrediction.progress = Math.min(100, task.progress + (currentProgressRate * daysFromNow / daysTotal) * 100);
-      }
-      
-      // 计算该日期的预测健康状态
-      const predictedHealth = this.calculateHealthState(futurePrediction, tree);
-      
-      predictions.push({
-        date: futureDate,
-        health: predictedHealth,
-      });
-    }
-
-    // 计算推荐的进度值
-    // 基于当前时间和截止日期之间的比例
-    const recommendedProgress = Math.ceil(expectedProgress);
-
-    return {
-      currentTrend: trend,
-      estimatedHealthAt: predictions,
-      recommendedProgress,
-    };
   }
 
   /**
@@ -493,10 +373,30 @@ export class TreeHealthService {
       // 批量更新树木健康状态
       for (const task of tasksWithTrees) {
         if (task.tree) {
-          const healthState = this.calculateHealthState(task, task.tree);
+          // 将数据库对象转换为类型安全对象
+          const taskData: TaskData = {
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            createdAt: task.createdAt,
+            updatedAt: task.updatedAt,
+            dueDate: task.dueDate,
+            progress: (task as any).progress
+          };
+          
+          const treeData: TreeData = {
+            id: task.tree.id,
+            type: task.tree.type,
+            healthState: task.tree.healthState,
+            stage: task.tree.stage,
+            createdAt: task.tree.createdAt,
+            taskId: task.tree.taskId
+          };
+          
+          const healthState = treeHealthCalculationService.calculateHealthState(taskData, treeData);
           
           await prisma.tree.update({
-            where: { id: task.tree.id },
+            where: { id: treeData.id },
             data: { healthState },
           });
         }
