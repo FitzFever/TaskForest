@@ -5,7 +5,13 @@ import { ThreeEvent } from '@react-three/fiber';
 import { TreeType } from '../types/Tree';
 import { modelLoader } from './ModelLoader';
 import { HealthCategory } from '../services/treeHealthService';
-import { applyHealthTransitionEffect, applyGrowthStageEffect, HealthTransitionType } from './TreeAnimations';
+import { 
+  applyHealthTransitionEffect, 
+  applyGrowthStageEffect, 
+  HealthTransitionType,
+  applyHealthTransitionEffectAtPosition,
+  applyGrowthStageEffectAtPosition
+} from './TreeAnimations';
 
 // TreeModel组件的props定义
 export interface TreeModelProps {
@@ -51,6 +57,33 @@ const TreeModel: React.FC<TreeModelProps> = ({
   
   // 计算缩放比例，根据生长阶段调整
   const treeScale = scale.map(s => s * (0.8 + growthStage * 0.25)) as [number, number, number];
+
+  // 统一模型原点位置的函数，确保不同生长阶段模型的基准点一致
+  const normalizeModelPosition = (model: THREE.Group, modelId: string) => {
+    // 计算模型的包围盒
+    const boundingBox = new THREE.Box3().setFromObject(model);
+    const center = new THREE.Vector3();
+    boundingBox.getCenter(center);
+    const size = new THREE.Vector3();
+    boundingBox.getSize(size);
+    
+    console.log(`[TreeModel ${modelId}] 模型边界盒: 
+      中心=(${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}), 
+      尺寸=(${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`);
+    
+    // 重置位置到世界坐标原点
+    model.position.set(0, 0, 0);
+    
+    // 移动模型，使底部中心位于原点
+    // 保留x和z的中心位置，但将y轴调整为底部与地面接触
+    model.position.x = -center.x;
+    model.position.z = -center.z;
+    
+    // 设置y轴位置，使模型底部与地面接触
+    model.position.y = -boundingBox.min.y;
+    
+    console.log(`[TreeModel ${modelId}] 统一模型位置后: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})`);
+  };
 
   // 直接测试模型URL是否可访问
   useEffect(() => {
@@ -150,9 +183,8 @@ const TreeModel: React.FC<TreeModelProps> = ({
           // 根据健康状态调整模型颜色
           updateModelHealth(modelCopy, healthState);
           
-          // 确保模型位置正确
-          // 只设置y轴位置，避免影响x和z坐标
-          modelCopy.position.y = 0;
+          // 应用位置规范化
+          normalizeModelPosition(modelCopy, componentId);
           
           setModel(modelCopy);
         } else {
@@ -197,6 +229,10 @@ const TreeModel: React.FC<TreeModelProps> = ({
         const fallbackModel = createDetailedFallbackModel(type, growthStage, healthState);
         fallbackModel.name = `fallback-tree-${type}-${growthStage}`;
         console.log(`后备模型创建成功: ${fallbackModel.name}`);
+        
+        // 对后备模型也应用相同的位置标准化处理
+        normalizeModelPosition(fallbackModel, `fallback-${type}-${growthStage}`);
+        
         setModel(fallbackModel);
       } finally {
         setLoading(false);
@@ -206,10 +242,10 @@ const TreeModel: React.FC<TreeModelProps> = ({
     loadModel();
   }, [type, growthStage, healthState, position]);
   
-  // 检查并应用健康状态或生长阶段变化的动画效果
-  useEffect(() => {
-    // 确保模型已加载且能获取场景
-    if (!model || loading) return;
+  // 应用树木模型状态变化的粒子效果
+  const applyModelEffects = (effectPosition: THREE.Vector3, averageScale: number) => {
+    // 确保模型已加载
+    if (!model) return;
     
     // 检查健康状态变化
     if (prevHealthState.current !== healthState) {
@@ -223,13 +259,16 @@ const TreeModel: React.FC<TreeModelProps> = ({
         transitionType = HealthTransitionType.DECLINE;
       }
       
-      // 应用健康状态变化动画
-      applyHealthTransitionEffect(
+      // 使用固定效果位置，不依赖模型的世界位置
+      // 传递树木的缩放信息，用于调整粒子效果的大小和散布范围
+      applyHealthTransitionEffectAtPosition(
         model,
         scene,
+        effectPosition,
         prevHealthState.current,
         healthState,
-        transitionType
+        transitionType,
+        averageScale // 传递平均缩放值
       );
       
       // 更新上一次健康状态
@@ -238,18 +277,84 @@ const TreeModel: React.FC<TreeModelProps> = ({
     
     // 检查生长阶段变化
     if (prevGrowthStage.current !== growthStage) {
-      // 应用生长阶段变化动画
-      applyGrowthStageEffect(
+      // 使用固定效果位置，不依赖模型的世界位置
+      // 传递树木的缩放信息，用于调整粒子效果的大小和散布范围
+      applyGrowthStageEffectAtPosition(
         model,
         scene,
+        effectPosition,
         prevGrowthStage.current,
-        growthStage
+        growthStage,
+        averageScale // 传递平均缩放值
       );
       
       // 更新上一次生长阶段
       prevGrowthStage.current = growthStage;
     }
-  }, [model, loading, healthState, growthStage, scene]);
+  };
+
+  // 检查并应用健康状态或生长阶段变化的动画效果
+  useEffect(() => {
+    // 确保模型已加载且能获取场景
+    if (!model || loading) return;
+    
+    // 健康状态或生长阶段变化才执行
+    if (prevHealthState.current === healthState && prevGrowthStage.current === growthStage) return;
+    
+    // 计算合适的粒子效果位置 - 考虑树木高度、生长阶段和缩放
+    // 获取当前树木的平均缩放比例
+    const averageScale = (treeScale[0] + treeScale[1] + treeScale[2]) / 3;
+    const treeHeightOffset = (0.5 + (growthStage * 0.3)) * averageScale; // 根据生长阶段和缩放调整高度偏移
+    
+    const effectPosition = new THREE.Vector3(
+      position[0], 
+      position[1] + treeHeightOffset, // 向上偏移，考虑树木高度和缩放
+      position[2]
+    );
+    
+    // 记录当前位置用于调试
+    console.log(`[TreeModel] 准备应用动画效果，使用固定位置: (${effectPosition.x.toFixed(2)}, ${effectPosition.y.toFixed(2)}, ${effectPosition.z.toFixed(2)})`);
+    console.log(`[TreeModel] 树木基础位置: (${position[0].toFixed(2)}, ${position[1].toFixed(2)}, ${position[2].toFixed(2)})`);
+    console.log(`[TreeModel] 高度偏移: ${treeHeightOffset.toFixed(2)}, 平均缩放: ${averageScale.toFixed(2)}, 生长阶段: ${growthStage}`);
+    
+    // 使用提取出的方法应用效果
+    applyModelEffects(effectPosition, averageScale);
+    
+  }, [model, loading, healthState, growthStage, scene, position, treeScale]);
+  
+  // 使用useFrame确保在每一帧中检查树的位置是否发生变化
+  // 如果位置变化且需要应用效果，则在正确的位置应用效果
+  useFrame(() => {
+    // 安全检查：确保所有必要的对象都存在
+    if (!model || loading || !groupRef.current) return;
+    
+    // 如果既没有健康状态变化也没有生长阶段变化，则不处理
+    if (prevHealthState.current === healthState && prevGrowthStage.current === growthStage) return;
+    
+    // 计算合适的粒子效果位置
+    const averageScale = (treeScale[0] + treeScale[1] + treeScale[2]) / 3;
+    const treeHeightOffset = (0.5 + (growthStage * 0.3)) * averageScale;
+    
+    const expectedEffectPosition = new THREE.Vector3(
+      position[0],
+      position[1] + treeHeightOffset,
+      position[2]
+    );
+    
+    // 获取当前实际的世界位置
+    const worldPos = new THREE.Vector3();
+    groupRef.current.getWorldPosition(worldPos);
+    
+    // 如果实际位置与预期位置差异较大，重新应用效果
+    const positionDifference = worldPos.distanceTo(new THREE.Vector3(position[0], position[1], position[2]));
+    if (positionDifference > 0.1) { // 如果位置差异超过阈值
+      console.log(`[TreeModel] 检测到位置变化，重新应用效果。差异: ${positionDifference.toFixed(2)}`);
+      console.log(`[TreeModel] 世界位置: (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)}, ${worldPos.z.toFixed(2)})`);
+      
+      // 重新应用效果在正确的位置
+      applyModelEffects(expectedEffectPosition, averageScale);
+    }
+  });
   
   // 更新模型健康状态
   const updateModelHealth = (modelObject: THREE.Group, health: number) => {
@@ -650,8 +755,15 @@ const TreeModel: React.FC<TreeModelProps> = ({
       rotation={rotation}
       scale={treeScale}
       onClick={handleClick}
+      onPointerOver={() => {
+        setIsRotating(true);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setIsRotating(false);
+        document.body.style.cursor = 'auto';
+      }}
     >
-      {/* 显示加载状态的占位符 */}
       {loading && (
         <mesh position={[0, 0.5, 0]}>
           <boxGeometry args={[0.3, 1, 0.3]} />
@@ -659,27 +771,18 @@ const TreeModel: React.FC<TreeModelProps> = ({
         </mesh>
       )}
       
-      {/* 显示错误状态的占位符 */}
       {error && !model && (
         <mesh position={[0, 0.5, 0]}>
           <boxGeometry args={[0.3, 1, 0.3]} />
           <meshStandardMaterial color="#ff6666" />
-          <meshStandardMaterial color="#ff0000" wireframe />
         </mesh>
       )}
       
       {/* 渲染模型 */}
       {model && !loading && (
-        // 直接在这里渲染模型的克隆版本
         <primitive 
           object={model} 
-          // 对模型应用高亮效果
-          onPointerOver={() => {
-            document.body.style.cursor = 'pointer';
-          }}
-          onPointerOut={() => {
-            document.body.style.cursor = 'auto';
-          }}
+          dispose={null}
         />
       )}
       
