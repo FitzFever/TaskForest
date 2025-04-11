@@ -40,6 +40,9 @@ const api = axios.create({
   withCredentials: false // 跨域请求不发送cookies
 });
 
+// 导出API基础URL，以便在其他地方使用
+export const API_BASE_URL = getBaseUrl();
+
 /**
  * 模拟API响应
  * 用于在后端服务不可用时生成模拟数据

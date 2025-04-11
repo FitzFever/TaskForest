@@ -61,6 +61,7 @@ export interface TaskTreeHealth {
   taskTitle: string;
   progress: number;
   deadline?: string;
+  taskType?: string; // 任务类型
   tree: {
     id: string;
     type: string;

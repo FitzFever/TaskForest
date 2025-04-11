@@ -3,22 +3,32 @@
  * 显示任务详细信息和相关的树木健康状态
  */
 import React, { useEffect, useState } from 'react';
-import { Modal, Descriptions, Tag, Divider, Row, Col, Spin, Typography, message, Button } from 'antd';
+import { 
+  Modal, Descriptions, Tag, Divider, Row, Col, Spin, Typography, 
+  message, Button, Card, Space, Tooltip, Badge, Progress 
+} from 'antd';
 import { 
   CalendarOutlined, 
   ClockCircleOutlined,
   FlagOutlined,
   TagsOutlined,
   ApartmentOutlined,
-  AimOutlined
+  AimOutlined,
+  CheckOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { Task, TaskStatus, TaskPriority } from '../types/Task';
+import { Task, TaskStatus, TaskPriority, TaskType } from '../types/Task';
+import { TreeType } from '../types/Tree';
 import * as taskService from '../services/taskService';
 import * as treeService from '../services/treeService';
 import TreeHealthPanel from './TreeHealthPanel';
 import { TaskTreeHealth } from '../services/treeHealthService';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+const { confirm } = Modal;
 
 // 状态颜色映射
 const statusColors: Record<TaskStatus, string> = {
@@ -58,7 +68,63 @@ const treeTypeNames: Record<string, string> = {
   'PINE': '松树',
   'CHERRY': '樱花树',
   'MAPLE': '枫树',
-  'PALM': '棕榈树'
+  'PALM': '棕榈树',
+  'APPLE': '苹果树',
+  'WILLOW': '柳树'
+};
+
+// 任务类型显示标签
+const TaskTypeTag: React.FC<{ type: TaskType }> = ({ type }) => {
+  const tagColors: Record<TaskType, string> = {
+    [TaskType.NORMAL]: 'blue',
+    [TaskType.RECURRING]: 'green',
+    [TaskType.PROJECT]: 'purple',
+    [TaskType.LEARNING]: 'volcano',
+    [TaskType.WORK]: 'red',
+    [TaskType.LEISURE]: 'gold'
+  };
+
+  const typeNames: Record<TaskType, string> = {
+    [TaskType.NORMAL]: '普通日常任务',
+    [TaskType.RECURRING]: '定期重复任务',
+    [TaskType.PROJECT]: '长期项目任务',
+    [TaskType.LEARNING]: '学习类任务',
+    [TaskType.WORK]: '工作类任务',
+    [TaskType.LEISURE]: '休闲类任务'
+  };
+
+  return (
+    <Tag color={tagColors[type] || 'blue'}>
+      {typeNames[type] || type}
+    </Tag>
+  );
+};
+
+// 树木类型显示标签
+const TreeTypeTag: React.FC<{ type: TreeType }> = ({ type }) => {
+  const tagColors: Record<string, string> = {
+    [TreeType.OAK]: 'green',
+    [TreeType.PINE]: 'cyan',
+    [TreeType.MAPLE]: 'orange',
+    [TreeType.PALM]: 'lime',
+    [TreeType.APPLE]: 'red',
+    [TreeType.WILLOW]: 'purple'
+  };
+
+  const typeNames: Record<string, string> = {
+    [TreeType.OAK]: '橡树',
+    [TreeType.PINE]: '松树',
+    [TreeType.MAPLE]: '枫树',
+    [TreeType.PALM]: '棕榈树',
+    [TreeType.APPLE]: '苹果树',
+    [TreeType.WILLOW]: '柳树'
+  };
+
+  return (
+    <Tag color={tagColors[type] || 'green'}>
+      {typeNames[type] || type}
+    </Tag>
+  );
 };
 
 interface TaskDetailProps {
@@ -77,6 +143,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [task, setTask] = useState<Task | null>(null);
   const [treeId, setTreeId] = useState<string | undefined>(undefined);
+  const [treeInfo, setTreeInfo] = useState<any>(null);
+  const [treeLoading, setTreeLoading] = useState(false);
   
   // 获取任务详情
   useEffect(() => {
@@ -93,7 +161,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
             treeService.getTreeByTaskId(taskId)
               .then(treeResponse => {
                 if (treeResponse && treeResponse.id) {
-                  setTreeId(treeResponse.id);
+                  setTreeId(treeResponse.id.toString()); // 转为字符串
                 }
               })
               .catch(error => {
@@ -112,6 +180,27 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
         });
     }
   }, [taskId, visible]);
+
+  // 获取关联的树木信息
+  useEffect(() => {
+    const fetchTreeInfo = async () => {
+      if (task && task.id) {
+        setTreeLoading(true);
+        try {
+          const response = await treeService.getTreeByTask(task.id.toString());
+          if (response?.data?.data) {
+            setTreeInfo(response.data.data);
+          }
+        } catch (error) {
+          console.error('获取树木信息失败:', error);
+        } finally {
+          setTreeLoading(false);
+        }
+      }
+    };
+
+    fetchTreeInfo();
+  }, [task]);
 
   // 任务进度更新处理
   const handleProgressUpdate = (taskId: string, progress: number) => {
@@ -134,6 +223,133 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
     setTask(null);
     setTreeId(undefined);
     onClose();
+  };
+
+  // 完成任务确认
+  const showCompleteConfirm = () => {
+    confirm({
+      title: '完成任务',
+      icon: <CheckOutlined />,
+      content: '确认将任务标记为已完成吗？',
+      onOk: handleComplete,
+      okText: '确认',
+      cancelText: '取消',
+    });
+  };
+
+  // 删除任务确认
+  const showDeleteConfirm = () => {
+    confirm({
+      title: '删除任务',
+      icon: <ExclamationCircleOutlined />,
+      content: '确认要删除这个任务吗？此操作不可撤销。',
+      okType: 'danger',
+      onOk: handleDelete,
+      okText: '删除',
+      cancelText: '取消',
+    });
+  };
+
+  // 完成任务处理函数
+  const handleComplete = async () => {
+    try {
+      setLoading(true);
+      await taskService.completeTask(task!.id.toString());
+      message.success('任务已完成！');
+      
+      if (onTaskUpdate) {
+        onTaskUpdate(task!.id.toString());
+      }
+    } catch (error) {
+      console.error('完成任务失败:', error);
+      message.error('完成任务失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 删除任务处理函数
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      await taskService.deleteTask(task!.id.toString());
+      message.success('任务已删除');
+      
+      if (onTaskUpdate) {
+        onTaskUpdate(task!.id.toString());
+      }
+    } catch (error) {
+      console.error('删除任务失败:', error);
+      message.error('删除任务失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 格式化日期
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '未设置';
+    return dayjs(dateString).format('YYYY-MM-DD HH:mm');
+  };
+
+  // 计算剩余天数
+  const getRemainingDays = () => {
+    if (!task?.dueDate) return null;
+    
+    const dueDate = dayjs(task.dueDate);
+    const now = dayjs();
+    const days = dueDate.diff(now, 'day');
+    
+    if (days < 0) {
+      return <Text type="danger">已逾期 {Math.abs(days)} 天</Text>;
+    } else if (days === 0) {
+      return <Text type="warning">今天到期</Text>;
+    } else {
+      return <Text>剩余 {days} 天</Text>;
+    }
+  };
+
+  // 获取任务状态显示
+  const getStatusDisplay = () => {
+    if (!task || !task.status) return null;
+    
+    const statusMap: Record<TaskStatus, { text: string, status: 'success' | 'processing' | 'default' | 'error' | 'warning' }> = {
+      [TaskStatus.TODO]: { text: '待办', status: 'default' },
+      [TaskStatus.IN_PROGRESS]: { text: '进行中', status: 'processing' },
+      [TaskStatus.COMPLETED]: { text: '已完成', status: 'success' },
+      [TaskStatus.CANCELLED]: { text: '已取消', status: 'error' }
+    };
+    
+    const statusInfo = statusMap[task.status] || { text: String(task.status), status: 'default' };
+    return <Badge status={statusInfo.status} text={statusInfo.text} />;
+  };
+
+  // 根据树木类型获取颜色
+  const getTreeTypeColor = (treeType: TreeType): string => {
+    const colorMap: Record<TreeType, string> = {
+      [TreeType.OAK]: 'green',
+      [TreeType.PINE]: 'cyan',
+      [TreeType.MAPLE]: 'orange',
+      [TreeType.PALM]: 'lime',
+      [TreeType.APPLE]: 'red',
+      [TreeType.WILLOW]: 'purple'
+    };
+    
+    return colorMap[treeType] || 'blue';
+  };
+  
+  // 获取树木类型的名称
+  const getTreeTypeName = (treeType: TreeType): string => {
+    const nameMap: Record<TreeType, string> = {
+      [TreeType.OAK]: '橡树',
+      [TreeType.PINE]: '松树',
+      [TreeType.MAPLE]: '枫树',
+      [TreeType.PALM]: '棕榈树',
+      [TreeType.APPLE]: '苹果树',
+      [TreeType.WILLOW]: '柳树'
+    };
+    
+    return nameMap[treeType] || String(treeType);
   };
 
   return (
@@ -166,8 +382,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
                   优先级: {priorityNames[task.priority as TaskPriority]}
                 </Tag>
                 {task.treeType && (
-                  <Tag color="green">
-                    {treeTypeNames[task.treeType] || task.treeType}
+                  <Tag color={getTreeTypeColor(task.treeType as TreeType)}>
+                    {getTreeTypeName(task.treeType as TreeType)}
                   </Tag>
                 )}
               </Col>
@@ -181,7 +397,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
               </Descriptions.Item>
               {task.dueDate && (
                 <Descriptions.Item label={<><ClockCircleOutlined /> 截止日期</>}>
-                  {new Date(task.dueDate).toLocaleString()}
+                  <Space>
+                    <ClockCircleOutlined /> {formatDate(task.dueDate)}
+                    {getRemainingDays()}
+                  </Space>
                 </Descriptions.Item>
               )}
               {task.progress !== undefined && (
@@ -191,10 +410,36 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
               )}
               {task.type && (
                 <Descriptions.Item label={<><FlagOutlined /> 任务类型</>}>
-                  {task.type}
+                  <Space>
+                    <TaskTypeTag type={task.type} />
+                    {task.treeType && (
+                      <Tooltip title="该任务类型对应的树木">
+                        <span>→</span>
+                        <TreeTypeTag type={task.treeType as TreeType} />
+                      </Tooltip>
+                    )}
+                  </Space>
                 </Descriptions.Item>
               )}
             </Descriptions>
+            
+            {/* 显示任务类型与树木类型对应关系 */}
+            <Divider plain>任务类型与树木对应关系</Divider>
+            <Card size="small" style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <Text strong>当前任务类型：</Text>
+                  {task.type && <TaskTypeTag type={task.type} />}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <Text strong>对应树木：</Text>
+                  {task.treeType && <TreeTypeTag type={task.treeType as TreeType} />}
+                </div>
+              </div>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                不同任务类型会对应不同的树木种类，完成任务后树木将完全生长
+              </Text>
+            </Card>
             
             {task.description && (
               <>
@@ -224,11 +469,39 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
             <Divider orientation="left">
               <ApartmentOutlined /> 关联树木状态
             </Divider>
-            <TreeHealthPanel 
-              taskId={taskId}
-              treeId={treeId}
-              onProgressUpdate={handleProgressUpdate}
-            />
+            {treeLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <Spin />
+              </div>
+            ) : treeInfo ? (
+              <Card size="small">
+                <Descriptions size="small" bordered column={1}>
+                  <Descriptions.Item label="树木类型">
+                    <TreeTypeTag type={task.treeType as TreeType} />
+                  </Descriptions.Item>
+                  <Descriptions.Item label="生长阶段">
+                    {treeInfo.stage}/4
+                    <Progress percent={treeInfo.stage * 25} status="active" />
+                  </Descriptions.Item>
+                  <Descriptions.Item label="健康状态">
+                    <Progress 
+                      percent={treeInfo.healthState} 
+                      status={
+                        treeInfo.healthState > 75 ? 'success' : 
+                        treeInfo.healthState > 50 ? 'normal' : 'exception'
+                      }
+                      strokeColor={
+                        treeInfo.healthState > 75 ? '#52c41a' : 
+                        treeInfo.healthState > 50 ? '#1890ff' : 
+                        treeInfo.healthState > 25 ? '#faad14' : '#f5222d'
+                      }
+                    />
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            ) : (
+              <Text type="secondary">无关联树木</Text>
+            )}
           </Col>
         </Row>
       ) : (

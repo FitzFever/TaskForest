@@ -44,15 +44,15 @@ const TreeHealthSimulator: React.FC = () => {
     },
     {
       id: 3,
-      type: TreeType.CHERRY,
+      type: TreeType.MAPLE,
       growthStage: 3,
       position: [4, 0, -3],
       healthState: 55
     },
     {
       id: 4,
-      type: TreeType.MAPLE,
-      growthStage: 3,
+      type: TreeType.APPLE,
+      growthStage: 2,
       position: [-3, 0, 3],
       healthState: 30
     }
@@ -290,8 +290,10 @@ const TreeHealthSimulator: React.FC = () => {
                     >
                       <RadioButton value={TreeType.OAK}>橡树</RadioButton>
                       <RadioButton value={TreeType.PINE}>松树</RadioButton>
-                      <RadioButton value={TreeType.CHERRY}>樱花树</RadioButton>
                       <RadioButton value={TreeType.MAPLE}>枫树</RadioButton>
+                      <RadioButton value={TreeType.APPLE}>苹果树</RadioButton>
+                      <RadioButton value={TreeType.PALM}>棕榈树</RadioButton>
+                      <RadioButton value={TreeType.WILLOW}>柳树</RadioButton>
                     </RadioGroup>
                   </div>
                 </div>

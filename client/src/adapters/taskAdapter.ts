@@ -55,7 +55,7 @@ export const apiTaskToFrontendTask = (apiTask: ApiTask): Task => {
       treeType = TreeType.PINE;
       break;
     case 'CHERRY':
-      treeType = TreeType.CHERRY;
+      treeType = TreeType.APPLE;
       break;
     case 'MAPLE':
       treeType = TreeType.MAPLE;
@@ -267,7 +267,7 @@ export const createTaskDisplayObject = (apiTask: ApiTask) => {
       treeType = TreeType.PINE;
       break;
     case 'CHERRY':
-      treeType = TreeType.CHERRY;
+      treeType = TreeType.APPLE;
       break;
     case 'MAPLE':
       treeType = TreeType.MAPLE;

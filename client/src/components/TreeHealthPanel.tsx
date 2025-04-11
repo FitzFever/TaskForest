@@ -2,7 +2,7 @@
  * 树木健康状态显示面板组件
  */
 import React, { useEffect, useState } from 'react';
-import { Card, Progress, Tag, Tooltip, Statistic, Divider, Alert, Button, Typography, Slider, List, Empty, Spin } from 'antd';
+import { Card, Progress, Tag, Tooltip, Statistic, Divider, Alert, Button, Typography, Slider, List, Empty, Spin, message } from 'antd';
 import { 
   HeartOutlined, 
   ClockCircleOutlined, 
@@ -19,6 +19,8 @@ import {
 import { TreeHealthDetails, TaskTreeHealth, HealthTrend, HealthCategory } from '../services/treeHealthService';
 import * as treeHealthService from '../services/treeHealthService';
 import { getHealthColor, getHealthCategoryName } from '../utils/healthUtils';
+import { TreeType } from '../types/Tree';
+import { TaskType } from '../types/Task';
 
 const { Title, Text } = Typography;
 
@@ -27,6 +29,62 @@ interface TreeHealthPanelProps {
   taskId?: string;
   onProgressUpdate?: (taskId: string, progress: number) => void;
 }
+
+// 获取树木类型的颜色
+const getTreeTypeColor = (treeType: TreeType): string => {
+  const colorMap: Record<string, string> = {
+    [TreeType.OAK]: 'green',
+    [TreeType.PINE]: 'cyan',
+    [TreeType.MAPLE]: 'orange',
+    [TreeType.PALM]: 'lime',
+    [TreeType.APPLE]: 'red',
+    [TreeType.WILLOW]: 'blue'
+  };
+  
+  return colorMap[treeType] || 'green';
+};
+
+// 获取树木类型的名称
+const getTreeTypeName = (treeType: TreeType): string => {
+  const nameMap: Record<string, string> = {
+    [TreeType.OAK]: '橡树',
+    [TreeType.PINE]: '松树',
+    [TreeType.MAPLE]: '枫树',
+    [TreeType.PALM]: '棕榈树',
+    [TreeType.APPLE]: '苹果树',
+    [TreeType.WILLOW]: '柳树'
+  };
+  
+  return nameMap[treeType] || '未知树种';
+};
+
+// 获取任务类型的颜色
+const getTaskTypeColor = (taskType: string): string => {
+  const colorMap: Record<string, string> = {
+    [TaskType.NORMAL]: 'blue',
+    [TaskType.RECURRING]: 'green',
+    [TaskType.PROJECT]: 'purple',
+    [TaskType.LEARNING]: 'volcano',
+    [TaskType.WORK]: 'red',
+    [TaskType.LEISURE]: 'gold'
+  };
+  
+  return colorMap[taskType] || 'default';
+};
+
+// 获取任务类型的名称
+const getTaskTypeName = (taskType: string): string => {
+  const nameMap: Record<string, string> = {
+    [TaskType.NORMAL]: '普通日常任务',
+    [TaskType.RECURRING]: '定期重复任务',
+    [TaskType.PROJECT]: '长期项目任务',
+    [TaskType.LEARNING]: '学习类任务',
+    [TaskType.WORK]: '工作类任务',
+    [TaskType.LEISURE]: '休闲类任务'
+  };
+  
+  return nameMap[taskType] || taskType;
+};
 
 /**
  * 获取健康趋势名称和图标
@@ -163,58 +221,147 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
 
   // 处理进度更新
   const handleProgressUpdate = async () => {
-    if (!updateProgress) return;
-    
-    // 确定任务ID：如果直接有taskId就用，没有就从treeHealth中获取
-    const currentTaskId = taskId || treeHealth?.task?.id;
-    
-    if (!currentTaskId) {
-      setError('无法更新进度：未找到关联任务');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
+    if (!taskId || updateProgress === null) return;
     
     try {
-      console.log(`更新任务${currentTaskId}进度为${updateProgress}%`); // 调试日志
+      setLoading(true);
+      
+      console.log(`更新任务 ${taskId} 进度为 ${updateProgress}%`);
       
       // 更新任务进度
-      const result = await treeHealthService.updateTaskProgress(currentTaskId, updateProgress);
-      console.log('进度更新结果:', result); // 调试日志
+      await treeHealthService.updateTaskProgress(taskId, updateProgress);
       
-      // 更新本地数据
-      if (taskHealth) {
-        setTaskHealth({
-          ...taskHealth,
-          progress: result.progress,
-          tree: {
-            ...taskHealth.tree,
-            healthState: result.tree?.healthStateAfter || taskHealth.tree.healthState
-          }
-        });
-      } else if (treeHealth && treeHealth.task) {
-        // 更新treeHealth中的任务进度
-        setTreeHealth({
-          ...treeHealth,
-          healthState: result.tree?.healthStateAfter || treeHealth.healthState,
-          task: {
-            ...treeHealth.task,
-            progress: updateProgress
-          }
-        });
+      // 根据进度更新计算生长阶段
+      let newGrowthStage = 0;
+      if (updateProgress >= 100) {
+        newGrowthStage = 3; // 完成 - 成熟阶段
+      } else if (updateProgress >= 70) {
+        newGrowthStage = 2; // 进度超过70% - 生长阶段
+      } else if (updateProgress >= 30) {
+        newGrowthStage = 1; // 进度超过30% - 幼苗阶段
       }
       
-      // 调用父组件回调
+      // 通知父组件任务进度已更新
       if (onProgressUpdate) {
-        onProgressUpdate(currentTaskId, updateProgress);
+        onProgressUpdate(taskId, updateProgress);
       }
+      
+      // 重新获取健康状态数据
+      if (treeId) {
+        const healthData = await treeHealthService.getTreeHealth(treeId);
+        setTreeHealth(healthData);
+      } else if (taskId) {
+        const healthData = await treeHealthService.getTaskTreeHealth(taskId);
+        setTaskHealth(healthData);
+      }
+      
+      // 显示成功消息
+      message.success(
+        `任务进度已更新为 ${updateProgress}%，树木进入${getGrowthStageName(newGrowthStage)}阶段`
+      );
     } catch (error) {
       console.error('更新任务进度失败:', error);
-      setError(`更新任务进度失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      message.error('更新进度失败，请稍后重试');
     } finally {
       setLoading(false);
     }
+  };
+  
+  // 获取生长阶段名称
+  const getGrowthStageName = (stage: number): string => {
+    const stageNames = [
+      '种子',
+      '幼苗',
+      '成长',
+      '成熟'
+    ];
+    
+    return stageNames[stage] || '未知阶段';
+  };
+  
+  // 渲染树木生长阶段信息
+  const renderGrowthStageInfo = () => {
+    // 计算生长阶段
+    let growthStage = 0;
+    let progress = 0;
+    
+    if (taskHealth) {
+      progress = taskHealth.progress || 0;
+    } else if (treeHealth && treeHealth.task) {
+      progress = treeHealth.task.progress || 0;
+    }
+    
+    // 根据进度确定生长阶段
+    if (progress >= 100) {
+      growthStage = 3; // 成熟
+    } else if (progress >= 70) {
+      growthStage = 2; // 生长
+    } else if (progress >= 30) {
+      growthStage = 1; // 幼苗
+    } else {
+      growthStage = 0; // 种子
+    }
+    
+    // 计算到下一阶段的进度
+    let nextStageThreshold = 100;
+    let stageProgress = 0;
+    
+    if (growthStage === 0) {
+      nextStageThreshold = 30;
+      stageProgress = (progress / 30) * 100;
+    } else if (growthStage === 1) {
+      nextStageThreshold = 70;
+      stageProgress = ((progress - 30) / 40) * 100;
+    } else if (growthStage === 2) {
+      nextStageThreshold = 100;
+      stageProgress = ((progress - 70) / 30) * 100;
+    } else {
+      stageProgress = 100;
+    }
+    
+    return (
+      <div style={{ marginBottom: '16px' }}>
+        <Divider orientation="left">生长阶段</Divider>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ flex: 1 }}>
+            <Tag color={getGrowthStageColor(growthStage)}>{getGrowthStageName(growthStage)}</Tag>
+            {growthStage < 3 && (
+              <Text type="secondary" style={{ marginLeft: '8px' }}>
+                距离{getGrowthStageName(growthStage + 1)}阶段还需要{nextStageThreshold - progress}%进度
+              </Text>
+            )}
+            {growthStage === 3 && (
+              <Text type="success" style={{ marginLeft: '8px' }}>
+                树木已经完全成熟！
+              </Text>
+            )}
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ width: '100%' }}>
+            <Progress 
+              percent={stageProgress} 
+              status={stageProgress === 100 ? 'success' : 'active'} 
+              strokeColor={getGrowthStageColor(growthStage)}
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // 获取生长阶段颜色
+  const getGrowthStageColor = (stage: number): string => {
+    const stageColors = [
+      '#8BC34A', // 种子 - 草绿色
+      '#4CAF50', // 幼苗 - 绿色
+      '#2E7D32', // 成长 - 深绿色
+      '#1B5E20'  // 成熟 - 墨绿色
+    ];
+    
+    return stageColors[stage] || stageColors[0];
   };
 
   // 渲染树木健康状态信息
@@ -275,6 +422,28 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
                 <ClockCircleOutlined /> 截止日期: {new Date(treeHealth?.task?.deadline || taskHealth?.deadline || '').toLocaleDateString()}
               </Text>
             )}
+          </div>
+        )}
+        
+        {/* 树木类型和任务类型关联 */}
+        {taskHealth?.tree?.type && (
+          <div style={{ marginTop: 16 }}>
+            <Divider orientation="left">树木信息</Divider>
+            <p>
+              <strong>树木类型:</strong>{' '}
+              <Tag color={getTreeTypeColor(taskHealth.tree.type as TreeType)}>
+                {getTreeTypeName(taskHealth.tree.type as TreeType)}
+              </Tag>
+            </p>
+            {taskHealth.taskType && (
+              <p>
+                <strong>任务类型:</strong>{' '}
+                <Tag color={getTaskTypeColor(taskHealth.taskType)}>
+                  {getTaskTypeName(taskHealth.taskType)}
+                </Tag>
+              </p>
+            )}
+            <Text type="secondary">不同任务类型对应不同的树木，完成任务将使树木完全生长</Text>
           </div>
         )}
         
@@ -426,6 +595,7 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
       ) : (
         <>
           {renderTreeHealthInfo()}
+          {renderGrowthStageInfo()}
           {renderHealthEffects()}
           {(taskId || (treeHealth?.task?.id && onProgressUpdate)) && (
             <div style={{ marginTop: 24 }}>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>树木模型测试页面</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    canvas { width: 100%; height: 100%; display: block; }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 100;
+    }
+    .model-button {
+      margin: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #log {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: 60%;
+      height: 150px;
+      background: rgba(0,0,0,0.7);
+      color: #00ff00;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <h3>树木模型测试</h3>
+    <div>
+      <button class="model-button" data-model="oak" data-stage="0">橡树-种子</button>
+      <button class="model-button" data-model="oak" data-stage="1">橡树-幼苗</button>
+      <button class="model-button" data-model="oak" data-stage="2">橡树-生长</button>
+      <button class="model-button" data-model="oak" data-stage="3">橡树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="pine" data-stage="0">松树-种子</button>
+      <button class="model-button" data-model="pine" data-stage="1">松树-幼苗</button>
+      <button class="model-button" data-model="pine" data-stage="2">松树-生长</button>
+      <button class="model-button" data-model="pine" data-stage="3">松树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="apple" data-stage="0">苹果树-种子</button>
+      <button class="model-button" data-model="apple" data-stage="1">苹果树-幼苗</button>
+      <button class="model-button" data-model="apple" data-stage="2">苹果树-生长</button>
+      <button class="model-button" data-model="apple" data-stage="3">苹果树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="maple" data-stage="0">枫树-种子</button>
+      <button class="model-button" data-model="maple" data-stage="1">枫树-幼苗</button>
+      <button class="model-button" data-model="maple" data-stage="2">枫树-生长</button>
+      <button class="model-button" data-model="maple" data-stage="3">枫树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="willow" data-stage="0">柳树-种子</button>
+      <button class="model-button" data-model="willow" data-stage="1">柳树-幼苗</button>
+      <button class="model-button" data-model="willow" data-stage="2">柳树-生长</button>
+      <button class="model-button" data-model="willow" data-stage="3">柳树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="palm" data-stage="0">棕榈树-种子</button>
+      <button class="model-button" data-model="palm" data-stage="1">棕榈树-幼苗</button>
+      <button class="model-button" data-model="palm" data-stage="2">棕榈树-生长</button>
+      <button class="model-button" data-model="palm" data-stage="3">棕榈树-成熟</button>
+    </div>
+    <div>
+      <button class="model-button" data-model="cherry" data-stage="0">樱花树-种子</button>
+      <button class="model-button" data-model="cherry" data-stage="1">樱花树-幼苗</button>
+      <button class="model-button" data-model="cherry" data-stage="2">樱花树-生长</button>
+      <button class="model-button" data-model="cherry" data-stage="3">樱花树-成熟</button>
+    </div>
+    <div>
+      <button id="check-all">测试所有模型</button>
+      <button id="clear-scene">清空场景</button>
+    </div>
+  </div>
+  
+  <div id="log"></div>
+
+  <!-- 导入Three.js库 -->
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // 日志功能
+    const logElement = document.getElementById('log');
+    function log(message, isError = false) {
+      const logLine = document.createElement('div');
+      logLine.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      if (isError) {
+        logLine.style.color = '#ff5555';
+      }
+      logElement.appendChild(logLine);
+      logElement.scrollTop = logElement.scrollHeight;
+      console.log(message);
+    }
+
+    // 设置场景
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    
+    // 照明
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 10, 10);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    // 设置相机
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(3, 3, 3);
+    camera.lookAt(0, 0, 0);
+    
+    // 设置渲染器
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    
+    // 添加轨道控制
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // 添加网格地面
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+
+    // 创建GLTF加载器
+    const loader = new GLTFLoader();
+    let currentModel = null;
+    
+    // 加载模型函数
+    function loadModel(modelType, growthStage) {
+      clearScene();
+      
+      const stageMap = {
+        0: 'seedstage',
+        1: 'sapling',
+        2: 'growing',
+        3: 'mature',
+      };
+      
+      // 构建模型URL
+      let modelUrl;
+      if (growthStage === 0) {
+        modelUrl = `/models/trees/seedstage_${modelType}.glb`;
+      } else {
+        modelUrl = `/models/trees/${modelType}_${stageMap[growthStage]}.glb`;
+      }
+      
+      log(`尝试加载模型: ${modelUrl}`);
+      
+      // 检查文件是否存在
+      fetch(modelUrl, { method: 'HEAD' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`文件不存在 (${response.status}): ${modelUrl}`);
+          }
+          return modelUrl;
+        })
+        .then(url => {
+          // 加载模型
+          loader.load(
+            url,
+            (gltf) => {
+              const model = gltf.scene;
+              log(`成功加载模型: ${url}`);
+              
+              // 设置阴影
+              model.traverse((node) => {
+                if (node.isMesh) {
+                  node.castShadow = true;
+                  node.receiveShadow = true;
+                }
+              });
+              
+              // 将模型添加到场景
+              scene.add(model);
+              currentModel = model;
+              
+              // 自动缩放模型以适应视图
+              fitCameraToModel(model);
+            },
+            (xhr) => {
+              const percentComplete = xhr.loaded / xhr.total * 100;
+              log(`加载进度: ${Math.round(percentComplete)}%`);
+            },
+            (error) => {
+              log(`加载模型失败: ${error.message}`, true);
+            }
+          );
+        })
+        .catch(error => {
+          log(`检查文件存在性失败: ${error.message}`, true);
+          
+          // 尝试加载通用模型作为备份
+          const fallbackUrl = `/models/trees/${modelType}.glb`;
+          log(`尝试加载备用模型: ${fallbackUrl}`);
+          
+          loader.load(
+            fallbackUrl,
+            (gltf) => {
+              const model = gltf.scene;
+              log(`成功加载备用模型: ${fallbackUrl}`);
+              
+              model.traverse((node) => {
+                if (node.isMesh) {
+                  node.castShadow = true;
+                  node.receiveShadow = true;
+                }
+              });
+              
+              scene.add(model);
+              currentModel = model;
+              fitCameraToModel(model);
+            },
+            null,
+            (fallbackError) => {
+              log(`备用模型加载失败: ${fallbackError.message}`, true);
+              createFallbackGeometry(modelType);
+            }
+          );
+        });
+    }
+    
+    // 清除场景中的当前模型
+    function clearScene() {
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+    }
+    
+    // 创建备用几何体
+    function createFallbackGeometry(modelType) {
+      log(`创建备用几何体模型: ${modelType}`);
+      
+      const group = new THREE.Group();
+      
+      // 创建树干
+      const trunkGeometry = new THREE.CylinderGeometry(0.1, 0.15, 1, 8);
+      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      trunk.position.y = 0.5;
+      trunk.castShadow = true;
+      
+      // 创建树冠
+      let crownGeometry;
+      let crownColor;
+      
+      switch(modelType) {
+        case 'pine':
+          crownGeometry = new THREE.ConeGeometry(0.5, 1.5, 8);
+          crownColor = 0x006400;
+          break;
+        case 'maple':
+          crownGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+          crownColor = 0x228B22;
+          break;
+        default:
+          crownGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+          crownColor = 0x32CD32;
+      }
+      
+      const crownMaterial = new THREE.MeshStandardMaterial({ color: crownColor });
+      const crown = new THREE.Mesh(crownGeometry, crownMaterial);
+      crown.position.y = 1.3;
+      crown.castShadow = true;
+      
+      group.add(trunk);
+      group.add(crown);
+      scene.add(group);
+      currentModel = group;
+    }
+    
+    // 调整相机以适应模型
+    function fitCameraToModel(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+      
+      // 乘以一个调整因子，确保模型完全可见
+      cameraDistance *= 1.5;
+      
+      camera.position.copy(center);
+      camera.position.z += cameraDistance;
+      camera.lookAt(center);
+      
+      controls.target.copy(center);
+    }
+    
+    // 测试所有模型
+    async function testAllModels() {
+      clearScene();
+      log('开始测试所有模型...');
+      
+      const models = ['oak', 'pine', 'maple', 'willow', 'apple', 'palm', 'cherry'];
+      const stages = [0, 1, 2, 3];
+      
+      const results = {
+        success: [],
+        failure: []
+      };
+      
+      for (const model of models) {
+        for (const stage of stages) {
+          log(`测试模型: ${model}, 阶段: ${stage}`);
+          
+          let modelUrl;
+          if (stage === 0) {
+            modelUrl = `/models/trees/seedstage_${model}.glb`;
+          } else {
+            const stageMap = {
+              1: 'sapling',
+              2: 'growing',
+              3: 'mature',
+            };
+            modelUrl = `/models/trees/${model}_${stageMap[stage]}.glb`;
+          }
+          
+          try {
+            const response = await fetch(modelUrl, { method: 'HEAD' });
+            if (response.ok) {
+              results.success.push({ model, stage, url: modelUrl, status: response.status });
+              log(`✅ 模型存在: ${modelUrl}`);
+            } else {
+              results.failure.push({ model, stage, url: modelUrl, status: response.status });
+              log(`❌ 模型不存在: ${modelUrl} (状态码: ${response.status})`, true);
+            }
+          } catch (error) {
+            results.failure.push({ model, stage, url: modelUrl, error: error.message });
+            log(`❌ 检查失败: ${modelUrl} (${error.message})`, true);
+          }
+          
+          // 添加短暂延迟避免请求过快
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      log('------- 测试结果摘要 -------');
+      log(`成功: ${results.success.length} 个模型`);
+      log(`失败: ${results.failure.length} 个模型`);
+      
+      if (results.failure.length > 0) {
+        log('失败模型列表:');
+        results.failure.forEach(item => {
+          log(`- ${item.model}_${item.stage}: ${item.url}`, true);
+        });
+      }
+    }
+
+    // 按钮点击事件处理
+    document.querySelectorAll('.model-button').forEach(button => {
+      button.addEventListener('click', function() {
+        const modelType = this.dataset.model;
+        const growthStage = parseInt(this.dataset.stage);
+        loadModel(modelType, growthStage);
+      });
+    });
+    
+    document.getElementById('check-all').addEventListener('click', testAllModels);
+    document.getElementById('clear-scene').addEventListener('click', clearScene);
+
+    // 页面大小调整
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // 页面加载完成
+    window.addEventListener('load', () => {
+      log('模型测试页面已加载。请点击按钮加载模型。');
+    });
+  </script>
+</body>
+</html> 

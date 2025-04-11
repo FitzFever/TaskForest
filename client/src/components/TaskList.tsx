@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { List, Card, Button, Tooltip, Modal, Empty, Row, Col, Typography, Space, Tag, message, Select, Form, DatePicker, Radio, Input, Divider } from 'antd';
 import { PlusOutlined, CheckOutlined, DeleteOutlined, EditOutlined, FilterOutlined, ReloadOutlined, SortAscendingOutlined, SearchOutlined, QuestionCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Task, TaskStatus, TaskPriority } from '../types/Task';
+import { Task, TaskStatus, TaskPriority, TaskType } from '../types/Task';
+import { TreeType } from '../types/Tree';
 import TaskForm from './TaskForm';
 import TagStats from './TagStats';
 import TaskStats from './TaskStats';
 import styles from './TaskList.module.css';
 import * as taskService from '../services/taskService';
 import { GetTasksParams } from '../services/taskService';
+import { getDefaultTreeTypeForTask } from '../services/constantsService';
 
 const { Title, Text } = Typography;
 
@@ -24,6 +26,26 @@ const priorityColors: Record<TaskPriority, string> = {
   [TaskPriority.MEDIUM]: 'blue',
   [TaskPriority.HIGH]: 'orange',
   [TaskPriority.URGENT]: 'red',
+};
+
+// 添加树木类型颜色映射
+const treeTypeColors: Record<string, string> = {
+  [TreeType.OAK]: 'green',     // 普通日常任务
+  [TreeType.PINE]: 'cyan',     // 定期重复任务
+  [TreeType.WILLOW]: 'purple', // 长期项目任务
+  [TreeType.MAPLE]: 'orange',  // 工作类任务
+  [TreeType.PALM]: 'lime',     // 休闲类任务
+  [TreeType.APPLE]: 'volcano'  // 学习类任务
+};
+
+// 添加树木类型名称映射
+const treeTypeNames: Record<string, string> = {
+  [TreeType.OAK]: '橡树 (普通日常任务)',
+  [TreeType.PINE]: '松树 (定期重复任务)',
+  [TreeType.WILLOW]: '柳树 (长期项目任务)',
+  [TreeType.MAPLE]: '枫树 (工作类任务)',
+  [TreeType.PALM]: '棕榈树 (休闲类任务)',
+  [TreeType.APPLE]: '苹果树 (学习类任务)'
 };
 
 // 定义filters状态的类型
@@ -771,6 +793,13 @@ const TaskList: React.FC = () => {
                       <Tag color={priorityColors[task.priority as TaskPriority]}>
                         优先级 {task.priority}
                       </Tag>
+                      {task.treeType && (
+                        <Tooltip title={`树木类型: ${treeTypeNames[task.treeType]}`}>
+                          <Tag color={treeTypeColors[task.treeType]}>
+                            {treeTypeNames[task.treeType]?.split(' ')[0] || task.treeType}
+                          </Tag>
+                        </Tooltip>
+                      )}
                     </Space>
                   }
                   description={
@@ -788,11 +817,18 @@ const TaskList: React.FC = () => {
                           </Tag>
                         ))}
                       </Space>
-                      {task.dueDate && (
-                        <Text type="secondary">
-                          截止日期: {new Date(task.dueDate).toLocaleDateString()}
-                        </Text>
-                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                        {task.dueDate && (
+                          <Text type="secondary">
+                            截止日期: {new Date(task.dueDate).toLocaleDateString()}
+                          </Text>
+                        )}
+                        {task.type && (
+                          <Text type="secondary">
+                            {task.type} → {task.treeType ? treeTypeNames[task.treeType] : getDefaultTreeTypeForTask(task.type)}
+                          </Text>
+                        )}
+                      </div>
                     </div>
                   }
                 />

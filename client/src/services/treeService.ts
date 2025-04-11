@@ -2,11 +2,13 @@
  * 树木相关API服务
  */
 import api from './api';
+import { AxiosResponse } from 'axios';
+import { Tree, CreateTreeData, TreeType } from '../types/Tree';
+import { ApiResponse } from '../types/Task';
 
-// API树木接口
+// 树木API接口
 export interface ApiTree {
   id: string;
-  taskId: string;
   type: string;
   stage: number;
   position: {
@@ -19,25 +21,20 @@ export interface ApiTree {
     y: number;
     z: number;
   };
-  scale: {
-    x: number;
-    y: number;
-    z: number;
-  };
   createdAt: string;
   lastGrowth: string;
   healthState: number;
+  taskId: string;
   task?: {
     id: string;
     title: string;
-    description: string;
     status: string;
-    dueDate: string;
+    progress?: number;
   };
 }
 
-// 树木列表响应接口
-export interface TreeListResponse {
+// API响应接口
+export interface TreesResponse {
   trees: ApiTree[];
   pagination: {
     total: number;
@@ -47,35 +44,14 @@ export interface TreeListResponse {
   };
 }
 
-// 更新树木请求接口
-export interface UpdateTreeRequest {
-  position?: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  rotation?: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  scale?: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  stage?: number;
-}
-
 /**
- * 获取所有树木
- * @returns 包含树木列表和分页信息的响应对象
+ * 获取所有树木列表
+ * @returns 树木列表响应
  */
-export const getAllTrees = async (): Promise<TreeListResponse> => {
-  // 使用真实API
+export const getTrees = async (): Promise<AxiosResponse<any>> => {
   try {
-    const response = await api.get<TreeListResponse>('/trees');
-    return response.data;
+    const response = await api.get('/trees');
+    return response;
   } catch (error) {
     console.error('获取树木列表失败:', error);
     throw error;
@@ -83,58 +59,80 @@ export const getAllTrees = async (): Promise<TreeListResponse> => {
 };
 
 /**
- * 获取指定ID的树木
- * @param treeId 树木ID
- * @returns 树木对象
+ * 获取单个树木信息
+ * @param id 树木ID
+ * @returns 响应
  */
-export const getTree = async (treeId: string): Promise<ApiTree> => {
-  // 使用真实API
-  try {
-    const response = await api.get<ApiTree>(`/trees/${treeId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`获取树木失败 ID:${treeId}:`, error);
-    throw error;
-  }
+export const getTree = async (id: string): Promise<AxiosResponse<ApiResponse<ApiTree>>> => {
+  return await api.get(`/trees/${id}`);
 };
 
 /**
- * 获取任务关联的树木
+ * 根据任务ID获取关联的树木
  * @param taskId 任务ID
- * @returns 树木对象
+ * @returns 树木信息响应
  */
-export const getTreeByTaskId = async (taskId: string): Promise<ApiTree> => {
-  // 使用真实API
+export const getTreeByTask = async (taskId: string): Promise<AxiosResponse<any>> => {
   try {
-    const response = await api.get<ApiTree>(`/trees/by-task/${taskId}`);
-    return response.data;
+    const response = await api.get(`/trees/by-task/${taskId}`);
+    return response;
   } catch (error) {
-    console.error(`获取任务树木失败 ID:${taskId}:`, error);
+    console.error(`获取任务(${taskId})关联的树木失败:`, error);
     throw error;
   }
 };
 
 /**
- * 更新树木
- * @param treeId 树木ID
- * @param updateData 更新数据
- * @returns 更新后的树木对象
+ * 根据任务ID获取关联的树木ID
+ * 这是一个简化方法，直接返回树木对象
+ * @param taskId 任务ID
+ * @returns 树木对象或undefined
  */
-export const updateTree = async (treeId: string, updateData: UpdateTreeRequest): Promise<ApiTree> => {
-  // 使用真实API
+export const getTreeByTaskId = async (taskId: string): Promise<Tree | undefined> => {
   try {
-    const response = await api.put<ApiTree>(`/trees/${treeId}`, updateData);
-    return response.data;
+    const response = await getTreeByTask(taskId);
+    if (response && response.data && response.data.data) {
+      return response.data.data;
+    }
+    return undefined;
   } catch (error) {
-    console.error(`更新树木失败 ID:${treeId}:`, error);
-    throw error;
+    console.error(`获取任务(${taskId})关联的树木ID失败:`, error);
+    return undefined;
   }
+};
+
+/**
+ * 更新树木信息
+ * @param id 树木ID
+ * @param treeData 树木数据
+ * @returns 响应
+ */
+export const updateTree = async (
+  id: string,
+  treeData: {
+    position?: { x: number, y: number, z: number };
+    rotation?: { x: number, y: number, z: number };
+    stage?: number;
+  }
+): Promise<AxiosResponse<ApiResponse<ApiTree>>> => {
+  return await api.put(`/trees/${id}`, treeData);
+};
+
+/**
+ * 获取树木健康状态
+ * @param id 树木ID
+ * @returns 响应
+ */
+export const getTreeHealth = async (id: string): Promise<AxiosResponse<ApiResponse<any>>> => {
+  return await api.get(`/trees/${id}/health`);
 };
 
 // 导出默认对象
 export default {
-  getAllTrees,
+  getTrees,
   getTree,
+  getTreeByTask,
   getTreeByTaskId,
-  updateTree
+  updateTree,
+  getTreeHealth
 }; 

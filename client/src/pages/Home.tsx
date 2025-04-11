@@ -122,7 +122,7 @@ const Home: React.FC = () => {
         priority: values.priority === '高' ? TaskPriority.HIGH : 
                  values.priority === '中' ? TaskPriority.MEDIUM : TaskPriority.LOW,
         dueDate: values.dueDate.format('YYYY-MM-DD'),
-        type: TaskType.NORMAL, // 使用枚举
+        type: values.type || TaskType.NORMAL,
         tags: values.tags || []
       };
       
@@ -173,7 +173,8 @@ const Home: React.FC = () => {
       priority: task.priority === TaskPriority.HIGH ? '高' : 
                 task.priority === TaskPriority.MEDIUM ? '中' : '低',
       dueDate: dayjs(task.dueDate),
-      tags: task.tags || []
+      tags: task.tags || [],
+      type: task.type || TaskType.NORMAL
     });
     setEditModalVisible(true);
   };
@@ -190,6 +191,7 @@ const Home: React.FC = () => {
         priority: values.priority === '高' ? TaskPriority.HIGH : 
                  values.priority === '中' ? TaskPriority.MEDIUM : TaskPriority.LOW,
         dueDate: values.dueDate.format('YYYY-MM-DD'),
+        type: values.type || TaskType.NORMAL,
         tags: values.tags || []
       };
       
@@ -502,6 +504,21 @@ const Home: React.FC = () => {
           </Form.Item>
           
           <Form.Item
+            name="type"
+            label="任务类型"
+            rules={[{ required: true, message: '请选择任务类型' }]}
+          >
+            <Select placeholder="请选择任务类型">
+              <Select.Option value={TaskType.NORMAL}>普通任务</Select.Option>
+              <Select.Option value={TaskType.WORK}>工作任务</Select.Option>
+              <Select.Option value={TaskType.LEARNING}>学习任务</Select.Option>
+              <Select.Option value={TaskType.PROJECT}>项目任务</Select.Option>
+              <Select.Option value={TaskType.RECURRING}>重复任务</Select.Option>
+              <Select.Option value={TaskType.LEISURE}>休闲任务</Select.Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item
             name="dueDate"
             label="截止日期"
             rules={[{ required: true, message: '请选择截止日期' }]}
@@ -574,6 +591,21 @@ const Home: React.FC = () => {
               <Select.Option value="低">低</Select.Option>
               <Select.Option value="中">中</Select.Option>
               <Select.Option value="高">高</Select.Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item
+            name="type"
+            label="任务类型"
+            rules={[{ required: true, message: '请选择任务类型' }]}
+          >
+            <Select placeholder="请选择任务类型">
+              <Select.Option value={TaskType.NORMAL}>普通任务</Select.Option>
+              <Select.Option value={TaskType.WORK}>工作任务</Select.Option>
+              <Select.Option value={TaskType.LEARNING}>学习任务</Select.Option>
+              <Select.Option value={TaskType.PROJECT}>项目任务</Select.Option>
+              <Select.Option value={TaskType.RECURRING}>重复任务</Select.Option>
+              <Select.Option value={TaskType.LEISURE}>休闲任务</Select.Option>
             </Select>
           </Form.Item>
           

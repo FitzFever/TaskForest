@@ -128,13 +128,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ visible, onCancel, onSubmit, initia
           label="树木类型"
           rules={[{ required: true, message: '请选择树木类型' }]}
         >
-          <Select placeholder="选择树木类型">
-            <Select.Option value={TreeType.OAK}>橡树</Select.Option>
-            <Select.Option value={TreeType.PINE}>松树</Select.Option>
-            <Select.Option value={TreeType.MAPLE}>枫树</Select.Option>
-            <Select.Option value={TreeType.CHERRY}>樱花树</Select.Option>
-            <Select.Option value={TreeType.PALM}>棕榈树</Select.Option>
-          </Select>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8 }}>树木类型</div>
+            <Select defaultValue={form.getFieldValue('treeType')} style={{ width: '100%' }}>
+              <Select.Option value={TreeType.OAK}>橡树</Select.Option>
+              <Select.Option value={TreeType.PINE}>松树</Select.Option>
+              <Select.Option value={TreeType.WILLOW}>柳树</Select.Option>
+              <Select.Option value={TreeType.MAPLE}>枫树</Select.Option>
+              <Select.Option value={TreeType.PALM}>棕榈树</Select.Option>
+              <Select.Option value={TreeType.APPLE}>苹果树</Select.Option>
+            </Select>
+          </div>
         </Form.Item>
       </Form>
     </Modal>

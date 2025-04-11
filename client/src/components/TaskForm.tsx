@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, DatePicker, Button, message, Space, Divider } from 'antd';
-import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { Form, Input, Select, DatePicker, Button, message, Space, Divider, Tooltip, Checkbox, Tag, Card, List } from 'antd';
+import { PlusOutlined, SaveOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
+const { Text } = Typography;
 import dayjs from 'dayjs';
-import { TaskStatus, TaskPriority, Task } from '../types/Task';
+import { TaskStatus, TaskPriority, Task, TaskType } from '../types/Task';
 import * as taskService from '../services/taskService';
 import { TreeType } from '../types/Tree';
+import { getDefaultTreeTypeForTask } from '../services/constantsService';
 
 // 表单类型: 'create' | 'edit'
 type FormType = 'create' | 'edit';
@@ -28,10 +31,14 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const [treeTypes, setTreeTypes] = useState<string[]>([
     TreeType.OAK, 
     TreeType.PINE,
-    TreeType.CHERRY,
+    TreeType.WILLOW,
     TreeType.MAPLE,
-    TreeType.PALM
+    TreeType.PALM,
+    TreeType.APPLE
   ]);
+  
+  // 添加自动选择树木类型的状态
+  const [autoSelectTreeType, setAutoSelectTreeType] = useState(true);
 
   const isEditMode = type === 'edit';
 
@@ -43,10 +50,20 @@ const TaskForm: React.FC<TaskFormProps> = ({
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : undefined,
       };
       form.setFieldsValue(values);
+      setAutoSelectTreeType(false); // 编辑模式默认不自动选择树木类型
     } else {
       form.resetFields();
+      setAutoSelectTreeType(true); // 创建模式默认自动选择
     }
   }, [initialValues, form]);
+
+  // 监听任务类型变化，自动更新树木类型
+  const handleTaskTypeChange = (value: TaskType) => {
+    if (autoSelectTreeType) {
+      const defaultTreeType = getDefaultTreeTypeForTask(value);
+      form.setFieldsValue({ treeType: defaultTreeType });
+    }
+  };
 
   // 提交表单
   const handleSubmit = async (values: any) => {
@@ -57,11 +74,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
       const formData = {
         title: values.title,
         description: values.description || '',
-        type: values.type || 'NORMAL',
+        type: values.type || TaskType.NORMAL,
         priority: values.priority || TaskPriority.MEDIUM,
         dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DDTHH:mm:ssZ') : undefined,
         tags: values.tags || [],
-        treeType: values.treeType || TreeType.OAK
+        treeType: values.treeType || getDefaultTreeTypeForTask(values.type || TaskType.NORMAL)
       };
 
       if (isEditMode && initialValues) {
@@ -103,7 +120,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       layout="vertical"
       onFinish={handleSubmit}
       initialValues={{
-        type: 'NORMAL',
+        type: TaskType.NORMAL,
         priority: TaskPriority.MEDIUM,
         treeType: TreeType.OAK
       }}
@@ -126,6 +143,33 @@ const TaskForm: React.FC<TaskFormProps> = ({
           maxLength={500}
           showCount
         />
+      </Form.Item>
+
+      <Form.Item
+        name="type"
+        label="任务类型"
+        rules={[{ required: true, message: '请选择任务类型' }]}
+      >
+        <Select onChange={handleTaskTypeChange}>
+          <Select.Option value={TaskType.NORMAL}>
+            普通日常任务 <Tag color="green">橡树</Tag>
+          </Select.Option>
+          <Select.Option value={TaskType.RECURRING}>
+            定期重复任务 <Tag color="cyan">松树</Tag>
+          </Select.Option>
+          <Select.Option value={TaskType.PROJECT}>
+            长期项目任务 <Tag color="magenta">柳树</Tag>
+          </Select.Option>
+          <Select.Option value={TaskType.LEARNING}>
+            学习类任务 <Tag color="volcano">苹果树</Tag>
+          </Select.Option>
+          <Select.Option value={TaskType.WORK}>
+            工作类任务 <Tag color="orange">枫树</Tag>
+          </Select.Option>
+          <Select.Option value={TaskType.LEISURE}>
+            休闲类任务 <Tag color="lime">棕榈树</Tag>
+          </Select.Option>
+        </Select>
       </Form.Item>
 
       <Form.Item
@@ -167,17 +211,74 @@ const TaskForm: React.FC<TaskFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        name="treeType"
-        label="树木类型"
-        rules={[{ required: true, message: '请选择树木类型' }]}
+        label={
+          <span>
+            树木类型
+            <Tooltip title="树木类型将决定您任务完成后在森林中种植的树木种类">
+              <InfoCircleOutlined style={{ marginLeft: 4 }} />
+            </Tooltip>
+          </span>
+        }
       >
-        <Select>
-          <Select.Option value={TreeType.OAK}>橡树</Select.Option>
-          <Select.Option value={TreeType.PINE}>松树</Select.Option>
-          <Select.Option value={TreeType.CHERRY}>樱花树</Select.Option>
-          <Select.Option value={TreeType.MAPLE}>枫树</Select.Option>
-          <Select.Option value={TreeType.PALM}>棕榈树</Select.Option>
-        </Select>
+        <Form.Item 
+          name="treeType"
+          rules={[{ required: true, message: '请选择树木类型' }]}
+          style={{ display: autoSelectTreeType ? 'none' : 'block' }}
+        >
+          <Select 
+            disabled={autoSelectTreeType}
+            placeholder="选择树木类型"
+          >
+            <Select.Option value={TreeType.OAK}>橡树 (普通日常任务)</Select.Option>
+            <Select.Option value={TreeType.PINE}>松树 (定期重复任务)</Select.Option>
+            <Select.Option value={TreeType.WILLOW}>柳树 (长期项目任务)</Select.Option>
+            <Select.Option value={TreeType.APPLE}>苹果树 (学习类任务)</Select.Option>
+            <Select.Option value={TreeType.MAPLE}>枫树 (工作类任务)</Select.Option>
+            <Select.Option value={TreeType.PALM}>棕榈树 (休闲类任务)</Select.Option>
+          </Select>
+        </Form.Item>
+      </Form.Item>
+
+      <Form.Item>
+        <Checkbox 
+          checked={autoSelectTreeType} 
+          onChange={(e) => setAutoSelectTreeType(e.target.checked)}
+        >
+          根据任务类型自动选择树木类型
+        </Checkbox>
+        <Tooltip title="开启后将根据任务类型自动选择对应的树木类型，可以在创建后修改">
+          <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+        </Tooltip>
+      </Form.Item>
+
+      {/* 添加任务类型与树木类型对应关系说明 */}
+      <Form.Item label={null}>
+        <Card size="small" title="任务类型与树木对应关系" style={{ marginBottom: 16 }}>
+          <List
+            size="small"
+            dataSource={[
+              { task: '普通日常任务', tree: '橡树', taskType: TaskType.NORMAL, treeType: TreeType.OAK, color: 'green' },
+              { task: '定期重复任务', tree: '松树', taskType: TaskType.RECURRING, treeType: TreeType.PINE, color: 'cyan' },
+              { task: '长期项目任务', tree: '柳树', taskType: TaskType.PROJECT, treeType: TreeType.WILLOW, color: 'magenta' },
+              { task: '学习类任务', tree: '苹果树', taskType: TaskType.LEARNING, treeType: TreeType.APPLE, color: 'volcano' },
+              { task: '工作类任务', tree: '枫树', taskType: TaskType.WORK, treeType: TreeType.MAPLE, color: 'orange' },
+              { task: '休闲类任务', tree: '棕榈树', taskType: TaskType.LEISURE, treeType: TreeType.PALM, color: 'lime' }
+            ]}
+            renderItem={item => (
+              <List.Item>
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: 1 }}>{item.task}</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <Tag color={item.color}>{item.tree}</Tag>
+                  </div>
+                </div>
+              </List.Item>
+            )}
+          />
+          <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+            选择任务类型后，系统将自动为您选择对应的树木类型
+          </Text>
+        </Card>
       </Form.Item>
 
       <Form.Item>

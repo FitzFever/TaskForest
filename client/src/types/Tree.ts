@@ -4,11 +4,13 @@ import { Task } from './Task';
  * 树木类型枚举
  */
 export enum TreeType {
-  OAK = 'oak',     // 橡树
-  PINE = 'pine',   // 松树
-  CHERRY = 'cherry', // 樱花树
-  MAPLE = 'maple', // 枫树
-  PALM = 'palm'    // 棕榈树
+  OAK = 'OAK',     // 橡树 - 普通日常任务
+  PINE = 'PINE',   // 松树 - 定期重复任务
+  WILLOW = 'WILLOW', // 柳树 - 长期项目任务
+  MAPLE = 'MAPLE', // 枫树 - 工作类任务
+  PALM = 'PALM',   // 棕榈树 - 休闲类任务
+  APPLE = 'APPLE',  // 苹果树 - 学习类任务
+  CHERRY = 'CHERRY' // 樱花树 - 特殊任务
 }
 
 /**

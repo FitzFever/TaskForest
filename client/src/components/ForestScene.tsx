@@ -34,6 +34,10 @@ const TreeModel: React.FC<{
           <sphereGeometry args={[0.8 * scale, 16, 16]} />
         ) : type === TreeType.CHERRY ? (
           <sphereGeometry args={[0.9 * scale, 16, 16]} />
+        ) : type === TreeType.WILLOW ? (
+          <sphereGeometry args={[1.0 * scale, 16, 16]} />
+        ) : type === TreeType.APPLE ? (
+          <sphereGeometry args={[0.85 * scale, 16, 16]} />
         ) : (
           <sphereGeometry args={[0.8 * scale, 16, 16]} />
         )}
@@ -43,7 +47,10 @@ const TreeModel: React.FC<{
             type === TreeType.PINE ? '#2d4c0e' : 
             type === TreeType.OAK ? '#4a7d1a' : 
             type === TreeType.CHERRY ? '#e77c8e' : 
-            type === TreeType.MAPLE ? '#d46a4c' : '#6a994e'
+            type === TreeType.MAPLE ? '#d46a4c' : 
+            type === TreeType.PALM ? '#6a994e' :
+            type === TreeType.WILLOW ? '#8ad472' :
+            type === TreeType.APPLE ? '#91c73e' : '#6a994e'
           } 
         />
       </mesh>

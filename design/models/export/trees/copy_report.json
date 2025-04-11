@@ -1,0 +1,216 @@
+{
+  "success_count": 42,
+  "failure_count": 0,
+  "models": [
+    {
+      "file": "cherry_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/cherry_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/cherry_mature.glb"
+    },
+    {
+      "file": "starfruit.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/starfruit.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/starfruit.glb"
+    },
+    {
+      "file": "apple.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/apple.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/apple.glb"
+    },
+    {
+      "file": "cherry.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/cherry.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/cherry.glb"
+    },
+    {
+      "file": "willow_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/willow_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/willow_mature.glb"
+    },
+    {
+      "file": "maple.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/maple.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/maple.glb"
+    },
+    {
+      "file": "palm_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/palm_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/palm_mature.glb"
+    },
+    {
+      "file": "seedstage_pine.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_pine.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_pine.glb"
+    },
+    {
+      "file": "oak.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/oak.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/oak.glb"
+    },
+    {
+      "file": "moderately_wilted_tree.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/moderately_wilted_tree.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/moderately_wilted_tree.glb"
+    },
+    {
+      "file": "pine_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/pine_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/pine_growing.glb"
+    },
+    {
+      "file": "severelywiltedtree.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/severelywiltedtree.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/severelywiltedtree.glb"
+    },
+    {
+      "file": "pine.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/pine.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/pine.glb"
+    },
+    {
+      "file": "palm_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/palm_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/palm_sapling.glb"
+    },
+    {
+      "file": "cherry_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/cherry_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/cherry_growing.glb"
+    },
+    {
+      "file": "seedstage_cherry.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_cherry.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_cherry.glb"
+    },
+    {
+      "file": "maple_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/maple_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/maple_growing.glb"
+    },
+    {
+      "file": "healthy_tree.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/healthy_tree.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/healthy_tree.glb"
+    },
+    {
+      "file": "apple_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/apple_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/apple_growing.glb"
+    },
+    {
+      "file": "oak_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/oak_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/oak_growing.glb"
+    },
+    {
+      "file": "pine_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/pine_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/pine_mature.glb"
+    },
+    {
+      "file": "willow_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/willow_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/willow_sapling.glb"
+    },
+    {
+      "file": "apple_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/apple_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/apple_sapling.glb"
+    },
+    {
+      "file": "rubber_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/rubber_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/rubber_mature.glb"
+    },
+    {
+      "file": "seedstage_apple.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_apple.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_apple.glb"
+    },
+    {
+      "file": "willow_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/willow_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/willow_growing.glb"
+    },
+    {
+      "file": "oak_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/oak_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/oak_sapling.glb"
+    },
+    {
+      "file": "oak_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/oak_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/oak_mature.glb"
+    },
+    {
+      "file": "seedstage_maple.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_maple.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_maple.glb"
+    },
+    {
+      "file": "slightly_wilted_tree.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/slightly_wilted_tree.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/slightly_wilted_tree.glb"
+    },
+    {
+      "file": "maple_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/maple_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/maple_sapling.glb"
+    },
+    {
+      "file": "cherry_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/cherry_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/cherry_sapling.glb"
+    },
+    {
+      "file": "seedstage_willow.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_willow.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_willow.glb"
+    },
+    {
+      "file": "maple_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/maple_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/maple_mature.glb"
+    },
+    {
+      "file": "pine_sapling.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/pine_sapling.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/pine_sapling.glb"
+    },
+    {
+      "file": "palm_growing.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/palm_growing.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/palm_growing.glb"
+    },
+    {
+      "file": "seedstage_palm.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_palm.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_palm.glb"
+    },
+    {
+      "file": "willow.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/willow.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/willow.glb"
+    },
+    {
+      "file": "severely_wilted_tree.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/severely_wilted_tree.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/severely_wilted_tree.glb"
+    },
+    {
+      "file": "palm.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/palm.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/palm.glb"
+    },
+    {
+      "file": "seedstage_oak.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/seedstage_oak.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/seedstage_oak.glb"
+    },
+    {
+      "file": "apple_mature.glb",
+      "client_path": "/Users/fitzchen/MyProject/TaskForest/client/public/models/trees/apple_mature.glb",
+      "export_path": "/Users/fitzchen/MyProject/TaskForest/design/models/export/trees/apple_mature.glb"
+    }
+  ]
+}
