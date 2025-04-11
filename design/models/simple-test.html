@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>简单测试 - 3D模型加载</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; background-color: #333; }
+    #container { position: absolute; width: 100%; height: 100%; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      z-index: 100;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #388E3C;
+    }
+  </style>
+  <!-- 使用UMD版本的Three.js库 -->
+  <script src="https://unpkg.com/three@0.126.1/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.126.1/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.126.1/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="container"></div>
+  <div id="info">
+    <h3>简单3D模型加载测试</h3>
+    <div>
+      <button onclick="loadModel('export/trees/oak.glb')">加载橡树</button>
+      <button onclick="loadModel('export/trees/pine.glb')">加载松树</button>
+      <button onclick="loadModel('export/trees/apple.glb')">加载苹果树</button>
+      <button onclick="loadModel('export/trees/healthy_tree.glb')">加载健康树</button>
+    </div>
+    <div id="status">准备就绪，点击按钮加载模型</div>
+  </div>
+
+  <script>
+    // 添加调试信息，确认组件加载情况
+    console.log("THREE 是否存在:", typeof THREE !== 'undefined');
+    console.log("OrbitControls 是否存在:", typeof THREE.OrbitControls !== 'undefined');
+    console.log("GLTFLoader 是否存在:", typeof THREE.GLTFLoader !== 'undefined');
+    
+    // 基本场景变量
+    let scene, camera, renderer, controls;
+    let currentModel = null;
+    const container = document.getElementById('container');
+    const status = document.getElementById('status');
+
+    // 初始化函数
+    function init() {
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x333333);
+      
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(5, 5, 5);
+      
+      // 创建渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+      
+      // 添加控制器
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      
+      // 添加灯光
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambient);
+      
+      const directional = new THREE.DirectionalLight(0xffffff, 0.8);
+      directional.position.set(5, 10, 5);
+      directional.castShadow = true;
+      scene.add(directional);
+      
+      // 添加网格地面
+      const grid = new THREE.GridHelper(10, 10, 0x888888, 0x444444);
+      scene.add(grid);
+      
+      // 窗口大小调整
+      window.addEventListener('resize', onWindowResize, false);
+      
+      // 开始动画循环
+      animate();
+      
+      log("3D场景初始化完成");
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+      controls.update();
+    }
+    
+    // 窗口大小调整
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // 加载模型
+    function loadModel(modelPath) {
+      log(`正在加载模型: ${modelPath}`);
+      
+      // 移除当前模型
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+      
+      // 创建GLTF加载器 - 使用THREE命名空间下的GLTFLoader
+      const loader = new THREE.GLTFLoader();
+      
+      // 加载模型
+      loader.load(
+        modelPath,
+        function(gltf) {
+          // 加载成功
+          const model = gltf.scene;
+          
+          // 计算包围盒并调整位置
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          model.position.x = -center.x;
+          model.position.y = -center.y;
+          model.position.z = -center.z;
+          
+          scene.add(model);
+          currentModel = model;
+          
+          log(`模型加载成功! 尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          
+          // 调整相机
+          adjustCamera(model);
+        },
+        function(xhr) {
+          // 进度更新
+          const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+          log(`加载进度: ${percent}%`);
+        },
+        function(error) {
+          // 加载失败
+          log(`模型加载失败: ${error.message}`, true);
+        }
+      );
+    }
+    
+    // 调整相机位置以适应模型大小
+    function adjustCamera(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / Math.sin(fov / 2));
+      
+      // 给相机一些额外距离
+      cameraZ = cameraZ * 1.5;
+      
+      const direction = new THREE.Vector3(1, 0.5, 1);
+      direction.normalize();
+      camera.position.copy(direction.multiplyScalar(cameraZ));
+      camera.lookAt(center);
+      
+      controls.target.copy(center);
+      controls.update();
+    }
+    
+    // 日志显示
+    function log(message, isError = false) {
+      console.log(message);
+      status.textContent = message;
+      if (isError) {
+        status.style.color = '#ff6666';
+      } else {
+        status.style.color = 'white';
+      }
+    }
+    
+    // 初始化场景
+    init();
+  </script>
+</body>
+</html> 

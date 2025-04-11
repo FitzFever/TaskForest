@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TaskForest 3D模型调试查看器</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow: auto;
+      width: 400px;
+      border-radius: 5px;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 80vh;
+      overflow: auto;
+      width: 250px;
+      border-radius: 5px;
+    }
+    .control-section {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #555;
+      padding-bottom: 10px;
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button.selected {
+      background: #2E7D32;
+      font-weight: bold;
+    }
+    .control-group {
+      margin: 10px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    select, input {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .material-controls {
+      margin-top: 10px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .toggle-control {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">正在加载...</div>
+  <div id="controls">
+    <div class="control-section">
+      <h3>模型选择</h3>
+      <select id="model-select" onchange="selectModel(this.value)">
+        <option value="">-- 选择模型 --</option>
+        <option value="export/trees/oak.glb">橡树 (Oak)</option>
+        <option value="export/trees/pine.glb">松树 (Pine)</option>
+        <option value="export/trees/maple.glb">枫树 (Maple)</option>
+        <option value="export/trees/cherry.glb">樱花树 (Cherry)</option>
+        <option value="export/trees/willow.glb">柳树 (Willow)</option>
+        <option value="export/trees/apple.glb">苹果树 (Apple)</option>
+        <option value="export/trees/palm.glb">棕榈树 (Palm)</option>
+        <option value="export/trees/seedstage_oak.glb">橡树种子</option>
+        <option value="export/trees/seedstage_pine.glb">松树种子</option>
+        <option value="export/trees/seedstage_apple.glb">苹果树种子</option>
+        <option value="export/trees/oak_mature.glb">橡树成熟期</option>
+        <option value="export/trees/pine_mature.glb">松树成熟期</option>
+        <option value="export/trees/maple_mature.glb">枫树成熟期</option>
+        <option value="export/trees/cherry_mature.glb">樱花树成熟期</option>
+        <option value="export/trees/willow_mature.glb">柳树成熟期</option>
+        <option value="export/trees/apple_mature.glb">苹果树成熟期</option>
+        <option value="export/trees/palm_mature.glb">棕榈树成熟期</option>
+      </select>
+    </div>
+    
+    <div class="control-section">
+      <h3>渲染设置</h3>
+      <div class="toggle-control">
+        <label class="switch">
+          <input type="checkbox" id="toggle-wireframe" onchange="toggleWireframe(this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span>线框模式</span>
+      </div>
+      <div class="toggle-control">
+        <label class="switch">
+          <input type="checkbox" id="toggle-grid" checked onchange="toggleGrid(this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span>显示网格</span>
+      </div>
+      <div class="toggle-control">
+        <label class="switch">
+          <input type="checkbox" id="toggle-axes" checked onchange="toggleAxes(this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span>显示坐标轴</span>
+      </div>
+      <div class="control-group">
+        <label for="bg-color">背景颜色:</label>
+        <select id="bg-color" onchange="changeBackground(this.value)">
+          <option value="0x333333">暗灰色</option>
+          <option value="0x000000">黑色</option>
+          <option value="0xCCCCCC">浅灰色</option>
+          <option value="0xffffff">白色</option>
+          <option value="0x7EC850">绿色</option>
+          <option value="0x87CEEB">天蓝色</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="control-section">
+      <h3>灯光设置</h3>
+      <div class="control-group">
+        <label for="ambient-intensity">环境光强度:</label>
+        <input type="range" min="0" max="1" step="0.1" value="0.6" id="ambient-intensity" onchange="updateLights()">
+        <span id="ambient-value">0.6</span>
+      </div>
+      <div class="control-group">
+        <label for="directional-intensity">平行光强度:</label>
+        <input type="range" min="0" max="2" step="0.1" value="0.8" id="directional-intensity" onchange="updateLights()">
+        <span id="directional-value">0.8</span>
+      </div>
+    </div>
+    
+    <div class="control-section">
+      <h3>模型调试</h3>
+      <button onclick="analyzeModel()">分析模型结构</button>
+      <button onclick="showBlenderExportSettings()">Blender导出设置</button>
+      <button onclick="showMaterialInfo()">材质信息</button>
+      <button onclick="fixDefaultMaterials()">修复材质显示</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.110.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.110.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    // 全局变量
+    let scene, camera, renderer, model, controls;
+    let gridHelper, axesHelper;
+    let ambientLight, directionalLight;
+    const info = document.getElementById('info');
+    
+    // 日志函数
+    function log(message) {
+      console.log(message);
+      info.innerHTML += message + '<br>';
+      info.scrollTop = info.scrollHeight;
+    }
+    
+    function clearLog() {
+      info.innerHTML = '';
+    }
+    
+    // 初始化场景
+    function init() {
+      clearLog();
+      log('初始化增强型3D模型查看器...');
+      
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x333333);
+      
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(3, 3, 10);
+      
+      // 创建渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild(renderer.domElement);
+      
+      // 添加光源
+      ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      
+      directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 5);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+      
+      // 添加网格
+      gridHelper = new THREE.GridHelper(10, 10);
+      scene.add(gridHelper);
+      
+      // 添加坐标轴
+      axesHelper = new THREE.AxesHelper(5);
+      scene.add(axesHelper);
+      
+      // 添加轨道控制器
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      
+      // 窗口大小调整
+      window.addEventListener('resize', onWindowResize);
+      
+      log('查看器初始化完成');
+      
+      // 获取URL参数
+      const urlParams = new URLSearchParams(window.location.search);
+      const modelParam = urlParams.get('model');
+      
+      if (modelParam) {
+        // 从URL参数加载模型
+        document.getElementById('model-select').value = modelParam;
+        loadModel(modelParam);
+      }
+      
+      // 启动渲染循环
+      animate();
+    }
+    
+    // 窗口大小调整
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // 模型选择
+    function selectModel(path) {
+      if (path) {
+        loadModel(path);
+        // 更新URL参数但不刷新页面
+        const url = new URL(window.location);
+        url.searchParams.set('model', path);
+        window.history.pushState({}, '', url);
+      }
+    }
+    
+    // 加载模型
+    function loadModel(path) {
+      clearLog();
+      log(`加载模型: ${path}`);
+      
+      // 移除现有模型
+      if (model) {
+        log('移除现有模型');
+        scene.remove(model);
+        model = null;
+      }
+      
+      // 检查GLTFLoader是否可用
+      if (typeof THREE.GLTFLoader !== 'function') {
+        log('错误: GLTFLoader未加载');
+        return;
+      }
+      
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        path,
+        function(gltf) {
+          log('模型加载成功!');
+          model = gltf.scene;
+          
+          // 遍历所有子对象
+          log(`模型结构:`);
+          traverseModel(model, 0);
+          
+          // 计算模型尺寸
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          log(`尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          log(`中心点: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
+          
+          // 重置位置
+          model.position.x = -center.x;
+          model.position.y = -center.y;
+          model.position.z = -center.z;
+          
+          model.traverse(function(node) {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+            }
+          });
+          
+          scene.add(model);
+          
+          // 调整相机
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const distance = maxDim * 2.5;
+          camera.position.set(distance, distance / 2, distance);
+          controls.target.set(0, 0, 0);
+          controls.update();
+        },
+        function(xhr) {
+          if (xhr.total > 0) {
+            const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+            log(`加载进度: ${percent}%`);
+          } else {
+            log(`加载中... ${xhr.loaded} 字节`);
+          }
+        },
+        function(error) {
+          log(`加载失败: ${error.message}`);
+          console.error('详细错误:', error);
+        }
+      );
+    }
+    
+    // 递归遍历模型结构
+    function traverseModel(object, level) {
+      const indent = '  '.repeat(level);
+      log(`${indent}+ ${object.name || '未命名'} (${object.type})`);
+      
+      if (object.children && object.children.length > 0) {
+        object.children.forEach((child) => {
+          traverseModel(child, level + 1);
+        });
+      }
+      
+      if (object.isMesh) {
+        const material = object.material;
+        log(`${indent}  材质: ${material.name || '默认'} (${material.type})`);
+      }
+    }
+    
+    // 显示材质信息
+    function showMaterialInfo() {
+      clearLog();
+      log('模型材质信息:');
+      
+      if (!model) {
+        log('请先加载模型');
+        return;
+      }
+      
+      const materials = new Set();
+      model.traverse(function(node) {
+        if (node.isMesh && node.material) {
+          if (Array.isArray(node.material)) {
+            node.material.forEach(mat => materials.add(mat));
+          } else {
+            materials.add(node.material);
+          }
+        }
+      });
+      
+      if (materials.size === 0) {
+        log('模型没有材质');
+        return;
+      }
+      
+      let index = 1;
+      materials.forEach(material => {
+        log(`材质 #${index++}: ${material.name || '未命名'} (${material.type})`);
+        log(`  颜色: ${formatColor(material.color)}`);
+        if (material.map) log(`  贴图: ${material.map.name || '未命名贴图'}`);
+        log(`  透明度: ${material.opacity}`);
+        log(`  透明: ${material.transparent}`);
+        log(`  粗糙度: ${material.roughness !== undefined ? material.roughness : 'N/A'}`);
+        log(`  金属度: ${material.metalness !== undefined ? material.metalness : 'N/A'}`);
+        log(`  双面: ${material.side === THREE.DoubleSide}`);
+        log('');
+      });
+    }
+    
+    // 格式化颜色
+    function formatColor(color) {
+      if (!color) return 'undefined';
+      return `RGB(${Math.floor(color.r * 255)}, ${Math.floor(color.g * 255)}, ${Math.floor(color.b * 255)})`;
+    }
+    
+    // 修复默认材质
+    function fixDefaultMaterials() {
+      if (!model) {
+        log('请先加载模型');
+        return;
+      }
+      
+      clearLog();
+      log('尝试修复材质显示问题...');
+      
+      let fixedCount = 0;
+      
+      model.traverse(function(node) {
+        if (node.isMesh) {
+          // 检查是否为默认材质或缺失材质
+          if (!node.material || 
+              (node.material.type === 'MeshStandardMaterial' && 
+               node.material.color.r === 1 && node.material.color.g === 1 && node.material.color.b === 1)) {
+            
+            // 根据名称为对象应用特定材质
+            let newMaterial;
+            const name = node.name.toLowerCase();
+            
+            if (name.includes('trunk')) {
+              // 树干材质
+              newMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(0x8B4513),  // 棕色
+                roughness: 0.8,
+                metalness: 0.1
+              });
+              log(`为树干应用棕色材质: ${node.name}`);
+            } 
+            else if (name.includes('crown') || name.includes('leaves')) {
+              // 树冠/叶子材质
+              newMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(0x228B22),  // 森林绿
+                roughness: 0.7,
+                metalness: 0.0
+              });
+              log(`为树冠应用绿色材质: ${node.name}`);
+            }
+            else if (name.includes('fruit') || name.includes('apple')) {
+              // 果实材质
+              newMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(0xFF0000),  // 红色
+                roughness: 0.3,
+                metalness: 0.0
+              });
+              log(`为果实应用红色材质: ${node.name}`);
+            }
+            else {
+              // 其他部分的默认材质
+              newMaterial = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(0x808080),  // 灰色
+                roughness: 0.5,
+                metalness: 0.2
+              });
+              log(`为其他部分应用默认材质: ${node.name}`);
+            }
+            
+            node.material = newMaterial;
+            fixedCount++;
+          }
+        }
+      });
+      
+      log(`完成材质修复，更新了 ${fixedCount} 个对象的材质`);
+    }
+    
+    // 分析模型结构
+    function analyzeModel() {
+      if (!model) {
+        log('请先加载模型');
+        return;
+      }
+      
+      clearLog();
+      log('模型结构分析:');
+      
+      // 计数各类对象
+      let meshCount = 0;
+      let emptyCount = 0;
+      let groupCount = 0;
+      let materialCount = 0;
+      let textureCount = 0;
+      let vertexCount = 0;
+      let faceCount = 0;
+      
+      const materials = new Set();
+      const textures = new Set();
+      
+      model.traverse(function(node) {
+        if (node.type === 'Mesh') {
+          meshCount++;
+          
+          // 计算顶点和面数
+          if (node.geometry) {
+            if (node.geometry.attributes.position) {
+              vertexCount += node.geometry.attributes.position.count;
+            }
+            if (node.geometry.index) {
+              faceCount += node.geometry.index.count / 3;
+            } else if (node.geometry.attributes.position) {
+              faceCount += node.geometry.attributes.position.count / 3;
+            }
+          }
+          
+          // 材质
+          if (node.material) {
+            if (Array.isArray(node.material)) {
+              node.material.forEach(mat => materials.add(mat));
+            } else {
+              materials.add(node.material);
+            }
+            
+            // 纹理
+            const mat = Array.isArray(node.material) ? node.material[0] : node.material;
+            if (mat.map) textures.add(mat.map);
+            if (mat.normalMap) textures.add(mat.normalMap);
+            if (mat.roughnessMap) textures.add(mat.roughnessMap);
+            if (mat.metalnessMap) textures.add(mat.metalnessMap);
+          }
+        } else if (node.type === 'Group') {
+          groupCount++;
+        } else if (node.type === 'Object3D') {
+          emptyCount++;
+        }
+      });
+      
+      materialCount = materials.size;
+      textureCount = textures.size;
+      
+      log(`网格对象数量: ${meshCount}`);
+      log(`组对象数量: ${groupCount}`);
+      log(`空对象数量: ${emptyCount}`);
+      log(`材质数量: ${materialCount}`);
+      log(`纹理数量: ${textureCount}`);
+      log(`顶点数量: ${vertexCount}`);
+      log(`面数量: ${Math.floor(faceCount)}`);
+      
+      // 检查模型层级
+      log(`\n模型层级结构:`);
+      traverseModel(model, 0);
+    }
+    
+    // 显示Blender导出设置建议
+    function showBlenderExportSettings() {
+      clearLog();
+      log('Blender GLB/GLTF导出设置建议:');
+      log('');
+      log('基本设置:');
+      log('- 格式: GLB (.glb)');
+      log('- 包含: 选中的对象');
+      log('- 变换: +Y向上');
+      log('');
+      log('几何体设置:');
+      log('- 应用修改器: ✓');
+      log('- UVs: ✓');
+      log('- 法线: ✓');
+      log('- 切线: ✓');
+      log('- 顶点颜色: ✓');
+      log('');
+      log('材质设置:');
+      log('- 材质: ✓');
+      log('- 纹理: ✓');
+      log('');
+      log('动画设置:');
+      log('- 动画: ✓ (如果有)');
+      log('- 限制为播放区域: ✓');
+      log('- 骨骼: ✓ (如果有)');
+      log('- 形态键: ✓ (如果有)');
+      log('');
+      log('如果模型看起来不正确:');
+      log('1. 确保几何体正确 (无内部面)');
+      log('2. 检查材质节点设置');
+      log('3. 确保灯光正确配置');
+      log('4. 尝试应用所有变换');
+    }
+    
+    // 灯光更新
+    function updateLights() {
+      const ambientIntensity = document.getElementById('ambient-intensity').value;
+      const directionalIntensity = document.getElementById('directional-intensity').value;
+      
+      document.getElementById('ambient-value').textContent = ambientIntensity;
+      document.getElementById('directional-value').textContent = directionalIntensity;
+      
+      ambientLight.intensity = parseFloat(ambientIntensity);
+      directionalLight.intensity = parseFloat(directionalIntensity);
+    }
+    
+    // 切换线框模式
+    function toggleWireframe(enabled) {
+      if (!model) return;
+      
+      model.traverse(function(node) {
+        if (node.isMesh && node.material) {
+          if (Array.isArray(node.material)) {
+            node.material.forEach(mat => mat.wireframe = enabled);
+          } else {
+            node.material.wireframe = enabled;
+          }
+        }
+      });
+    }
+    
+    // 切换网格
+    function toggleGrid(enabled) {
+      gridHelper.visible = enabled;
+    }
+    
+    // 切换坐标轴
+    function toggleAxes(enabled) {
+      axesHelper.visible = enabled;
+    }
+    
+    // 修改背景颜色
+    function changeBackground(colorHex) {
+      scene.background = new THREE.Color(parseInt(colorHex));
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    // 初始化应用
+    init();
+  </script>
+</body>
+</html> 

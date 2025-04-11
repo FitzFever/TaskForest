@@ -42,6 +42,34 @@
 - `TaskForest_材质和纹理规范.md` - 材质标准和参数
 - `TaskForest_动画和特效规范.md` - 动画效果和实现指南
 
+### 4. 生命周期说明文档
+
+每种树木都有独立的生命周期说明文档，包含其所有生长阶段和使用方法：
+
+- `models/README_OAK.md` - 橡树生命周期说明
+- `models/README_PINE.md` - 松树生命周期说明
+- `models/README_CHERRY.md` - 樱花树生命周期说明
+- `models/README_PALM.md` - 棕榈树生命周期说明
+
+## 设计资源组织
+
+本目录包含所有TaskForest项目的设计资源，包括文档、原型、模型、图像等。
+
+### 目录结构
+
+- `design/models/` - 3D模型资源目录，包含所有树木和环境模型
+  - `source/` - 模型源文件(.blend)
+  - `export/` - 导出的模型文件(.glb)
+  - `README_*.md` - 每种树木的生命周期说明文档
+- `design/images/` - 图像资源
+- `design/*.md` - 设计文档和规范
+
+### 3D模型资源
+
+所有3D模型资源统一放置在`models/`目录下进行管理，具体请参阅[3D模型资源目录](./models/README.md)。
+
+项目通过符号链接方式，将`design/models/export`链接到`client/public/models`，这样既保持了设计资源的统一管理，又方便了客户端代码的引用。
+
 ## 开发人员获取资源指南
 
 ### 模型集成流程
@@ -49,11 +77,13 @@
 1. **确认需要的树种和阶段**
    - 查阅`TaskForest_3D视觉进度报告.md`确认所需模型的完成状态
    - 所有标记为"✅ 完成"的模型可直接使用
+   - 查阅各树种的生命周期说明文档（例如`models/README_OAK.md`、`models/README_PINE.md`、`models/README_CHERRY.md`或`models/README_PALM.md`）了解详细信息
 
 2. **导出为Web友好格式**
    - 从.blend文件导出为glTF/GLB格式（推荐）
    - 导出命令：`blender -b {模型文件}.blend -P export_gltf.py -- {输出路径}`
    - 导出脚本位于`/scripts/export_gltf.py`
+   - 也可直接使用`models/export/trees`目录下的预导出模型
 
 3. **加载到Three.js**
    - 使用Three.js的GLTFLoader加载模型
@@ -64,6 +94,7 @@
      scene.add(gltf.scene);
    });
    ```
+   - 详细加载示例请参考各树种生命周期说明文档
 
 ### 资源命名规范
 
@@ -139,10 +170,34 @@
 ### 当前完成情况
 
 目前已完成的模型：
-- 橡树全生命周期（种子、幼苗、成长、成熟）
-- 其他7种树木的种子阶段
+- 橡树全生命周期（种子、幼苗、成长、成熟）✅
+- 松树全生命周期（种子、幼苗、成长、成熟）✅ 
+- 樱花树全生命周期（种子、幼苗、成长、成熟）✅ 花期特殊版本 ⏳
+- 棕榈树全生命周期（种子、幼苗、成长、成熟）✅
+- 苹果树全生命周期（种子、幼苗、成长、成熟、果实期）✅
+- 枫树全生命周期（种子、幼苗、成长、成熟、秋季特殊版本）✅
+- 柳树全生命周期（种子、幼苗、成长、成熟）✅
+
+已完成的文档：
+- TaskForest_3D视觉进度报告.md
+- TaskForest_3D模型制作计划.md
+- TaskForest_材质和纹理规范.md
+- TaskForest_动画和特效规范.md
+- models/README_OAK.md - 橡树生命周期完整说明 ✅
+- models/README_PINE.md - 松树生命周期完整说明 ✅
+- models/README_CHERRY.md - 樱花树生命周期完整说明 ✅
+- models/README_PALM.md - 棕榈树生命周期完整说明 ✅
+- models/README_APPLE.md - 苹果树生命周期完整说明 ✅
+- models/README_MAPLE.md - 枫树生命周期完整说明 ✅
+- models/README_WILLOW.md - 柳树生命周期完整说明 ✅
 
 请参考`TaskForest_3D视觉进度报告.md`获取最新进度信息。
+
+### 注意事项
+
+所有树种的全部生长阶段（种子、幼苗、成长、成熟）已在Blender中创建完成，相关模型文件已导出到`design/models/source/export/trees`目录。部分特殊版本（如樱花树花期）仍在开发中。
+
+如发现任何模型文件缺失或导出问题，请联系设计团队进行修复。
 
 ### 联系方式
 
@@ -152,4 +207,4 @@
 
 ---
 
-*最后更新：2023年4月20日* 
+*最后更新：2023-12-02* 

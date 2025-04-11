@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型加载测试</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/GLTFLoader.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { width: 100%; height: 100%; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+    }
+    .button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #urls {
+      margin-top: 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    模型加载测试
+    <div>
+      <button class="button" onclick="testDirectModelPath()">测试1:直接路径</button>
+      <button class="button" onclick="testRelativeModelPath()">测试2:相对路径</button>
+      <button class="button" onclick="testAbsoluteModelPath()">测试3:绝对路径</button>
+    </div>
+    <div id="status">准备测试...</div>
+    <div id="urls"></div>
+  </div>
+  
+  <script>
+    // 创建场景
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    
+    // 创建相机
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(3, 3, 3);
+    
+    // 创建渲染器
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    
+    // 控制器
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    // 灯光
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5);
+    scene.add(directionalLight);
+    
+    // 添加网格
+    const gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+    
+    // 添加坐标轴
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    
+    // 当前模型
+    let currentModel = null;
+    
+    // 状态显示
+    function updateStatus(text) {
+      document.getElementById('status').textContent = text;
+      console.log(text);
+    }
+    
+    // 更新URL显示
+    function updateURLs(path) {
+      const urlsElement = document.getElementById('urls');
+      const baseURL = window.location.href.replace(/\/[^\/]*$/, '');
+      
+      urlsElement.innerHTML = `
+        <div>测试URL:</div>
+        <div>1. 基础URL: ${baseURL}</div>
+        <div>2. 模型路径: ${path}</div>
+        <div>3. 完整URL: ${new URL(path, baseURL)}</div>
+      `;
+    }
+    
+    // 加载模型函数
+    function loadModel(path) {
+      updateStatus('开始加载模型: ' + path);
+      updateURLs(path);
+      
+      // 清除当前模型
+      if (currentModel) {
+        scene.remove(currentModel);
+      }
+      
+      // 创建加载器
+      const loader = new THREE.GLTFLoader();
+      
+      // 加载模型
+      loader.load(
+        path,
+        // 成功回调
+        function(gltf) {
+          updateStatus('模型加载成功!');
+          const model = gltf.scene;
+          scene.add(model);
+          currentModel = model;
+          
+          // 计算包围盒以居中模型
+          const box = new THREE.Box3().setFromObject(model);
+          const center = box.getCenter(new THREE.Vector3());
+          model.position.x = -center.x;
+          model.position.y = -center.y;
+          model.position.z = -center.z;
+        },
+        // 进度回调
+        function(xhr) {
+          const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+          updateStatus(`加载进度: ${percent}%`);
+        },
+        // 错误回调
+        function(error) {
+          updateStatus('模型加载失败: ' + error.message);
+          console.error('模型加载错误:', error);
+        }
+      );
+    }
+    
+    // 测试三种不同的路径
+    function testDirectModelPath() {
+      loadModel('oak.glb');
+    }
+    
+    function testRelativeModelPath() {
+      loadModel('export/trees/oak.glb');
+    }
+    
+    function testAbsoluteModelPath() {
+      loadModel('/export/trees/oak.glb');
+    }
+    
+    // 直接尝试加载模型
+    function tryLoadAllFormats() {
+      // 尝试访问模型文件并报告状态
+      [
+        'oak.glb',
+        'export/trees/oak.glb',
+        '/export/trees/oak.glb'
+      ].forEach(path => {
+        fetch(path)
+          .then(response => {
+            if (response.ok) {
+              console.log(`路径可访问: ${path}`);
+            } else {
+              console.error(`路径无法访问: ${path}, 状态: ${response.status}`);
+            }
+          })
+          .catch(error => {
+            console.error(`路径错误: ${path}, 错误: ${error.message}`);
+          });
+      });
+    }
+    
+    // 初始化后立即尝试所有格式
+    tryLoadAllFormats();
+    
+    // 窗口大小调整
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // 渲染循环
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+  </script>
+</body>
+</html> 
