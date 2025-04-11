@@ -4,6 +4,7 @@
  */
 import express from 'express';
 import cors from 'cors';
+import { TASK_TYPE_TO_TREE_TYPE_MAPPING, getDefaultTreeTypeForTask } from './constants/treeMapping.js';
 
 // 设置编码
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -453,18 +454,22 @@ app.post('/api/tasks', (req, res) => {
     }
     
     // 创建新任务
+    const taskType = payload.type || 'NORMAL';
+    // 获取默认树木类型
+    const defaultTreeType = getDefaultTreeTypeForTask(taskType);
+    
     const newTask = {
       id: Date.now().toString(),
       title: payload.title,
       description: payload.description || '',
-      type: payload.type || 'NORMAL',
+      type: taskType,
       priority: payload.priority !== undefined ? payload.priority : 2,
       status: 'TODO',
       dueDate: payload.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       tags: payload.tags || [],
-      treeType: payload.treeType || 'OAK',
+      treeType: payload.treeType || defaultTreeType,
       growthStage: 0
     };
     

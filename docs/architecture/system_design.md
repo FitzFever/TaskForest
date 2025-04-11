@@ -67,9 +67,64 @@ interface Task {
   categoryId?: number;
   treeId?: number;
 }
+
+// 任务类型枚举
+enum TaskType {
+  NORMAL = 'NORMAL',       // 普通日常任务
+  RECURRING = 'RECURRING', // 定期重复任务
+  PROJECT = 'PROJECT',     // 长期项目任务
+  LEARNING = 'LEARNING',   // 学习类任务
+  WORK = 'WORK',           // 工作类任务
+  LEISURE = 'LEISURE'      // 休闲类任务
+}
+
+// 树木类型枚举
+enum TreeType {
+  OAK = 'OAK',         // 橡树
+  PINE = 'PINE',       // 松树
+  WILLOW = 'WILLOW',   // 柳树
+  APPLE = 'APPLE',     // 苹果树
+  MAPLE = 'MAPLE',     // 枫树
+  PALM = 'PALM',       // 棕榈树
+  CHERRY = 'CHERRY'    // 樱花树
+}
 ```
 
-#### 2.1.2 核心API设计
+#### 2.1.2 任务类型与树木类型映射机制
+
+TaskForest实现了任务类型与树木类型的自动映射关系，使不同类型的任务能够对应到特定的树木类型：
+
+| 任务类型    | 树木类型 | 说明           |
+|------------|----------|----------------|
+| NORMAL     | OAK      | 普通日常任务 -> 橡树 |
+| RECURRING  | PINE     | 定期重复任务 -> 松树 |
+| PROJECT    | WILLOW   | 长期项目任务 -> 柳树 |
+| LEARNING   | APPLE    | 学习类任务 -> 苹果树 |
+| WORK       | MAPLE    | 工作类任务 -> 枫树   |
+| LEISURE    | PALM     | 休闲类任务 -> 棕榈树 |
+
+映射实现方式：
+
+```typescript
+// 任务类型与树木类型映射关系常量
+const TASK_TYPE_TO_TREE_TYPE_MAPPING: Record<TaskType, TreeType> = {
+  'NORMAL': 'OAK',      // 普通日常任务 -> 橡树
+  'RECURRING': 'PINE',  // 定期重复任务 -> 松树
+  'PROJECT': 'WILLOW',  // 长期项目任务 -> 柳树
+  'LEARNING': 'APPLE',  // 学习类任务 -> 苹果树
+  'WORK': 'MAPLE',      // 工作类任务 -> 枫树
+  'LEISURE': 'PALM',    // 休闲类任务 -> 棕榈树
+};
+
+// 根据任务类型获取默认的树木类型
+function getDefaultTreeTypeForTask(taskType: TaskType): TreeType {
+  return TASK_TYPE_TO_TREE_TYPE_MAPPING[taskType] || 'OAK';
+}
+```
+
+在创建任务时，系统会根据任务类型自动选择对应的树木类型，用户也可以手动指定树木类型覆盖默认映射。
+
+#### 2.1.3 核心API设计
 
 | 接口 | 方法 | 说明 |
 |------|------|------|
@@ -81,7 +136,7 @@ interface Task {
 | `/api/tasks/:id/progress` | PUT | 更新任务进度 |
 | `/api/tasks/:id/tree-health` | GET | 获取任务关联的树木健康状态 |
 
-#### 2.1.3 组件设计
+#### 2.1.4 组件设计
 
 - **TaskList**: 任务列表组件
 - **TaskDetail**: 任务详情组件

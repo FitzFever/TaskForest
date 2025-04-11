@@ -464,4 +464,100 @@ POST /api/trees/health/batch-update
 
 1. 健康状态值和进度值必须在0-100范围内
 2. 批量更新操作可能需要较长处理时间，建议不要频繁调用
-3. 健康状态预测基于当前数据，实际情况可能因任务进度变化而改变 
+3. 健康状态预测基于当前数据，实际情况可能因任务进度变化而改变
+
+## 3. 任务类型与树木类型映射
+
+### 3.1 映射关系说明
+
+TaskForest系统实现了任务类型与树木类型的自动映射关系，使得不同类型的任务默认创建对应类型的树木，增强了游戏化体验：
+
+| 任务类型        | 树木类型 | 说明                |
+|---------------|----------|---------------------|
+| NORMAL        | OAK      | 普通日常任务 -> 橡树   |
+| RECURRING     | PINE     | 定期重复任务 -> 松树   |
+| PROJECT       | WILLOW   | 长期项目任务 -> 柳树   |
+| LEARNING      | APPLE    | 学习类任务 -> 苹果树   |
+| WORK          | MAPLE    | 工作类任务 -> 枫树     |
+| LEISURE       | PALM     | 休闲类任务 -> 棕榈树   |
+
+### 3.2 查询映射关系
+
+```
+GET /api/constants/tree-mappings
+```
+
+**描述**：获取任务类型与树木类型的映射关系
+
+**认证要求**：无
+
+**参数**：无
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "mappings": {
+      "NORMAL": "OAK",
+      "RECURRING": "PINE",
+      "PROJECT": "WILLOW",
+      "LEARNING": "APPLE",
+      "WORK": "MAPLE",
+      "LEISURE": "PALM"
+    },
+    "taskTypes": ["NORMAL", "RECURRING", "PROJECT", "LEARNING", "WORK", "LEISURE"],
+    "treeTypes": ["OAK", "PINE", "WILLOW", "APPLE", "MAPLE", "PALM", "CHERRY"]
+  },
+  "message": "获取映射关系成功",
+  "timestamp": 1675487562589
+}
+```
+
+### 3.3 创建任务时的映射应用
+
+在创建任务时，如果未指定`treeType`参数，系统将根据任务类型自动选择对应的树木类型：
+
+```
+POST /api/tasks
+```
+
+**请求体示例**：
+
+```json
+{
+  "title": "学习React基础知识",
+  "description": "完成React官方文档的学习",
+  "type": "LEARNING",
+  "priority": 2,
+  "dueDate": "2023-07-30T00:00:00Z",
+  "tags": ["学习", "编程", "前端"]
+}
+```
+
+**响应示例**：
+
+```json
+{
+  "code": 201,
+  "data": {
+    "id": "1005",
+    "title": "学习React基础知识",
+    "description": "完成React官方文档的学习",
+    "type": "LEARNING",
+    "status": "TODO",
+    "priority": 2,
+    "dueDate": "2023-07-30T00:00:00Z",
+    "createdAt": "2023-07-20T10:30:00Z",
+    "updatedAt": "2023-07-20T10:30:00Z",
+    "tags": ["学习", "编程", "前端"],
+    "treeType": "APPLE",
+    "growthStage": 0
+  },
+  "message": "任务创建成功，已分配苹果树",
+  "timestamp": 1675487562589
+}
+```
+
+在上述示例中，由于任务类型为"LEARNING"，系统自动将树木类型设置为"APPLE"（苹果树）。 

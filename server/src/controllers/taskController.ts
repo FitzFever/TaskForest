@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import taskTreeService from '../services/taskTreeService.js';
+import { getDefaultTreeTypeForTask } from '../constants/treeTypeMappings.js';
 
 const prisma = new PrismaClient();
 
@@ -225,17 +226,24 @@ export async function createTask(req: Request, res: Response) {
       });
     }
     
-    // 创建任务
+    // 获取任务类型对应的默认树木类型
+    const taskType = type || 'NORMAL';
+    const defaultTreeType = getDefaultTreeTypeForTask(taskType);
+    
+    // 确定使用的树木类型（手动指定的或根据任务类型自动映射的）
+    const finalTreeType = treeType || defaultTreeType;
+    
+    // 创建任务，同时设置treeType字段
     const newTask = await prisma.task.create({
       data: {
         title,
         description: description || '',
-        type: type || 'NORMAL',
+        type: taskType,
         status: status || 'TODO',
         priority: priority || 2,
-        progress: 0,
         dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        tags: tags || [],
+        tags: tags ? tags.join(',') : '',
+        treeType: finalTreeType
       }
     });
 
@@ -243,7 +251,8 @@ export async function createTask(req: Request, res: Response) {
     let tree = null;
     if (autoCreateTree) {
       try {
-        tree = await taskTreeService.createTreeForTask(newTask.id, treeType || 'OAK');
+        // 使用与任务相同的树木类型
+        tree = await taskTreeService.createTreeForTask(newTask.id, finalTreeType);
       } catch (treeError) {
         console.error('自动创建树木失败:', treeError);
         // 继续返回任务创建成功，但提示树木创建失败
@@ -552,7 +561,6 @@ export async function completeTask(req: Request, res: Response) {
       where: { id },
       data: {
         status: 'COMPLETED',
-        progress: 100,
         completedAt: new Date(),
         updatedAt: new Date()
       }

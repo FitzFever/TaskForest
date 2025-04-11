@@ -260,12 +260,28 @@ POST /api/tasks
 |-------------|----------|----------|-------------------------------------|
 | title       | string   | 是       | 任务标题                            |
 | description | string   | 否       | 任务描述                            |
-| type        | string   | 是       | 任务类型                            |
+| type        | string   | 是       | 任务类型 (NORMAL, RECURRING, PROJECT, LEARNING, WORK, LEISURE) |
 | priority    | number   | 否       | 优先级(1-5)，默认3                  |
 | dueDate     | string   | 是       | 截止日期，ISO8601格式               |
 | tags        | string[] | 否       | 标签列表                            |
 | parentId    | string   | 否       | 父任务ID，创建子任务时使用          |
-| treeType    | string   | 否       | 树木类型，默认根据任务类型自动选择  |
+| treeType    | string   | 否       | 树木类型，若不指定则根据任务类型自动映射 |
+| autoCreateTree | boolean | 否     | 是否自动创建关联树木，默认为true    |
+
+**任务类型与树木类型的自动映射关系**:
+
+系统会根据任务类型自动选择对应的树木类型：
+
+| 任务类型    | 自动映射的树木类型 | 说明           |
+|------------|-------------------|----------------|
+| NORMAL     | OAK               | 普通日常任务 -> 橡树 |
+| RECURRING  | PINE              | 定期重复任务 -> 松树 |
+| PROJECT    | WILLOW            | 长期项目任务 -> 柳树 |
+| LEARNING   | APPLE             | 学习类任务 -> 苹果树 |
+| WORK       | MAPLE             | 工作类任务 -> 枫树   |
+| LEISURE    | PALM              | 休闲类任务 -> 棕榈树 |
+
+用户也可以通过`treeType`参数手动指定树木类型，将覆盖自动映射的结果。
 
 **成功响应**：
 

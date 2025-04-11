@@ -59,6 +59,62 @@ TaskForest 采用 Electron + React 的桌面应用架构，结合 Three.js 进�
 - **测试框架**: Jest + React Testing Library
 - **3D 资源处理**: Blender + Three.js GLTFLoader
 
+## 2. 后端架构
+
+### 2.1 服务层架构
+
+TaskForest后端采用分层架构：
+
+- **控制器层（Controllers）**：处理HTTP请求和响应
+- **服务层（Services）**：实现业务逻辑
+- **数据访问层（Repositories）**：处理数据库交互
+- **工具层（Utils）**：提供通用功能和辅助函数
+- **常量定义（Constants）**：定义系统各类常量值和映射关系
+
+```
+src/
+├── controllers/     # 控制器层，处理HTTP请求
+├── services/        # 服务层，实现业务逻辑
+├── models/          # 数据模型定义
+├── repositories/    # 数据访问层
+├── middlewares/     # 中间件
+├── utils/           # 工具函数
+├── constants/       # 常量定义和映射关系
+├── routes/          # 路由定义
+└── app.js           # 应用程序入口
+```
+
+### 2.2 核心功能模块
+
+TaskForest后端实现了以下核心功能模块：
+
+#### 2.2.1 任务管理模块
+
+- 实现任务CRUD操作
+- 任务筛选、排序和分页
+- 任务状态管理
+- 任务标签系统
+
+#### 2.2.2 树木生命周期模块
+
+- 树木创建和生长系统
+- 树木健康状态计算
+- 基于任务进度的树木状态更新
+- **任务类型与树木类型的自动映射系统**
+
+任务类型与树木类型映射系统允许不同类型的任务自动对应到特定的树木类型：
+
+| 任务类型    | 树木类型 | 说明           |
+|------------|----------|----------------|
+| NORMAL     | OAK      | 普通日常任务 -> 橡树 |
+| RECURRING  | PINE     | 定期重复任务 -> 松树 |
+| PROJECT    | WILLOW   | 长期项目任务 -> 柳树 |
+| LEARNING   | APPLE    | 学习类任务 -> 苹果树 |
+| WORK       | MAPLE    | 工作类任务 -> 枫树   |
+| LEISURE    | PALM     | 休闲类任务 -> 棕榈树 |
+
+映射通过`constants/treeTypeMappings.ts`中的常量定义和辅助函数实现，在创建任务时自动应用。
+
 ## 3. 系统模块划分
 
 ### 3.1 核心模块
