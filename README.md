@@ -16,10 +16,10 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 - **数据统计分析**：任务完成率与时间投入分析
 
 ### 技术栈
-- **前端**：React + TypeScript + Three.js + Zustand
-- **后端**：Node.js + Express + Prisma
-- **数据库**：SQLite
-- **桌面容器**：Electron
+- **前端**：React 18 + TypeScript 5 + Three.js + Zustand + Vite
+- **后端**：Node.js 18 + Express 4 + Prisma 4 + TypeScript 5
+- **数据库**：SQLite 3
+- **包管理**：pnpm
 - **AI 集成**：OpenAI API（计划中）
 
 ## 开发计划与进展
@@ -33,16 +33,17 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 - ✅ 前后端通信架构
 - ✅ 基础任务列表与任务管理UI
 - ✅ 树木模型基础加载和展示
-- 🔄 树木生命状态系统实现中
+- ✅ 树木健康状态数据模型
+- 🔄 树木健康状态视觉效果实现中
 - 🔄 任务数据模型扩展中
 - 🔄 前端体验优化中
 
 ### 近期开发计划
 1. **树木生命状态系统** - 实现树木健康状态与任务进度/截止日期的联动
    - ✅ 健康状态数据模型设计
-   - 🔄 健康状态计算逻辑实现中
+   - ✅ 健康状态计算逻辑实现
    - 🔄 生命值与生长阶段映射开发中
-   - ⬜ 健康状态视觉效果实现
+   - 🔄 健康状态视觉效果实现中
 
 2. **树木解锁与奖励系统** - 开发不同类型任务对应不同树种的解锁机制
    - ✅ 树木类型数据模型
@@ -61,9 +62,21 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 
 ## 快速启动
 
-项目提供了便捷的启动脚本，支持 Windows 和 Unix/Linux/macOS 系统。
+项目提供了便捷的启动脚本，支持多种系统和启动方式。
 
-### Windows 系统
+### 推荐：使用开发专用脚本（Unix/Linux/macOS）
+
+```bash
+# 先赋予脚本执行权限
+chmod +x start-dev.sh
+
+# 启动开发环境（前后端）
+./start-dev.sh
+```
+
+### 其他启动方式
+
+#### Windows 系统
 
 ```bash
 # 开发模式启动前后端
@@ -82,7 +95,7 @@ start.bat /p
 start.bat /h
 ```
 
-### Unix/Linux/macOS 系统
+#### Unix/Linux/macOS 系统
 
 ```bash
 # 先赋予脚本执行权限
@@ -130,8 +143,6 @@ cd server && pnpm dev
 | React + TypeScript  | <----> | Node.js + Express   |
 | Three.js            |  API   | 业务逻辑             |
 | Zustand             |        | 数据处理             |
-|---------------------|        |---------------------|
-| Electron容器         |        | 数据持久化层         |
 +---------------------+        +---------------------+
                                         |
                                +---------------------+
@@ -149,28 +160,24 @@ taskforest/
 │   ├── src/                 # 前端源代码
 │   │   ├── components/      # React组件
 │   │   ├── pages/           # 页面组件
-│   │   ├── store/           # 状态管理
 │   │   ├── services/        # API服务
 │   │   ├── three/           # 3D渲染相关
-│   │   └── utils/           # 工具函数
+│   │   └── stores/          # 状态管理
 │   ├── public/              # 静态资源
 │   └── README.md            # 前端文档
 ├── server/                  # 后端代码
 │   ├── src/                 # 后端源代码
 │   │   ├── controllers/     # API控制器
 │   │   ├── services/        # 业务服务
-│   │   ├── models/          # 数据模型
 │   │   ├── routes/          # 路由配置
-│   │   ├── middleware/      # 中间件
-│   │   └── utils/           # 工具函数
+│   │   └── models/          # 数据模型
 │   ├── prisma/              # Prisma ORM
+│   ├── data/                # 数据文件夹
+│   ├── start-dev.sh         # 后端开发启动脚本
 │   └── README.md            # 后端文档
 ├── docs/                    # 项目文档
-│   ├── api/                 # API文档
-│   ├── development/         # 开发规范
-│   ├── architecture/        # 架构文档
-│   └── design/              # 设计文档
-├── start.sh                 # Unix/Linux/macOS启动脚本
+├── start-dev.sh             # 项目开发启动脚本
+├── start.sh                 # Unix启动脚本
 ├── start.bat                # Windows启动脚本
 └── README.md                # 项目总览文档
 ```
@@ -178,49 +185,44 @@ taskforest/
 ## 文档导航
 
 - [项目架构文档](./docs/architecture/architecture_overview.md) - 系统架构设计
-- [详细设计文档](./docs/design/detailed_design.md) - 模块和接口详细设计
+- [开发规范](./docs/development/standards.md) - 开发规范和流程
 - [前端项目说明](./client/README.md) - 前端项目详细说明
 - [后端项目说明](./server/README.md) - 后端项目详细说明
-- [开发快速指南](./docs/guides/development_quick_start.md) - 快速上手开发流程
-- [开发规范](./docs/development/standards.md) - 开发规范和流程
-- [故障排除指南](./docs/development/troubleshooting.md) - 开发常见问题解决方案
-- [贡献指南](./docs/development/contributing.md) - 项目贡献指南
 - [API 文档](./docs/api/api_reference.md) - API 接口参考
-- [开发任务](./docs/development_tasks.md) - 开发任务清单
+- [故障排除指南](./docs/development/troubleshooting.md) - 开发常见问题解决方案
 
 ## 环境要求
 
 - Node.js >= 18
-- npm >= 8 或 pnpm >= 7
+- pnpm >= 7（推荐）或 npm >= 8
 - Git
-
-## 贡献指南
-
-请参阅 [贡献指南](./docs/development/contributing.md) 了解如何为项目做出贡献。
 
 ## 常见问题解决
 
 1. **启动脚本提示"无法识别的命令"**
    - 确保已安装Node.js和pnpm
-   - 在Unix/Linux/macOS系统上，确保已设置脚本执行权限：`chmod +x start.sh`
+   - 在Unix/Linux/macOS系统上，确保已设置脚本执行权限：`chmod +x start-dev.sh`
 
 2. **前端启动后显示空白页面**
    - 检查浏览器控制台是否有错误
-   - 确认后端服务是否正常运行
-   - 检查前端配置文件是否正确 (参考 [故障排除指南](./docs/development/troubleshooting.md#前端配置问题))
+   - 确认后端服务是否正常运行（API地址默认为 http://localhost:9000）
+   - 检查前端配置文件是否正确（.env.development.local）
 
 3. **后端服务启动失败**
-   - 检查端口3000是否被占用
+   - 检查端口9000是否被占用
    - 确认数据库配置是否正确
-   - ESM模块相关问题 (参考 [故障排除指南](./docs/development/troubleshooting.md#esm-模块问题))
-   - Prisma类型问题 (参考 [故障排除指南](./docs/development/troubleshooting.md#prisma-与类型系统问题))
+   - 检查logs/目录中的日志文件获取详细错误信息
 
-4. **类型错误或编译失败**
-   - 检查TypeScript配置
-   - 确保导入路径包含正确的扩展名
-   - 详细解决方案请参考 [故障排除指南](./docs/development/troubleshooting.md)
+4. **3D模型加载失败**
+   - 检查控制台是否有资源加载错误
+   - 确认public/models目录中的模型文件是否存在
+   - 检查模型路径是否正确配置
 
 详细问题解决方案请参阅 [开发常见问题解决指南](./docs/development/troubleshooting.md)。
+
+## 贡献指南
+
+请参阅 [贡献指南](./docs/development/contributing.md) 了解如何为项目做出贡献。
 
 ## 许可证
 

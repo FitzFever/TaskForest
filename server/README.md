@@ -48,18 +48,19 @@ server/
 │   │   ├── app.ts        # 应用配置
 │   │   ├── db.ts         # 数据库配置
 │   │   └── openai.ts     # OpenAI 配置
-│   └── app.ts            # 应用入口
+│   ├── app.ts            # 应用入口
+│   └── dev.js            # 开发模式服务器
 ├── prisma/               # Prisma ORM
 │   ├── schema.prisma     # 数据库 Schema
 │   ├── migrations/       # 数据库迁移
 │   └── seed.ts           # 数据库种子脚本
-├── tests/                # 测试文件
-│   ├── unit/             # 单元测试
-│   ├── integration/      # 集成测试
-│   └── fixtures/         # 测试数据
-├── .eslintrc.js          # ESLint 配置
-├── .prettierrc           # Prettier 配置
-├── jest.config.js        # Jest 配置
+├── data/                 # 数据文件
+│   └── dev.db            # SQLite开发数据库
+├── logs/                 # 日志文件
+│   └── dev.log           # 开发日志
+├── dist/                 # 编译输出
+├── start-dev.sh          # 开发环境启动脚本
+├── .env                  # 环境变量
 ├── tsconfig.json         # TypeScript 配置
 └── package.json          # 项目依赖
 ```
@@ -72,8 +73,11 @@ server/
 # 进入后端目录
 cd server
 
-# 安装依赖
+# 安装依赖（推荐使用pnpm）
 pnpm install
+
+# 或使用npm
+npm install
 ```
 
 ### 数据库设置
@@ -92,12 +96,24 @@ pnpm prisma db seed
 ### 启动服务
 
 ```bash
-# 开发模式
+# 使用开发脚本启动（推荐）
+chmod +x start-dev.sh
+./start-dev.sh
+
+# 或使用pnpm命令
 pnpm dev
+
+# 或使用npm
+npm run dev
 
 # 生产模式
 pnpm start
 ```
+
+开发脚本 `start-dev.sh` 会自动：
+1. 启动后端API服务
+2. 监控日志输出
+3. 在服务关闭时清理进程
 
 ### 测试
 
@@ -121,6 +137,18 @@ TaskForest 后端提供 RESTful API 接口，遵循以下设计原则：
 3. 使用状态码表示请求结果
 4. 支持分页、过滤和排序
 5. 返回 JSON 格式数据
+
+主要接口：
+
+- `GET /api/tasks` - 获取任务列表
+- `GET /api/tasks/:id` - 获取单个任务
+- `POST /api/tasks` - 创建任务
+- `PUT /api/tasks/:id` - 更新任务
+- `DELETE /api/tasks/:id` - 删除任务
+- `PATCH /api/tasks/:id/complete` - 完成任务
+- `GET /api/trees` - 获取树木列表
+- `GET /api/trees/:id` - 获取单个树木
+- `PUT /api/trees/:id` - 更新树木
 
 详细的 API 文档请参考 [API 文档](../docs/api/api_reference.md)。
 
@@ -177,6 +205,7 @@ model Tree {
 3. 使用依赖注入模式，提高代码可测试性
 4. 统一的错误处理和响应格式
 5. 详细的日志记录
+6. 遵循渐进式修改原则
 
 ## 错误处理
 
@@ -195,6 +224,33 @@ model Tree {
   }
 }
 ```
+
+## 开发进度
+
+### 已完成功能 ✅
+
+- 基础项目架构搭建完成
+- 任务CRUD基础功能实现
+- 树木数据模型实现
+- 任务状态管理API
+- 任务查询与筛选功能
+- 树木健康状态系统
+
+### 进行中 🔄
+
+- 高级任务统计功能 (70%)
+- 树木生长算法优化 (60%)
+- API性能优化 (40%)
+- 数据库索引优化 (30%)
+- 日志系统增强 (50%)
+
+### 待实现 ⬜
+
+- 用户认证系统
+- API文档自动生成
+- AI辅助任务分析
+- 数据导出功能
+- 历史数据分析
 
 ## 贡献
 

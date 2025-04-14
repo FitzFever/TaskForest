@@ -28,15 +28,16 @@ client/
 │   ├── pages/       # 页面组件
 │   ├── services/    # 服务层
 │   ├── stores/      # 状态存储
+│   ├── three/       # 3D渲染和模型
 │   ├── types/       # TypeScript类型
 │   ├── utils/       # 工具函数
 │   ├── App.tsx      # 主应用组件
 │   └── main.tsx     # 入口文件
-├── .eslintrc.json   # ESLint配置
-├── .prettierrc      # Prettier配置
-├── tsconfig.json    # TypeScript配置
-├── vite.config.ts   # Vite配置
-└── package.json     # 项目依赖
+├── .env.development      # 开发环境变量
+├── .env.production       # 生产环境变量
+├── index.html            # HTML模板
+├── vite.config.ts        # Vite配置
+└── package.json          # 项目依赖
 ```
 
 ## 开发进度
@@ -53,6 +54,7 @@ client/
 - 响应式设计适配
 - 暗黑模式支持
 - 基础3D场景集成
+- 树木模型加载和渲染
 
 ### 进行中 🔄
 
@@ -63,6 +65,7 @@ client/
 - 用户设置界面 (20%)
 - 数据可视化组件 (10%)
 - 性能优化与代码重构 (30%)
+- 树木生长状态动画效果 (40%)
 
 ### 待实现 ⬜
 
@@ -80,24 +83,40 @@ client/
 ### 安装依赖
 
 ```bash
+# 推荐使用pnpm
+pnpm install
+
+# 也可以使用npm
 npm install
 ```
 
 ### 开发模式
 
 ```bash
+# 使用pnpm
+pnpm dev
+
+# 使用npm
 npm run dev
 ```
 
 ### 构建项目
 
 ```bash
+# 使用pnpm
+pnpm build
+
+# 使用npm
 npm run build
 ```
 
 ### 代码检查
 
 ```bash
+# 使用pnpm
+pnpm lint
+
+# 使用npm
 npm run lint
 ```
 
@@ -112,19 +131,20 @@ npm run lint
 
 详细API参数和返回值请参考 `src/types` 目录下的类型定义。
 
-## 组件库
+## 3D渲染核心组件
 
-项目使用 Ant Design 组件库，同时封装了一些自定义组件以满足特定需求：
+项目中的3D渲染相关组件位于 `src/three` 目录下：
 
-- `TaskCard`: 任务卡片组件
-- `TaskForm`: 任务表单组件
-- `TreeView`: 树木3D视图组件
-- `FilterPanel`: 过滤面板组件
-- `PageLayout`: 页面布局组件
+- `ForestScene.tsx`: 3D森林场景主组件
+- `TreeModel.tsx`: 树木模型组件
+- `ModelLoader.ts`: 模型加载工具
+- `TreeAnimations.ts`: 树木动画效果
+- `cameraControls.ts`: 相机控制工具
 
 ## 贡献指南
 
 1. 确保遵循项目的代码风格和TypeScript类型定义
 2. 提交前运行代码检查和格式化
 3. 编写必要的测试用例
-4. 提交PR前先与相关团队成员讨论设计决策 
+4. 遵循渐进式修改原则，避免大规模重构
+5. 提交PR前先与相关团队成员讨论设计决策 
