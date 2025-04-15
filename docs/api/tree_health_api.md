@@ -561,3 +561,23 @@ POST /api/tasks
 ```
 
 在上述示例中，由于任务类型为"LEARNING"，系统自动将树木类型设置为"APPLE"（苹果树）。 
+
+## 相关文档
+
+为了更全面地了解树木健康状态 API 及其实现，请参阅以下相关文档：
+
+### 核心文档
+- [树木健康系统概览](../modules/tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康系统详细设计](../modules/tree_health_system.md) - 系统详细设计与实现
+- [完整 API 参考](../api_reference.md) - 项目 API 完整参考
+
+### 实施指南
+- [树木健康组件指南](../guides/tree_health_components_guide.md) - 树木健康组件开发指南
+- [树木健康实现指南](../guides/tree_health_implementation_guide.md) - 树木健康系统实现指南
+
+### 系统架构
+- [系统架构概览](../architecture/architecture_overview.md) - 项目整体架构
+- [系统设计文档](../architecture/system_design.md) - 详细系统设计
+
+### 返回
+- [项目总览](../../README.md) - 返回项目总览文档 

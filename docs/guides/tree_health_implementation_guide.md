@@ -522,4 +522,24 @@ describe('Tree Health API', () => {
 
 - [树木健康状态系统详细设计](/docs/modules/tree_health_system.md)
 - [API参考文档](/docs/api/api_reference.md)
-- [开发快速指南](/docs/guides/development_quick_start.md) 
+- [开发快速指南](/docs/guides/development_quick_start.md)
+
+## 相关文档
+
+为了更好地实施树木健康系统，请参阅以下相关文档：
+
+### 核心参考
+- [树木健康系统概览](../modules/tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康系统详细设计](../modules/tree_health_system.md) - 系统详细设计说明
+
+### 具体指南
+- [树木健康组件指南](./tree_health_components_guide.md) - 树木健康相关组件开发详细指南
+- [开发快速入门](./development_quick_start.md) - 项目开发环境配置与规范
+
+### API 与实现
+- [树木健康 API](../api/tree_health_api.md) - 树木健康系统 API 参考
+- [树木健康 3D 可视化](../modules/tree_health_3d_visualization.md) - 3D 可视化实现指南
+
+### 项目指南
+- [开发任务清单](../development_tasks.md) - 查看与树木健康系统相关的开发任务
+- [项目总览](../../README.md) - 返回项目总览文档 

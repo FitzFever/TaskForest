@@ -842,3 +842,23 @@ function calculateSeasonalFactor(treeType: string, date: Date = new Date()): num
 | v0.2 | 2024-04-10 | 增加状态转换动画说明 | 系统架构师 | 
 | v0.3 | 2024-04-12 | 增加健康状态算法实现细节 | 系统架构师 |
 | v0.4 | 2024-04-12 | 增加前后端交互流程 | 系统架构师 | 
+
+## 相关文档
+
+为了更全面地了解树木健康状态系统的设计与实现，请参阅以下相关文档：
+
+### 核心文档
+- [树木健康系统概览](./tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康 3D 可视化](./tree_health_3d_visualization.md) - 树木健康状态的 3D 可视化实现
+
+### 实施指南
+- [树木健康组件指南](../guides/tree_health_components_guide.md) - 树木健康组件开发详细指南
+- [树木健康实现指南](../guides/tree_health_implementation_guide.md) - 树木健康系统实现步骤
+
+### API 文档
+- [树木健康 API](../api/tree_health_api.md) - 树木健康状态系统 API 参考
+- [完整 API 文档](../api_reference.md) - 项目 API 完整参考
+
+### 开发指南
+- [开发任务清单](../development_tasks.md) - 查看与树木健康系统相关的开发任务
+- [项目总览](../../README.md) - 返回项目总览文档

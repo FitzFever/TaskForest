@@ -791,6 +791,26 @@ function applyWeatherEffect(treeObj, weather, healthState) {
 - [渐变色计算工具](https://gist.github.com/jdarling/4803411)
 - [粒子系统最佳实践](https://tympanus.net/codrops/2019/01/17/interactive-particles-with-three-js/)
 
+## 相关文档
+
+为了更全面地了解树木健康状态的 3D 可视化实现，请参阅以下相关文档：
+
+### 核心文档
+- [树木健康系统概览](./tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康系统详细设计](./tree_health_system.md) - 系统详细设计与实现
+
+### 实施指南
+- [树木健康组件指南](../guides/tree_health_components_guide.md) - 树木健康组件开发详细指南
+- [树木健康实现指南](../guides/tree_health_implementation_guide.md) - 树木健康系统实现步骤
+
+### API 与数据
+- [树木健康 API](../api/tree_health_api.md) - 树木健康状态系统 API 参考
+- [完整 API 文档](../api_reference.md) - 项目 API 完整参考
+
+### 开发指南
+- [开发任务清单](../development_tasks.md) - 查看与树木健康系统相关的开发任务
+- [项目总览](../../README.md) - 返回项目总览文档
+
 ---
 
 这份文档详细介绍了如何在TaskForest项目中实现树木健康状态的3D可视化效果。随着项目的发展，可能需要根据实际需求和反馈进一步优化和扩展这些功能。 

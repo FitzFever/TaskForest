@@ -215,11 +215,23 @@ function getTreeAppearance(healthState: number) {
 
 ## 相关文档
 
-- [API参考文档](/docs/api/api_reference.md)
-- [数据库模型](/docs/architecture/architecture_overview.md)
-- [任务管理](/docs/guides/development_quick_start.md)
-- [开发规范](/docs/development/standards.md)
-- [项目路线图](/docs/development/roadmap.md)
+为了更全面地了解树木健康状态系统，请参阅以下相关文档：
+
+### 详细设计文档
+- [树木健康系统详细设计](./tree_health_system.md) - 系统详细设计和架构
+- [树木健康 3D 可视化](./tree_health_3d_visualization.md) - 树木健康状态的 3D 可视化实现
+
+### 实施指南
+- [树木健康组件指南](../guides/tree_health_components_guide.md) - 树木健康组件开发详细指南
+- [树木健康实现指南](../guides/tree_health_implementation_guide.md) - 树木健康系统实现步骤
+
+### API 文档
+- [树木健康 API](../api/tree_health_api.md) - 树木健康状态系统 API 参考
+- [完整 API 文档](../api_reference.md) - 项目 API 完整参考
+
+### 项目指南
+- [开发任务清单](../development_tasks.md) - 查看与树木健康系统相关的开发任务
+- [项目总览](../../README.md) - 返回项目总览文档
 
 ## 开发计划
 

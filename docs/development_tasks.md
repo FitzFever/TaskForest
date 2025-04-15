@@ -179,4 +179,28 @@ npm run electron:build
 - [ ] 是否验证了自动更新
 - [ ] 是否检查了数据迁移
 - [ ] 是否测试了回滚流程
-- [ ] 是否准备了用户指南 
+- [ ] 是否准备了用户指南
+
+## 相关文档
+
+为了更好地理解和完成开发任务，请参阅以下相关文档：
+
+### 开发指南
+- [开发规范](./development/standards.md) - 项目编码规范与开发流程
+- [开发路线图](./development/roadmap.md) - 项目开发计划与进度
+- [故障排除指南](./development/troubleshooting.md) - 开发常见问题解决方案
+
+### 架构与系统设计
+- [项目架构概览](./architecture/architecture_overview.md) - 系统整体架构设计
+- [系统设计文档](./architecture/system_design.md) - 详细系统设计与技术选型
+
+### 核心模块文档
+- [树木健康系统概览](./modules/tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康系统设计](./modules/tree_health_system.md) - 树木健康系统详细设计
+
+### API 与实现指南
+- [API 接口参考](./api_reference.md) - 完整 API 接口规范
+- [快速开发指南](./guides/development_quick_start.md) - 开发环境搭建与项目启动
+
+### 项目参考
+- [项目总览](../README.md) - 返回项目总览文档 

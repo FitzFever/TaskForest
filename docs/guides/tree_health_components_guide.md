@@ -631,4 +631,25 @@ const ForestView: React.FC = () => {
 - [树木健康状态实施指南](/docs/guides/tree_health_implementation_guide.md)
 - [API参考文档](/docs/api/tree_health_api.md)
 - [React Three Fiber文档](https://docs.pmnd.rs/react-three-fiber)
-- [Ant Design组件库文档](https://ant.design/components/overview) 
+- [Ant Design组件库文档](https://ant.design/components/overview)
+
+## 相关文档
+
+为了更好地开发与使用树木健康组件，请参阅以下相关文档：
+
+### 设计与实现
+- [树木健康系统概览](../modules/tree_health_readme.md) - 树木健康系统总体说明
+- [树木健康系统详细设计](../modules/tree_health_system.md) - 系统详细设计说明
+- [树木健康 3D 可视化](../modules/tree_health_3d_visualization.md) - 3D 可视化实现方案
+
+### 实施指南
+- [树木健康实现指南](./tree_health_implementation_guide.md) - 树木健康系统实现步骤
+- [开发快速入门](./development_quick_start.md) - 项目开发环境配置与规范
+
+### API 参考
+- [树木健康 API](../api/tree_health_api.md) - 树木健康系统 API 参考
+- [完整 API 参考](../api_reference.md) - 项目 API 完整参考
+
+### 项目指南
+- [开发任务清单](../development_tasks.md) - 查看与树木健康系统相关的开发任务
+- [项目总览](../../README.md) - 返回项目总览文档 
