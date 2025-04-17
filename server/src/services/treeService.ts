@@ -113,8 +113,8 @@ export class TreeService {
 
     // 只有在完成任务的情况下才增加成长
     if (taskCompleted) {
-      // 最大生长阶段为5
-      const newStage = Math.min(tree.stage + 1, 5);
+      // 最大生长阶段为3
+      const newStage = Math.min(tree.stage + 1, 3);
       
       const updatedTree = await prisma.tree.update({
         where: { id },

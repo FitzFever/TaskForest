@@ -45,22 +45,19 @@ GET /api/trees/123/health
   "code": 200,
   "data": {
     "treeId": "123",
-    "healthState": 85,
+    "currentHealth": 100,
     "healthCategory": "HEALTHY",
-    "lastUpdated": "2024-04-09T10:15:30Z",
-    "task": {
-      "id": "456",
-      "title": "完成报告",
-      "progress": 60,
-      "deadline": "2024-04-15T23:59:59Z"
-    },
-    "details": {
-      "timeRatio": 0.75,
-      "expectedProgress": 25,
-      "actualProgress": 60
+    "healthTrend": "STABLE",
+    "lastUpdated": "2025-04-16T12:29:20.980Z",
+    "taskId": "456",
+    "environmentFactors": {
+      "sunlight": 80,
+      "water": 75,
+      "nutrients": 85
     }
   },
-  "message": "success"
+  "message": "获取树木健康状态成功",
+  "timestamp": 1744806560989
 }
 ```
 
@@ -123,15 +120,10 @@ PUT /api/trees/:id/health
     "treeId": "123",
     "healthState": 75,
     "healthCategory": "HEALTHY",
-    "lastUpdated": "2024-04-09T12:30:45Z",
-    "task": {
-      "id": "456",
-      "title": "完成报告",
-      "progress": 60,
-      "deadline": "2024-04-15T23:59:59Z"
-    }
+    "lastUpdated": "2025-04-16T12:35:20.980Z"
   },
-  "message": "success"
+  "message": "更新树木健康状态成功",
+  "timestamp": 1744806920980
 }
 ```
 
@@ -216,7 +208,8 @@ GET /api/tasks/456/tree-health
       "recommendedProgress": 65
     }
   },
-  "message": "success"
+  "message": "获取任务树木健康关联成功",
+  "timestamp": 1744806560989
 }
 ```
 
@@ -286,7 +279,8 @@ PUT /api/tasks/:id/progress
       "healthChange": "IMPROVED"
     }
   },
-  "message": "success"
+  "message": "任务进度和树木健康状态更新成功",
+  "timestamp": 1744806560980
 }
 ```
 
@@ -336,17 +330,10 @@ POST /api/trees/health/batch-update
 {
   "code": 200,
   "data": {
-    "message": "批量更新成功",
-    "summary": {
-      "total": 50,
-      "updated": 30,
-      "unchanged": 15,
-      "improved": 10,
-      "declined": 20,
-      "critical": 5
-    }
+    "message": "已完成所有树木健康状态更新，共更新2棵树"
   },
-  "message": "success"
+  "message": "批量更新树木健康状态成功",
+  "timestamp": 1744806560980
 }
 ```
 
@@ -357,6 +344,67 @@ POST /api/trees/health/batch-update
 {
   "code": 500,
   "message": "批量更新树木健康状态失败"
+}
+```
+
+### 2.6 获取树木生长阶段历史
+
+获取树木生长阶段历史记录和进度需求。
+
+**请求：**
+
+```
+GET /api/trees/:id/growth-history
+```
+
+**路径参数：**
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| id | number | 树木ID |
+
+**响应示例：**
+
+```json
+{
+  "code": 200,
+  "data": {
+    "treeId": "tree-1001",
+    "currentStage": 2,
+    "currentProgress": 92,
+    "growthStages": [
+      {
+        "stage": 0,
+        "name": "种子阶段 (0-33%)",
+        "progressRequirement": "0%",
+        "reached": true
+      },
+      {
+        "stage": 1,
+        "name": "幼苗阶段 (33-66%)",
+        "progressRequirement": "33%",
+        "reached": true
+      },
+      {
+        "stage": 2,
+        "name": "成长阶段 (66-100%)",
+        "progressRequirement": "66%",
+        "reached": true,
+        "reachedAt": "2025-04-16T12:29:17.130Z"
+      },
+      {
+        "stage": 3,
+        "name": "成熟阶段 (100%)",
+        "progressRequirement": "100%",
+        "reached": false,
+        "progressNeeded": "8%"
+      }
+    ],
+    "taskId": "1001",
+    "taskTitle": "完成项目报告"
+  },
+  "message": "获取树木生长阶段历史成功",
+  "timestamp": 1744806560980
 }
 ```
 

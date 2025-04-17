@@ -18,7 +18,7 @@ interface Task {
   parentId?: string;    // 父任务ID
   tags: string[];       // 标签
   treeType: TreeType;   // 对应的树木类型
-  growthStage: number;  // 生长阶段 (0-4)
+  growthStage: number;  // 生长阶段 (0-3)
 }
 
 enum TaskType {

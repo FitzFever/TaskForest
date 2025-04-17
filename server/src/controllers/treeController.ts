@@ -614,7 +614,7 @@ export async function growTree(req: Request, res: Response) {
     }
     
     // 计算新的生长阶段
-    const newStage = Math.min(4, tree.stage + amount);
+    const newStage = Math.min(3, tree.stage + amount);
     
     // 更新树木
     const updatedTree = await prisma.tree.update({

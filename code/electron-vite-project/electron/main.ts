@@ -188,11 +188,11 @@ function setupIpcHandlers() {
         }
       })
 
-      // 如果有关联的树木，更新树木生长阶段为最终阶段(5)
+      // 如果有关联的树木，更新树木生长阶段为最终阶段(3)
       if (updatedTask.tree) {
         await prisma.tree.update({
           where: { id: updatedTask.tree.id },
-          data: { growthStage: 5 }
+          data: { growthStage: 3 }
         })
       }
 
@@ -259,8 +259,8 @@ function setupIpcHandlers() {
         throw new Error('树木不存在')
       }
 
-      // 最大生长阶段为5
-      const newGrowthStage = Math.min(tree.growthStage + 1, 5)
+      // 最大生长阶段为3
+      const newGrowthStage = Math.min(tree.growthStage + 1, 3)
 
       return await prisma.tree.update({
         where: { id },

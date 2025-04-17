@@ -608,7 +608,7 @@ PUT /api/trees/:id
 | position | object | 否       | 位置坐标 (x,y,z)   |
 | rotation | object | 否       | 旋转角度 (x,y,z)   |
 | scale    | object | 否       | 缩放比例 (x,y,z)   |
-| stage    | number | 否       | 生长阶段 (0-4)     |
+| stage    | number | 否       | 生长阶段 (0-3)     |
 
 **成功响应**：
 
@@ -995,7 +995,7 @@ interface Tree {
   id: string;            // 树木唯一标识
   taskId: string;        // 关联任务ID
   type: TreeType;        // 树木类型
-  stage: number;         // 生长阶段(0-4)
+  stage: number;         // 生长阶段(0-3)
   position: Vector3;     // 位置坐标
   rotation: Vector3;     // 旋转角度
   scale: Vector3;        // 缩放比例

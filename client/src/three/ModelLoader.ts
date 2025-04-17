@@ -28,7 +28,7 @@ class ModelLoader {
   /**
    * 加载树木模型
    * @param treeType 树木类型
-   * @param growthStage 生长阶段（0: seed, 1: sapling, 2: growing, 3: mature）
+   * @param growthStage 生长阶段（0: seed, 1: seedling, 2: growing, 3: mature）
    * @returns 加载的3D模型
    */
   async loadTreeModel(treeType: TreeType, growthStage: number = 3): Promise<THREE.Group | null> {
@@ -351,7 +351,7 @@ class ModelLoader {
   /**
    * 获取树木模型URL
    * @param treeType 树木类型
-   * @param growthStage 生长阶段（0: seed, 1: sapling, 2: growing, 3: mature）
+   * @param growthStage 生长阶段（0: seed, 1: seedling, 2: growing, 3: mature）
    * @returns 模型URL
    */
   private getTreeModelUrl(treeType: TreeType, growthStage: number = 3): string {
@@ -379,25 +379,34 @@ class ModelLoader {
     type = type || 'oak'; // 无法识别的类型默认使用橡树
     const modelsRoot = '/models/trees';
     
-    // 建立生长阶段与模型文件名的映射关系
+    // 建立生长阶段与模型文件名的映射关系 (0-3系统)
     const stageModelMap = {
-      0: `${modelsRoot}/seedstage_${type}.glb`,       // 种子阶段
-      1: `${modelsRoot}/${type}_sapling.glb`,         // 幼苗阶段
-      2: `${modelsRoot}/${type}_growing.glb`,         // 生长阶段（新添加）
-      3: `${modelsRoot}/${type}_mature.glb`,          // 成熟阶段
+      0: `${modelsRoot}/seedstage_${type}.glb`,      // 种子阶段
+      1: `${modelsRoot}/${type}_sapling.glb`,        // 幼苗阶段
+      2: `${modelsRoot}/${type}_growing.glb`,        // 成长阶段
+      3: `${modelsRoot}/${type}_mature.glb`,         // 成熟阶段
     };
     
-    // 获取指定生长阶段的模型URL
-    const modelUrl = stageModelMap[growthStage] || `${modelsRoot}/${type}.glb`;
+    // 处理超出范围的生长阶段，回退到最接近的有效阶段
+    const validStage = Math.min(Math.max(0, growthStage), 3);
+    if (validStage !== growthStage) {
+      console.warn(`生长阶段 ${growthStage} 超出有效范围(0-3)，使用 ${validStage} 代替`);
+    }
+    
+    // 选择对应的模型URL
+    let modelUrl = stageModelMap[validStage];
+    
+    // 如果映射中没有对应的URL，使用通用模型
+    modelUrl = modelUrl || `${modelsRoot}/${type}.glb`;
     
     // 检查当前URL并打印完整信息
     const fullUrl = `${window.location.origin}${modelUrl}`;
-    console.log(`最终选择的模型URL: ${modelUrl}`);
+    console.log(`最终选择的模型URL: ${modelUrl}, 生长阶段: ${validStage}`);
     console.log(`完整URL: ${fullUrl}`);
     console.log(`尝试以下备用URL:`);
     
     // 输出所有可能的备用URL
-    const fallbackUrls = this.getFallbackModelUrl(treeType, growthStage);
+    const fallbackUrls = this.getFallbackModelUrl(treeType, validStage);
     fallbackUrls.forEach((url, index) => {
       console.log(`- 备用${index + 1}: ${url} (完整: ${window.location.origin}${url})`);
     });
@@ -420,20 +429,14 @@ class ModelLoader {
     fallbacks.push(`${modelsRoot}/${type}.glb`);
     
     // 2. 根据生长阶段，添加相邻的生长阶段模型
-    if (growthStage === 0) {
-      // 种子阶段，可以尝试幼苗阶段
-      fallbacks.push(`${modelsRoot}/${type}_sapling.glb`);
-    } else if (growthStage === 1) {
-      // 幼苗阶段，可以尝试种子或生长阶段
+    if (growthStage <= 1) {
+      // 种子或幼苗阶段，可以尝试相邻阶段
       fallbacks.push(`${modelsRoot}/seedstage_${type}.glb`);
-      fallbacks.push(`${modelsRoot}/${type}_growing.glb`);
-    } else if (growthStage === 2) {
-      // 生长阶段，可以尝试幼苗或成熟阶段
       fallbacks.push(`${modelsRoot}/${type}_sapling.glb`);
-      fallbacks.push(`${modelsRoot}/${type}_mature.glb`);
-    } else {
-      // 成熟阶段，可以尝试生长阶段
+    } else if (growthStage <= 3) {
+      // 成长或成熟阶段，可以尝试相邻阶段
       fallbacks.push(`${modelsRoot}/${type}_growing.glb`);
+      fallbacks.push(`${modelsRoot}/${type}_mature.glb`);
     }
     
     // 3. 添加健康状态模型作为备用

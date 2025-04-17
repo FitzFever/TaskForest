@@ -406,14 +406,16 @@ const ForestPage: React.FC = () => {
       if (selectedTreeId !== null) {
         const updatedTrees = trees.map(tree => {
           if (tree.taskId === taskId) {
-            // 根据进度设置生长阶段
+            // 根据进度设置生长阶段 - 使用4阶段标准(0-3)
             let newGrowthStage = 0;
             if (progress >= 100) {
               newGrowthStage = 3; // 完成 - 成熟阶段
-            } else if (progress >= 70) {
-              newGrowthStage = 2; // 进度超过70% - 生长阶段
-            } else if (progress >= 30) {
-              newGrowthStage = 1; // 进度超过30% - 幼苗阶段
+            } else if (progress >= 66) {
+              newGrowthStage = 2; // 进度超过66% - 成长阶段
+            } else if (progress >= 33) {
+              newGrowthStage = 1; // 进度超过33% - 幼苗阶段
+            } else {
+              newGrowthStage = 0; // 进度低于33% - 种子阶段
             }
             
             console.log(`更新树木ID=${tree.id}的生长阶段: ${tree.growthStage} -> ${newGrowthStage}`);

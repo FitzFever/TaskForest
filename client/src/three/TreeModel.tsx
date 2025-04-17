@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ThreeEvent } from '@react-three/fiber';
@@ -16,7 +16,7 @@ import {
 // TreeModel组件的props定义
 export interface TreeModelProps {
   type: TreeType;
-  growthStage: number; // 0-4，表示树木的生长阶段
+  growthStage: number; // 0-3，表示树木的生长阶段
   position: [number, number, number];
   rotation?: [number, number, number];
   scale?: [number, number, number];
@@ -46,131 +46,132 @@ const TreeModel: React.FC<TreeModelProps> = ({
   const [error, setError] = useState<string | null>(null);
   // 动画状态
   const [isSwaying, setIsSwaying] = useState(true);
-  const [isRotating, setIsRotating] = useState(false);
   
-  // 记录上一次的健康状态和生长阶段，用于动画效果
+  // 记录上一次的健康状态和生长阶段，用于监测变化
   const prevHealthState = useRef<number>(healthState);
   const prevGrowthStage = useRef<number>(growthStage);
   
-  // 获取场景对象，用于粒子效果
+  // 获取场景对象
   const { scene } = useThree();
   
   // 计算缩放比例，根据生长阶段调整
-  const treeScale = scale.map(s => s * (0.8 + growthStage * 0.25)) as [number, number, number];
+  const treeScale = useMemo(() => {
+    return scale.map(s => s * (0.6 + growthStage * 0.1)) as [number, number, number];
+  }, [scale, growthStage]);
 
+  // 生成模型唯一标识符
+  const modelKey = useMemo(() => {
+    // 使用所有关键属性构建唯一标识
+    const positionKey = position.map(p => p.toFixed(2)).join(',');
+    return `tree_${type}_stage${growthStage}_health${healthState}_pos${positionKey}`;
+  }, [type, growthStage, position, healthState]);
+  
   // 统一模型原点位置的函数，确保不同生长阶段模型的基准点一致
   const normalizeModelPosition = (model: THREE.Group, modelId: string) => {
-    // 计算模型的包围盒
-    const boundingBox = new THREE.Box3().setFromObject(model);
-    const center = new THREE.Vector3();
-    boundingBox.getCenter(center);
-    const size = new THREE.Vector3();
-    boundingBox.getSize(size);
-    
-    console.log(`[TreeModel ${modelId}] 模型边界盒: 
-      中心=(${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}), 
-      尺寸=(${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`);
-    
-    // 重置位置到世界坐标原点
-    model.position.set(0, 0, 0);
-    
-    // 移动模型，使底部中心位于原点
-    // 保留x和z的中心位置，但将y轴调整为底部与地面接触
-    model.position.x = -center.x;
-    model.position.z = -center.z;
-    
-    // 设置y轴位置，使模型底部与地面接触
-    model.position.y = -boundingBox.min.y;
-    
-    console.log(`[TreeModel ${modelId}] 统一模型位置后: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})`);
-  };
-
-  // 直接测试模型URL是否可访问
-  useEffect(() => {
-    const testModelAccess = async () => {
-      const url = modelLoader.getPublicTreeModelUrl(type, growthStage);
-      try {
-        const response = await fetch(url, { method: 'HEAD' });
-        console.log(`模型文件访问测试: ${url} - ${response.ok ? '成功' : '失败'} (${response.status})`);
-      } catch (err) {
-        console.error(`模型文件访问测试失败: ${url}`, err);
-      }
-    };
-    
-    if (process.env.NODE_ENV === 'development') {
-      testModelAccess();
+    try {
+      // 计算模型的包围盒
+      const boundingBox = new THREE.Box3().setFromObject(model);
+      const center = new THREE.Vector3();
+      boundingBox.getCenter(center);
+      const size = new THREE.Vector3();
+      boundingBox.getSize(size);
+      
+      console.log(`[TreeModel ${modelId}] 模型边界盒: 
+        中心=(${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}), 
+        尺寸=(${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`);
+      
+      // 重置位置到世界坐标原点
+      model.position.set(0, 0, 0);
+      
+      // 移动模型，使底部中心位于原点
+      model.position.x = -center.x;
+      model.position.z = -center.z;
+      
+      // 设置y轴位置，使模型底部与地面接触
+      model.position.y = -boundingBox.min.y;
+      
+      console.log(`[TreeModel ${modelId}] 统一模型位置后: (${model.position.x.toFixed(2)}, ${model.position.y.toFixed(2)}, ${model.position.z.toFixed(2)})`);
+    } catch (error) {
+      console.error(`[TreeModel ${modelId}] 规范化模型位置失败:`, error);
+      // 如果失败，设置一个默认位置
+      model.position.set(0, 0, 0);
     }
-  }, [type, growthStage]);
+  };
 
   // 加载树木模型
   useEffect(() => {
+    // 确保生长阶段和健康状态有效
+    if (growthStage === undefined || growthStage === null) {
+      console.error(`[TreeModel] 无效的生长阶段: ${growthStage}, 类型: ${type}`);
+      return;
+    }
+
+    if (healthState === undefined || healthState === null) {
+      console.warn(`[TreeModel] 无效的健康状态: ${healthState}, 使用默认值100`);
+    }
+
+    // 标记当前加载会话，避免竞态条件
+    const loadingSession = Date.now();
+    console.log(`[TreeModel ${modelKey}] 开始加载模型: 类型=${type}, 阶段=${growthStage}, 位置=[${position.join(', ')}], 健康值=${healthState}`);
+    
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+    
     const loadModel = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        
-        // 更详细的模型加载日志，包含组件实例标识
-        const componentId = `${type}-${position.join(',')}`;
-        console.log(`[TreeModel ${componentId}] 开始加载模型: 类型=${type}, 阶段=${growthStage}, 位置=[${position.join(', ')}]`);
-        
-        // 检查模型URL是否可访问
+        // 获取模型URL用于日志记录
         const modelUrl = modelLoader.getPublicTreeModelUrl(type, growthStage);
-        console.log(`[TreeModel ${componentId}] 尝试加载模型URL: ${modelUrl}`);
-        console.log(`[TreeModel ${componentId}] 完整URL: ${window.location.origin}${modelUrl}`);
+        console.log(`[TreeModel ${modelKey}] 尝试加载模型URL: ${modelUrl}, 生长阶段: ${growthStage}`);
         
-        // 直接测试URL是否可访问
-        let isModelAccessible = false;
-        try {
-          const response = await fetch(modelUrl, { method: 'HEAD' });
-          isModelAccessible = response.ok;
-          console.log(`[TreeModel ${componentId}] 模型文件访问测试: ${modelUrl} - ${isModelAccessible ? '成功' : '失败'} (${response.status})`);
-        } catch (err) {
-          console.error(`[TreeModel ${componentId}] 模型文件访问测试异常:`, err);
-        }
-        
-        // 添加一个短暂延迟，确保模型加载请求不会同时发送
-        // 这有助于防止可能的竞态条件
+        // 添加一个短暂延迟，以避免同时发送过多模型加载请求
         await new Promise(resolve => setTimeout(resolve, 50 * Math.random()));
         
-        // 尝试加载模型
-        let loadedModel: THREE.Group | null = null;
+        // 如果组件已卸载，则停止加载
+        if (!isMounted) return;
         
-        try {
-          // 如果模型直接访问失败，直接尝试备用模型
-          if (!isModelAccessible) {
-            console.warn(`[TreeModel ${componentId}] 主模型URL不可访问，直接尝试备用模型`);
+        // 尝试加载模型，重试最多3次
+        let loadedModel: THREE.Group | null = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (attempts < maxAttempts) {
+          attempts++;
+          try {
+            // 确保传递有效的生长阶段值
+            const validGrowthStage = Math.max(0, Math.min(3, growthStage));
+            loadedModel = await modelLoader.loadTreeModel(type, validGrowthStage);
             
-            // 尝试通用模型
-            const fallbackUrl = `/models/trees/${type.toLowerCase()}.glb`;
-            console.log(`[TreeModel ${componentId}] 尝试备用模型: ${fallbackUrl}`);
-            
-            // 检查备用模型是否可访问
-            try {
-              const fallbackResponse = await fetch(fallbackUrl, { method: 'HEAD' });
-              if (fallbackResponse.ok) {
-                console.log(`[TreeModel ${componentId}] 备用模型可访问`);
-              } else {
-                console.warn(`[TreeModel ${componentId}] 备用模型不可访问: ${fallbackResponse.status}`);
+            if (loadedModel) {
+              console.log(`[TreeModel ${modelKey}] 模型加载成功 (尝试 ${attempts}/${maxAttempts})`);
+              break;
+            } else {
+              console.warn(`[TreeModel ${modelKey}] 模型加载返回null (尝试 ${attempts}/${maxAttempts})`);
+              // 如果是最后一次尝试，给出更详细的日志
+              if (attempts === maxAttempts) {
+                console.error(`[TreeModel ${modelKey}] 所有加载尝试失败，将使用后备模型`);
               }
-            } catch (err) {
-              console.error(`[TreeModel ${componentId}] 备用模型访问测试异常:`, err);
+              // 短暂等待后重试
+              await new Promise(resolve => setTimeout(resolve, 300));
             }
+          } catch (loadErr) {
+            console.warn(`[TreeModel ${modelKey}] 模型加载尝试 ${attempts}/${maxAttempts} 失败:`, loadErr);
+            // 等待后重试，增加等待时间
+            await new Promise(resolve => setTimeout(resolve, 300 * attempts));
           }
-          
-          loadedModel = await modelLoader.loadTreeModel(type, growthStage);
-          console.log(`[TreeModel ${componentId}] 模型加载${loadedModel ? '成功' : '失败'}`);
-        } catch (loadError) {
-          console.error(`[TreeModel ${componentId}] 模型加载异常:`, loadError);
-          throw loadError;
         }
         
+        // 如果组件已卸载或开始了新的加载，则放弃这次结果
+        if (!isMounted) return;
+        
         if (loadedModel) {
+          console.log(`[TreeModel ${modelKey}] 模型加载成功`);
+          
           // 复制模型，避免引用相同实例
           const modelCopy = loadedModel.clone();
-          console.log(`[TreeModel ${componentId}] 模型加载并克隆成功`);
           
           // 设置模型名称，便于调试
-          modelCopy.name = `tree-${type}-${growthStage}-${position.join(',')}`;
+          modelCopy.name = modelKey;
           
           // 设置投影和阴影
           modelCopy.traverse((object) => {
@@ -184,617 +185,212 @@ const TreeModel: React.FC<TreeModelProps> = ({
           updateModelHealth(modelCopy, healthState);
           
           // 应用位置规范化
-          normalizeModelPosition(modelCopy, componentId);
+          normalizeModelPosition(modelCopy, modelKey);
           
+          // 更新模型状态
           setModel(modelCopy);
+          setLoading(false);
         } else {
-          console.warn(`[TreeModel ${componentId}] 模型加载失败，将创建后备模型`);
-          throw new Error('模型加载失败或返回null');
+          throw new Error('所有模型加载尝试均失败');
         }
       } catch (err) {
-        console.error(`加载树木模型失败 (${type}):`, err);
+        // 确保组件仍然挂载
+        if (!isMounted) return;
+        
+        console.error(`[TreeModel ${modelKey}] 加载失败:`, err);
         setError(err instanceof Error ? err.message : '未知错误');
         
-        // 检查所有可能的模型文件
-        const checkFallbackModels = async () => {
-          const baseUrl = `/models/trees`;
-          const typeStr = type.toLowerCase();
-          const possibleUrls = [
-            `${baseUrl}/seedstage_${typeStr}.glb`,
-            `${baseUrl}/${typeStr}_sapling.glb`,
-            `${baseUrl}/${typeStr}_growing.glb`,
-            `${baseUrl}/${typeStr}_mature.glb`,
-            `${baseUrl}/${typeStr}.glb`
-          ];
-          
-          console.log(`检查所有可能的模型文件:`);
-          
-          for (const url of possibleUrls) {
-            try {
-              const resp = await fetch(url, { method: 'HEAD' });
-              console.log(`- ${url}: ${resp.ok ? '可访问' : '不可访问'} (${resp.status})`);
-            } catch (e) {
-              console.log(`- ${url}: 检查失败 (${e})`);
-            }
-          }
-        };
-        
-        // 在开发环境中执行检查
-        if (process.env.NODE_ENV === 'development') {
-          checkFallbackModels();
-        }
-        
-        // 创建后备模型 - 增强后备逻辑，确保能生成清晰可见的模型
-        console.log(`为 ${type} 创建后备模型...`);
-        const fallbackModel = createDetailedFallbackModel(type, growthStage, healthState);
-        fallbackModel.name = `fallback-tree-${type}-${growthStage}`;
-        console.log(`后备模型创建成功: ${fallbackModel.name}`);
+        // 创建后备模型
+        const fallbackModel = createFallbackTree();
+        fallbackModel.name = `fallback-${modelKey}`;
         
         // 对后备模型也应用相同的位置标准化处理
-        normalizeModelPosition(fallbackModel, `fallback-${type}-${growthStage}`);
+        normalizeModelPosition(fallbackModel, `fallback-${modelKey}`);
         
         setModel(fallbackModel);
-      } finally {
         setLoading(false);
       }
     };
     
     loadModel();
-  }, [type, growthStage, healthState, position]);
-  
-  // 应用树木模型状态变化的粒子效果
-  const applyModelEffects = (effectPosition: THREE.Vector3, averageScale: number) => {
-    // 确保模型已加载
-    if (!model) return;
     
-    // 检查健康状态变化
-    if (prevHealthState.current !== healthState) {
-      // 确定状态变化类型
-      let transitionType: HealthTransitionType;
-      if (healthState > prevHealthState.current) {
-        transitionType = HealthTransitionType.RECOVERY;
-      } else if (healthState < 50 && prevHealthState.current >= 50) {
-        transitionType = HealthTransitionType.CRITICAL;
-      } else {
-        transitionType = HealthTransitionType.DECLINE;
-      }
+    // 清理函数
+    return () => {
+      isMounted = false;
+      console.log(`[TreeModel ${modelKey}] 组件卸载，停止加载过程`);
+    };
+  }, [type, growthStage, position, healthState, modelKey]);
+
+  // 监控健康状态和生长阶段变化
+  useEffect(() => {
+    // 如果健康状态发生变化，更新模型外观
+    if (model && prevHealthState.current !== healthState) {
+      console.log(`[TreeModel ${modelKey}] 健康状态变化: ${prevHealthState.current}% → ${healthState}%`);
       
-      // 使用固定效果位置，不依赖模型的世界位置
-      // 传递树木的缩放信息，用于调整粒子效果的大小和散布范围
-      applyHealthTransitionEffectAtPosition(
-        model,
-        scene,
-        effectPosition,
-        prevHealthState.current,
-        healthState,
-        transitionType,
-        averageScale // 传递平均缩放值
-      );
+      // 更新模型健康状态
+      updateModelHealth(model, healthState);
       
-      // 更新上一次健康状态
+      // 更新上一次的健康状态
       prevHealthState.current = healthState;
     }
     
-    // 检查生长阶段变化
+    // 如果生长阶段发生变化，记录变化
     if (prevGrowthStage.current !== growthStage) {
-      // 使用固定效果位置，不依赖模型的世界位置
-      // 传递树木的缩放信息，用于调整粒子效果的大小和散布范围
-      applyGrowthStageEffectAtPosition(
-        model,
-        scene,
-        effectPosition,
-        prevGrowthStage.current,
-        growthStage,
-        averageScale // 传递平均缩放值
-      );
-      
-      // 更新上一次生长阶段
+      console.log(`[TreeModel ${modelKey}] 生长阶段变化: ${prevGrowthStage.current} → ${growthStage}`);
       prevGrowthStage.current = growthStage;
     }
-  };
-
-  // 检查并应用健康状态或生长阶段变化的动画效果
-  useEffect(() => {
-    // 确保模型已加载且能获取场景
-    if (!model || loading) return;
-    
-    // 健康状态或生长阶段变化才执行
-    if (prevHealthState.current === healthState && prevGrowthStage.current === growthStage) return;
-    
-    // 计算合适的粒子效果位置 - 考虑树木高度、生长阶段和缩放
-    // 获取当前树木的平均缩放比例
-    const averageScale = (treeScale[0] + treeScale[1] + treeScale[2]) / 3;
-    const treeHeightOffset = (0.5 + (growthStage * 0.3)) * averageScale; // 根据生长阶段和缩放调整高度偏移
-    
-    const effectPosition = new THREE.Vector3(
-      position[0], 
-      position[1] + treeHeightOffset, // 向上偏移，考虑树木高度和缩放
-      position[2]
-    );
-    
-    // 记录当前位置用于调试
-    console.log(`[TreeModel] 准备应用动画效果，使用固定位置: (${effectPosition.x.toFixed(2)}, ${effectPosition.y.toFixed(2)}, ${effectPosition.z.toFixed(2)})`);
-    console.log(`[TreeModel] 树木基础位置: (${position[0].toFixed(2)}, ${position[1].toFixed(2)}, ${position[2].toFixed(2)})`);
-    console.log(`[TreeModel] 高度偏移: ${treeHeightOffset.toFixed(2)}, 平均缩放: ${averageScale.toFixed(2)}, 生长阶段: ${growthStage}`);
-    
-    // 使用提取出的方法应用效果
-    applyModelEffects(effectPosition, averageScale);
-    
-  }, [model, loading, healthState, growthStage, scene, position, treeScale]);
+  }, [model, healthState, growthStage, modelKey]);
   
-  // 使用useFrame确保在每一帧中检查树的位置是否发生变化
-  // 如果位置变化且需要应用效果，则在正确的位置应用效果
-  useFrame(() => {
-    // 安全检查：确保所有必要的对象都存在
-    if (!model || loading || !groupRef.current) return;
+  // 简单的树叶摇摆动画
+  useFrame(({ clock }) => {
+    if (!groupRef.current || !isSwaying || healthState < 25) return;
     
-    // 如果既没有健康状态变化也没有生长阶段变化，则不处理
-    if (prevHealthState.current === healthState && prevGrowthStage.current === growthStage) return;
+    // 随时间调整摇摆强度（与健康状态挂钩）
+    const time = clock.getElapsedTime();
+    const swayFactor = 0.005 * (healthState / 100); // 根据健康状态调整摇摆幅度
     
-    // 计算合适的粒子效果位置
-    const averageScale = (treeScale[0] + treeScale[1] + treeScale[2]) / 3;
-    const treeHeightOffset = (0.5 + (growthStage * 0.3)) * averageScale;
+    // 简单的摇摆效果
+    groupRef.current.rotation.x = Math.sin(time * 0.5) * 0.01 * swayFactor;
+    groupRef.current.rotation.z = Math.sin(time * 0.7) * 0.02 * swayFactor;
     
-    const expectedEffectPosition = new THREE.Vector3(
-      position[0],
-      position[1] + treeHeightOffset,
-      position[2]
-    );
-    
-    // 获取当前实际的世界位置
-    const worldPos = new THREE.Vector3();
-    groupRef.current.getWorldPosition(worldPos);
-    
-    // 如果实际位置与预期位置差异较大，重新应用效果
-    const positionDifference = worldPos.distanceTo(new THREE.Vector3(position[0], position[1], position[2]));
-    if (positionDifference > 0.1) { // 如果位置差异超过阈值
-      console.log(`[TreeModel] 检测到位置变化，重新应用效果。差异: ${positionDifference.toFixed(2)}`);
-      console.log(`[TreeModel] 世界位置: (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)}, ${worldPos.z.toFixed(2)})`);
-      
-      // 重新应用效果在正确的位置
-      applyModelEffects(expectedEffectPosition, averageScale);
+    // 处理高亮效果
+    if (isHighlighted) {
+      groupRef.current.scale.set(
+        treeScale[0] * (1 + Math.sin(time) * 0.05),
+        treeScale[1] * (1 + Math.sin(time) * 0.05),
+        treeScale[2] * (1 + Math.sin(time) * 0.05)
+      );
     }
   });
   
   // 更新模型健康状态
   const updateModelHealth = (modelObject: THREE.Group, health: number) => {
-    const healthColor = getHealthColor(health);
-    
-    modelObject.traverse((object) => {
-      if ((object as THREE.Mesh).isMesh) {
-        const mesh = object as THREE.Mesh;
-        if (mesh.material) {
-          // 对叶子部分应用健康状态颜色
-          if (mesh.name.includes('leaf') || mesh.name.includes('leaves') || 
+    try {
+      // 遍历模型的所有部分
+      modelObject.traverse((object) => {
+        if ((object as THREE.Mesh).isMesh) {
+          const mesh = object as THREE.Mesh;
+          
+          // 只调整树叶和树冠部分的颜色
+          if (mesh.name.includes('leaf') || mesh.name.includes('leaves') ||
               (mesh.name.includes('crown') && !mesh.name.includes('trunk'))) {
+            
+            // 计算健康状态颜色
+            const healthColor = getHealthColor(health);
+            
             if (Array.isArray(mesh.material)) {
               mesh.material.forEach(mat => {
                 if (mat instanceof THREE.MeshStandardMaterial) {
-                  // 保持原色并与健康状态色调混合
-                  const originalColor = new THREE.Color(mat.color);
-                  const targetColor = new THREE.Color(healthColor);
-                  // 混合原始颜色和健康状态颜色
-                  const mixFactor = health < 50 ? 0.7 : 0.3; // 健康状态较差时，颜色影响更明显
-                  mat.color.set(
-                    originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
-                    originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
-                    originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
-                  );
+                  mat.color.set(healthColor);
                 }
               });
             } else if (mesh.material instanceof THREE.MeshStandardMaterial) {
-              const originalColor = new THREE.Color(mesh.material.color);
-              const targetColor = new THREE.Color(healthColor);
-              // 混合原始颜色和健康状态颜色
-              const mixFactor = health < 50 ? 0.7 : 0.3; // 健康状态较差时，颜色影响更明显
-              mesh.material.color.set(
-                originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
-                originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
-                originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
-              );
+              mesh.material.color.set(healthColor);
             }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error(`[TreeModel ${modelKey}] 更新健康状态颜色失败:`, error);
+    }
   };
   
-  // 根据健康状态获取颜色
+  // 获取根据健康状态计算的颜色
   const getHealthColor = (health: number): string => {
     if (health >= 75) return '#4CAF50'; // 健康 - 绿色
-    if (health >= 50) return '#CDDC39'; // 轻微枯萎 - 青柠色
-    if (health >= 25) return '#FFC107'; // 中度枯萎 - 琥珀色
-    return '#FF5722'; // 严重枯萎 - 深橙色
+    if (health >= 50) return '#8BC34A'; // 轻微枯萎 - 淡绿色
+    if (health >= 25) return '#CDDC39'; // 中度枯萎 - 黄绿色
+    return '#FFC107';                   // 严重枯萎 - 黄色
   };
   
-  // 获取树木颜色 - 考虑健康状态
-  const getTreeColor = (): string => {
-    let baseColor;
-    
-    // 根据树木类型确定基础颜色
-    switch (type) {
-      case TreeType.OAK:
-        baseColor = '#618833';
-        break;
-      case TreeType.PINE:
-        baseColor = '#2D5824';
-        break;
-      case TreeType.MAPLE:
-        baseColor = '#C74A28';
-        break;
-      case TreeType.APPLE:
-        baseColor = '#E5A0A0';
-        break;
-      case TreeType.PALM:
-        baseColor = '#8bc34a';
-        break;
-      case TreeType.WILLOW:
-        baseColor = '#78909c';
-        break;
-      default:
-        baseColor = '#4CAF50';
-    }
-    
-    // 如果健康状态不佳，调整颜色
-    if (healthState < 75) {
-      const healthColor = getHealthColor(healthState);
-      const originalColor = new THREE.Color(baseColor);
-      const targetColor = new THREE.Color(healthColor);
-      const mixFactor = healthState < 50 ? 0.6 : 0.3;
-      
-      const mixedColor = new THREE.Color(
-        originalColor.r * (1 - mixFactor) + targetColor.r * mixFactor,
-        originalColor.g * (1 - mixFactor) + targetColor.g * mixFactor,
-        originalColor.b * (1 - mixFactor) + targetColor.b * mixFactor
-      );
-      
-      return '#' + mixedColor.getHexString();
-    }
-    
-    return baseColor;
-  };
-  
-  // 获取树干颜色
-  const getTrunkColor = (): string => {
-    return '#8B4513'; // 棕色树干
-  };
-  
-  // 处理树木点击事件
+  // 处理点击事件
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
     if (onClick) {
+      // 防止事件冒泡
+      event.stopPropagation();
       onClick(event);
     }
   };
   
-  // 处理树叶摇摆动画
-  useFrame(({ clock }) => {
-    if (!groupRef.current || !isSwaying) return;
-    
-    const time = clock.getElapsedTime();
-    
-    // 添加轻微摇摆效果
-    if (groupRef.current.children.length > 0) {
-      // 对每个子物体应用不同的摇摆
-      groupRef.current.children.forEach((child, index) => {
-        if (child.name.includes('crown') || child.name.includes('leaf')) {
-          const swayAmount = 0.005; // 摇摆幅度
-          const swaySpeed = 1.5 + index * 0.1; // 摇摆速度，每个子物体略有不同
-          
-          // 在X轴和Z轴上应用轻微摇摆
-          child.rotation.x = Math.sin(time * swaySpeed) * swayAmount;
-          child.rotation.z = Math.cos(time * swaySpeed * 0.7) * swayAmount;
-        }
-      });
-    }
-    
-    // 如果树被高亮，添加旋转动画
-    if (isHighlighted && isRotating) {
-      groupRef.current.rotation.y += 0.01;
-    }
-  });
-  
   // 创建后备树木模型（几何体）
   const createFallbackTree = (): THREE.Group => {
-    console.log('创建备用几何树木');
-    return createDetailedFallbackModel(type, growthStage, healthState);
-  };
-  
-  // 创建更详细的后备模型，包含更多细节和变化
-  const createDetailedFallbackModel = (
-    treeType: TreeType, 
-    stage: number,
-    health: number
-  ): THREE.Group => {
-    console.log(`创建详细后备模型: 类型=${treeType}, 阶段=${stage}, 健康=${health}`);
+    // 创建简单的替代模型
+    const fallbackGroup = new THREE.Group();
     
-    const group = new THREE.Group();
-    group.name = `fallback-${treeType}-${stage}`;
-    
-    // 根据树木类型和生长阶段设置不同的尺寸和形状
-    // 生长阶段影响尺寸
-    const stageScale = Math.max(0.6, Math.min(1.8, 0.6 + stage * 0.3));
-    console.log(`后备模型阶段缩放: ${stageScale}`);
-    
-    // 设置树干尺寸，基于生长阶段
-    const trunkHeight = 1.0 * stageScale;
-    const trunkRadius = 0.15 * stageScale;
-
-    // 创建更详细的树干
-    const trunkGeometry = new THREE.CylinderGeometry(
-      trunkRadius * 0.8,  // 上部半径略小
-      trunkRadius,        // 底部半径
-      trunkHeight, 
-      8
-    );
-    
-    // 获取树干颜色
-    const getTrunkColor = (): number => {
-      switch(treeType) {
-        case TreeType.PINE: return 0x614126;
-        case TreeType.OAK: return 0x8b4513;
-        case TreeType.MAPLE: return 0x6d4c41;
-        case TreeType.CHERRY: return 0x795548;
-        case TreeType.PALM: return 0x8d6e63;
-        case TreeType.APPLE: return 0x5d4037;
-        case TreeType.WILLOW: return 0x6d4c41;
-        default: return 0x8b4513;
-      }
-    };
-    
-    const trunkMaterial = new THREE.MeshStandardMaterial({ 
-      color: getTrunkColor(),
-      roughness: 0.9,
-      metalness: 0.1
-    });
-    
+    // 创建简单的树干
+    const trunkGeometry = new THREE.CylinderGeometry(0.1, 0.15, 1, 8);
+    const trunkMaterial = new THREE.MeshStandardMaterial({ color: '#8B4513' });
     const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-    trunk.position.y = trunkHeight / 2;
+    trunk.position.y = 0.5;
     trunk.castShadow = true;
     trunk.receiveShadow = true;
-    trunk.name = "trunk";
-    group.add(trunk);
+    trunk.name = 'trunk';
     
-    // 获取健康调整后的颜色
-    const getHealthAdjustedColor = (baseColor: number, health: number): number => {
-      const baseRGB = {
-        r: (baseColor >> 16) & 0xff,
-        g: (baseColor >> 8) & 0xff,
-        b: baseColor & 0xff
-      };
-      
-      // 健康度影响颜色
-      const healthFactor = Math.max(0, Math.min(1, health / 100));
-      
-      // 健康度越低，颜色越偏褐色
-      const targetRGB = {
-        r: Math.min(255, baseRGB.r + (1 - healthFactor) * 50),
-        g: Math.max(0, baseRGB.g - (1 - healthFactor) * 50),
-        b: Math.max(0, baseRGB.b - (1 - healthFactor) * 100)
-      };
-      
-      return (targetRGB.r << 16) | (targetRGB.g << 8) | targetRGB.b;
-    };
+    // 创建简单的树冠
+    const crownGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+    const crownMaterial = new THREE.MeshStandardMaterial({ 
+      color: getHealthColor(healthState)
+    });
+    const crown = new THREE.Mesh(crownGeometry, crownMaterial);
+    crown.position.y = 1.3;
+    crown.castShadow = true;
+    crown.receiveShadow = true;
+    crown.name = 'crown';
     
-    // 根据树木类型创建不同形状的树冠
-    if (stage === 0) {
-      // 种子阶段 - 只显示一个小球
-      const seedGeometry = new THREE.SphereGeometry(0.15 * stageScale, 8, 8);
-      const seedMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x8B4513, 
-        roughness: 0.8,
-        metalness: 0.2
-      });
-      const seed = new THREE.Mesh(seedGeometry, seedMaterial);
-      seed.position.y = 0.05;
-      seed.castShadow = true;
-      seed.receiveShadow = true;
-      seed.name = "seed";
-      
-      // 添加一个小的绿色新芽
-      const sproutGeometry = new THREE.ConeGeometry(0.05 * stageScale, 0.1 * stageScale, 8);
-      const sproutMaterial = new THREE.MeshStandardMaterial({ 
-        color: getHealthAdjustedColor(0x7CFC00, health),
-        roughness: 0.8,
-        metalness: 0.1
-      });
-      const sprout = new THREE.Mesh(sproutGeometry, sproutMaterial);
-      sprout.position.y = 0.15;
-      sprout.castShadow = true;
-      sprout.receiveShadow = true;
-      sprout.name = "sprout";
-      
-      group.add(seed);
-      group.add(sprout);
-      
-      // 添加一个红色标记，使种子更容易看到
-      const markerGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.05, 16);
-      const markerMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xff6b6b,
-        roughness: 0.7,
-        metalness: 0.1,
-        transparent: true,
-        opacity: 0.7
-      });
-      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-      marker.position.y = -0.02;
-      marker.receiveShadow = true;
-      marker.name = "marker";
-      group.add(marker);
-      
-      return group;
-    }
+    // 将部件添加到组
+    fallbackGroup.add(trunk);
+    fallbackGroup.add(crown);
     
-    // 根据树木类型创建不同形状的树冠
-    const crownY = trunkHeight + 0.1;
-    
-    // 获取特定树木类型的树冠颜色
-    const getCrownColor = (): number => {
-      switch(treeType) {
-        case TreeType.PINE: return 0x1b5e20;
-        case TreeType.OAK: return 0x2e7d32;
-        case TreeType.MAPLE: return 0x43a047;
-        case TreeType.CHERRY: return 0xf8bbd0;
-        case TreeType.PALM: return 0x81c784;
-        case TreeType.APPLE: return 0xc8e6c9;
-        case TreeType.WILLOW: return 0xa5d6a7;
-        default: return 0x4caf50;
-      }
-    };
-    
-    // 根据树木类型和生长阶段创建树冠
-    if (treeType === TreeType.PINE) {
-      // 松树 - 圆锥形
-      const coneHeight = 1.2 * stageScale;
-      const coneGeometry = new THREE.ConeGeometry(0.6 * stageScale, coneHeight, 8);
-      const coneMaterial = new THREE.MeshStandardMaterial({ 
-        color: getHealthAdjustedColor(getCrownColor(), health),
-        roughness: 0.8,
-        metalness: 0.1
-      });
-      const crown = new THREE.Mesh(coneGeometry, coneMaterial);
-      crown.position.y = trunkHeight + (coneHeight / 2);
-      crown.castShadow = true;
-      crown.receiveShadow = true;
-      crown.name = "crown";
-      group.add(crown);
-      
-      // 添加额外的锥体表示多层树冠
-      if (stage > 1) {
-        const topConeGeometry = new THREE.ConeGeometry(0.4 * stageScale, 0.8 * stageScale, 8);
-        const topCone = new THREE.Mesh(topConeGeometry, coneMaterial);
-        topCone.position.y = trunkHeight + coneHeight * 0.8;
-        topCone.castShadow = true;
-        topCone.name = "top_crown";
-        group.add(topCone);
-      }
-    } else if (treeType === TreeType.PALM) {
-      // 棕榈树 - 细长树干和伞状树冠
-      const crownGeometry = new THREE.SphereGeometry(0.8 * stageScale, 8, 8);
-      crownGeometry.scale(1, 0.5, 1);
-      const crownMaterial = new THREE.MeshStandardMaterial({ 
-        color: getHealthAdjustedColor(getCrownColor(), health),
-        roughness: 0.7,
-        metalness: 0.2
-      });
-      const crown = new THREE.Mesh(crownGeometry, crownMaterial);
-      crown.position.y = trunkHeight + 0.3;
-      crown.castShadow = true;
-      crown.receiveShadow = true;
-      crown.name = "crown";
-      group.add(crown);
-      
-      // 添加棕榈叶
-      for (let i = 0; i < 6; i++) {
-        const leafGeometry = new THREE.BoxGeometry(0.1, 0.02, 0.8 * stageScale);
-        const leaf = new THREE.Mesh(leafGeometry, crownMaterial);
-        leaf.position.y = trunkHeight + 0.3;
-        leaf.rotation.y = (Math.PI * 2 / 6) * i;
-        leaf.rotation.x = -Math.PI / 4;
-        leaf.castShadow = true;
-        leaf.name = `leaf_${i}`;
-        group.add(leaf);
-      }
-    } else {
-      // 其他树木类型 - 圆形或椭球形树冠
-      let crownGeometry;
-      if (treeType === TreeType.OAK || treeType === TreeType.MAPLE) {
-        // 橡树和枫树 - 扁平球形
-        crownGeometry = new THREE.SphereGeometry(0.8 * stageScale, 8, 8);
-        crownGeometry.scale(1.2, 1, 1.2);
-      } else if (treeType === TreeType.CHERRY) {
-        // 樱花树 - 圆形树冠，粉色
-        crownGeometry = new THREE.SphereGeometry(0.7 * stageScale, 8, 8);
-      } else if (treeType === TreeType.WILLOW) {
-        // 柳树 - 下垂的椭球形
-        crownGeometry = new THREE.SphereGeometry(0.7 * stageScale, 8, 8);
-        crownGeometry.scale(1, 1.3, 1);
-      } else {
-        // 默认和苹果树 - 标准球形
-        crownGeometry = new THREE.SphereGeometry(0.7 * stageScale, 8, 8);
-      }
-      
-      const crownMaterial = new THREE.MeshStandardMaterial({ 
-        color: getHealthAdjustedColor(getCrownColor(), health),
-        roughness: 0.8,
-        metalness: 0.1
-      });
-      
-      const crown = new THREE.Mesh(crownGeometry, crownMaterial);
-      crown.position.y = trunkHeight + 0.4;
-      crown.castShadow = true;
-      crown.receiveShadow = true;
-      crown.name = "crown";
-      group.add(crown);
-    }
-    
-    // 为种子添加红色标记底座，使其更明显
-    if (stage === 1) {
-      const markerGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.03, 16);
-      const markerMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xff6b6b,
-        roughness: 0.7,
-        metalness: 0.1,
-        transparent: true,
-        opacity: 0.6
-      });
-      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-      marker.position.y = -0.01;
-      marker.receiveShadow = true;
-      marker.name = "marker";
-      group.add(marker);
-    }
-    
-    return group;
+    return fallbackGroup;
   };
-  
+
   return (
-    <group 
+    <group
       ref={groupRef}
       position={position}
       rotation={rotation}
-      scale={treeScale}
+      scale={isHighlighted ? treeScale.map(s => s * 1.1) as [number, number, number] : treeScale}
       onClick={handleClick}
-      onPointerOver={() => {
-        setIsRotating(true);
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setIsRotating(false);
-        document.body.style.cursor = 'auto';
+      onPointerOver={() => document.body.style.cursor = 'pointer'}
+      onPointerOut={() => document.body.style.cursor = 'auto'}
+      name={`tree-${type}-${growthStage}-${healthState}`}
+      userData={{ 
+        type,
+        growthStage,
+        healthState,
+        modelKey
       }}
     >
-      {loading && (
-        <mesh position={[0, 0.5, 0]}>
-          <boxGeometry args={[0.3, 1, 0.3]} />
-          <meshStandardMaterial color="#aaaaaa" wireframe />
+      {loading && !model && (
+        <mesh position={[0, 1, 0]}>
+          <sphereGeometry args={[0.3, 8, 8]} />
+          <meshStandardMaterial color="#cccccc" wireframe />
         </mesh>
       )}
       
       {error && !model && (
         <mesh position={[0, 0.5, 0]}>
-          <boxGeometry args={[0.3, 1, 0.3]} />
-          <meshStandardMaterial color="#ff6666" />
+          <boxGeometry args={[0.5, 1, 0.5]} />
+          <meshStandardMaterial color="red" />
         </mesh>
       )}
       
-      {/* 渲染模型 */}
-      {model && !loading && (
-        <primitive 
-          object={model} 
-          dispose={null}
-        />
-      )}
-      
-      {/* 如果树被高亮，添加高亮指示器 */}
-      {isHighlighted && (
-        <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.8, 1, 32]} />
-          <meshBasicMaterial color="#4285f4" transparent opacity={0.6} />
-        </mesh>
+      {model && (
+        <primitive object={model} />
       )}
     </group>
   );
 };
 
-export default TreeModel; 
+export default React.memo(TreeModel, (prevProps, nextProps) => {
+  // 仅当关键属性发生变化时重新渲染组件
+  return (
+    prevProps.type === nextProps.type &&
+    prevProps.growthStage === nextProps.growthStage &&
+    prevProps.healthState === nextProps.healthState &&
+    prevProps.position[0] === nextProps.position[0] &&
+    prevProps.position[1] === nextProps.position[1] &&
+    prevProps.position[2] === nextProps.position[2] &&
+    prevProps.isHighlighted === nextProps.isHighlighted
+  );
+}); 

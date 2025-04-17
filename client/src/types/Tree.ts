@@ -28,6 +28,7 @@ export interface Tree {
   updatedAt?: string;
   taskId?: number;
   task?: Task;
+  healthState?: number; // 树木健康状态(0-100)
 }
 
 /**

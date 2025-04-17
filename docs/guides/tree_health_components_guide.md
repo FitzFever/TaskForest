@@ -260,7 +260,7 @@ TreeGrowthAnimation组件用于在2D环境中显示树木生长和健康状态�
 interface TreeGrowthAnimationProps {
   healthState: number;        // 健康状态值(0-100)
   previousHealth?: number;    // 先前的健康状态(可选)
-  growthStage: number;        // 生长阶段(0-5)
+  growthStage: number;        // 生长阶段(0-3)
   treeType: string;           // 树木类型
   width?: number;             // 宽度(默认200)
   height?: number;            // 高度(默认250)

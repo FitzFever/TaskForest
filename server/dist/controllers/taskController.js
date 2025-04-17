@@ -1,361 +1,518 @@
-import taskService from '../services/taskService.js';
+import { PrismaClient } from '@prisma/client';
+import taskTreeService from '../services/taskTreeService.js';
+import { getDefaultTreeTypeForTask } from '../constants/treeTypeMappings.js';
+const prisma = new PrismaClient();
 /**
- * 获取任务列表
+ * 获取所有任务
  * @route GET /api/tasks
  */
-export const getTasks = async (req, res) => {
+export async function getTasks(req, res) {
     try {
-        // 提取查询参数
-        const { status, type, dueDate, tags, page = '1', limit = '20', sort = 'dueDate', order = 'asc' } = req.query;
-        // 将标签字符串转为数组
-        const tagArray = tags ? String(tags).split(',') : undefined;
-        // 获取任务列表
-        const result = await taskService.getTasks({
-            status: status ? String(status) : undefined,
-            type: type ? String(type) : undefined,
-            dueDate: dueDate ? String(dueDate) : undefined,
-            tags: tagArray,
-            page: parseInt(String(page), 10),
-            limit: parseInt(String(limit), 10),
-            sort: String(sort),
-            order: String(order)
-        });
-        // 返回成功响应
+        // 获取查询参数
+        const { status, tags, priority, type, page = '1', pageSize = '10', startDate, endDate, search, sortBy = 'dueDate', sortOrder = 'asc' } = req.query;
+        // 构建过滤条件
+        const where = {};
+        if (status) {
+            const statusList = Array.isArray(status)
+                ? status
+                : typeof status === 'string' ? status.split(',').map(s => s.trim()) : [];
+            where.status = { in: statusList };
+        }
+        if (priority) {
+            const priorityList = Array.isArray(priority)
+                ? priority
+                : typeof priority === 'string' ? priority.split(',').map(p => parseInt(p.trim())) : [];
+            where.priority = { in: priorityList };
+        }
+        if (type) {
+            const typeList = Array.isArray(type)
+                ? type
+                : typeof type === 'string' ? type.split(',').map(t => t.trim()) : [];
+            where.type = { in: typeList };
+        }
+        // 日期范围过滤
+        if (startDate) {
+            where.dueDate = {
+                ...where.dueDate,
+                gte: new Date(startDate)
+            };
+        }
+        if (endDate) {
+            where.dueDate = {
+                ...where.dueDate,
+                lte: new Date(endDate)
+            };
+        }
+        // 搜索过滤
+        if (search && typeof search === 'string') {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        // 标签过滤
+        if (tags) {
+            const tagsList = Array.isArray(tags)
+                ? tags
+                : typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : [];
+            where.tags = {
+                hasSome: tagsList
+            };
+        }
+        // 分页处理
+        const pageInt = parseInt(page);
+        const pageSizeInt = parseInt(pageSize);
+        const skip = (pageInt - 1) * pageSizeInt;
+        // 排序处理
+        let orderBy = {};
+        if (sortBy && sortOrder) {
+            orderBy[sortBy] = sortOrder;
+        }
+        // 查询任务，包含关联的树木
+        const [tasks, totalTasks] = await Promise.all([
+            prisma.task.findMany({
+                where,
+                orderBy,
+                skip,
+                take: pageSizeInt,
+                include: {
+                    tree: true
+                }
+            }),
+            prisma.task.count({ where })
+        ]);
+        // 计算总页数
+        const totalPages = Math.ceil(totalTasks / pageSizeInt);
         return res.status(200).json({
             code: 200,
-            data: result,
-            message: 'Success',
+            data: {
+                tasks,
+                pagination: {
+                    total: totalTasks,
+                    page: pageInt,
+                    pageSize: pageSizeInt,
+                    totalPages
+                }
+            },
+            message: '获取任务列表成功',
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('获取任务列表失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '获取任务列表失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '获取任务列表失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 获取单个任务
  * @route GET /api/tasks/:id
  */
-export const getTask = async (req, res) => {
+export async function getTask(req, res) {
     try {
         const { id } = req.params;
-        // 获取任务详情
-        const task = await taskService.getTaskById(id);
-        // 如果任务不存在，返回404
+        if (!id) {
+            return res.status(400).json({
+                code: 400,
+                data: null,
+                error: { message: '无效的任务ID' },
+                message: 'Bad Request',
+                timestamp: Date.now()
+            });
+        }
+        const task = await prisma.task.findUnique({
+            where: { id },
+            include: { tree: true }
+        });
         if (!task) {
             return res.status(404).json({
                 code: 404,
                 data: null,
-                error: {
-                    message: '任务不存在',
-                    type: 'NOT_FOUND'
-                },
+                error: { message: '任务不存在' },
                 message: 'Not Found',
                 timestamp: Date.now()
             });
         }
-        // 返回成功响应
         return res.status(200).json({
             code: 200,
             data: task,
-            message: 'Success',
+            message: '获取任务成功',
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('获取任务失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '获取任务失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '获取任务失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 创建任务
  * @route POST /api/tasks
  */
-export const createTask = async (req, res) => {
+export async function createTask(req, res) {
     try {
-        // 获取请求体数据
-        const taskData = req.body;
-        // 验证必要字段
-        if (!taskData.title) {
+        const { title, description, type, status, priority, dueDate, tags, treeType, autoCreateTree = true } = req.body;
+        if (!title) {
             return res.status(400).json({
                 code: 400,
                 data: null,
                 error: {
-                    message: '任务标题不能为空',
-                    type: 'VALIDATION_ERROR',
+                    message: '标题是必填项',
                     details: {
                         field: 'title',
-                        reason: 'required'
+                        reason: 'required',
                     }
                 },
                 message: 'Bad Request',
                 timestamp: Date.now()
             });
         }
-        // 创建任务
-        const task = await taskService.createTask(taskData);
-        // 返回成功响应
+        // 获取任务类型对应的默认树木类型
+        const taskType = type || 'NORMAL';
+        const defaultTreeType = getDefaultTreeTypeForTask(taskType);
+        // 确定使用的树木类型（手动指定的或根据任务类型自动映射的）
+        const finalTreeType = treeType || defaultTreeType;
+        // 创建任务，同时设置treeType字段
+        const newTask = await prisma.task.create({
+            data: {
+                title,
+                description: description || '',
+                type: taskType,
+                status: status || 'TODO',
+                priority: priority || 2,
+                dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                tags: tags ? tags.join(',') : '',
+                treeType: finalTreeType
+            }
+        });
+        // 如果需要自动创建树木
+        let tree = null;
+        if (autoCreateTree) {
+            try {
+                // 使用与任务相同的树木类型
+                tree = await taskTreeService.createTreeForTask(newTask.id, finalTreeType);
+            }
+            catch (treeError) {
+                console.error('自动创建树木失败:', treeError);
+                // 继续返回任务创建成功，但提示树木创建失败
+            }
+        }
         return res.status(201).json({
             code: 201,
-            data: task,
-            message: 'Task created successfully',
+            data: {
+                task: newTask,
+                tree
+            },
+            message: '任务创建成功' + (tree ? '，并已关联树木' : '，但树木创建失败'),
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('创建任务失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '创建任务失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '创建任务失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 更新任务
  * @route PUT /api/tasks/:id
  */
-export const updateTask = async (req, res) => {
+export async function updateTask(req, res) {
     try {
         const { id } = req.params;
-        const taskData = req.body;
-        // 检查任务是否存在
-        const existingTask = await taskService.getTaskById(id);
-        if (!existingTask) {
+        const updates = req.body;
+        if (!id) {
+            return res.status(400).json({
+                code: 400,
+                data: null,
+                error: { message: '无效的任务ID' },
+                message: 'Bad Request',
+                timestamp: Date.now()
+            });
+        }
+        // 避免更新id、创建时间等敏感字段
+        const { id: _, createdAt: __, tree: ___, ...validUpdates } = updates;
+        // 获取当前任务状态以比较变化
+        const currentTask = await prisma.task.findUnique({
+            where: { id }
+        });
+        if (!currentTask) {
             return res.status(404).json({
                 code: 404,
                 data: null,
-                error: {
-                    message: '任务不存在',
-                    type: 'NOT_FOUND'
-                },
+                error: { message: '任务不存在' },
                 message: 'Not Found',
                 timestamp: Date.now()
             });
         }
         // 更新任务
-        const updatedTask = await taskService.updateTask(id, taskData);
-        // 返回成功响应
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: {
+                ...validUpdates,
+                updatedAt: new Date()
+            },
+            include: { tree: true }
+        });
+        // 如果状态或进度发生变化，更新关联树木
+        let updatedTree = null;
+        if ((validUpdates.status && validUpdates.status !== currentTask.status) ||
+            (validUpdates.progress !== undefined && validUpdates.progress !== currentTask.progress)) {
+            try {
+                updatedTree = await taskTreeService.updateTreeOnTaskChange(id, validUpdates.status || currentTask.status, validUpdates.progress !== undefined ? validUpdates.progress : currentTask.progress);
+            }
+            catch (treeError) {
+                console.error('更新关联树木失败:', treeError);
+            }
+        }
         return res.status(200).json({
             code: 200,
-            data: updatedTask,
-            message: 'Task updated successfully',
+            data: {
+                task: updatedTask,
+                treeUpdated: !!updatedTree
+            },
+            message: '任务更新成功' + (updatedTree ? '，关联树木已更新' : ''),
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('更新任务失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '更新任务失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '更新任务失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 删除任务
  * @route DELETE /api/tasks/:id
  */
-export const deleteTask = async (req, res) => {
+export async function deleteTask(req, res) {
     try {
         const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({
+                code: 400,
+                data: null,
+                error: { message: '无效的任务ID' },
+                message: 'Bad Request',
+                timestamp: Date.now()
+            });
+        }
         // 检查任务是否存在
-        const existingTask = await taskService.getTaskById(id);
-        if (!existingTask) {
+        const task = await prisma.task.findUnique({
+            where: { id }
+        });
+        if (!task) {
             return res.status(404).json({
                 code: 404,
                 data: null,
-                error: {
-                    message: '任务不存在',
-                    type: 'NOT_FOUND'
-                },
+                error: { message: '任务不存在' },
                 message: 'Not Found',
                 timestamp: Date.now()
             });
         }
+        // 总是删除关联的树木
+        let treeDeleted = false;
+        try {
+            treeDeleted = await taskTreeService.unlinkTaskTree(id);
+        }
+        catch (treeError) {
+            console.error('删除关联树木失败:', treeError);
+        }
         // 删除任务
-        await taskService.deleteTask(id);
-        // 返回成功响应
+        await prisma.task.delete({
+            where: { id }
+        });
         return res.status(200).json({
             code: 200,
-            data: null,
-            message: 'Task deleted successfully',
+            data: {
+                id,
+                treeDeleted
+            },
+            message: '任务删除成功' + (treeDeleted ? '，已删除关联树木' : ''),
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('删除任务失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '删除任务失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '删除任务失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 更新任务状态
  * @route PUT /api/tasks/:id/status
  */
-export const updateTaskStatus = async (req, res) => {
+export async function updateTaskStatus(req, res) {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        // 验证状态
-        const validStatuses = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-        if (!status || !validStatuses.includes(status)) {
+        if (!id) {
             return res.status(400).json({
                 code: 400,
                 data: null,
-                error: {
-                    message: '无效的任务状态',
-                    type: 'VALIDATION_ERROR',
-                    details: {
-                        field: 'status',
-                        reason: 'invalid',
-                        allowedValues: validStatuses
-                    }
-                },
+                error: { message: '无效的任务ID' },
                 message: 'Bad Request',
                 timestamp: Date.now()
             });
         }
-        // 检查任务是否存在
-        const existingTask = await taskService.getTaskById(id);
-        if (!existingTask) {
+        if (!status) {
+            return res.status(400).json({
+                code: 400,
+                data: null,
+                error: { message: '状态是必填项' },
+                message: 'Bad Request',
+                timestamp: Date.now()
+            });
+        }
+        // 获取当前任务
+        const currentTask = await prisma.task.findUnique({
+            where: { id }
+        });
+        if (!currentTask) {
             return res.status(404).json({
                 code: 404,
                 data: null,
-                error: {
-                    message: '任务不存在',
-                    type: 'NOT_FOUND'
-                },
+                error: { message: '任务不存在' },
                 message: 'Not Found',
                 timestamp: Date.now()
             });
         }
+        // 更新完成时间
+        let completedAt = null;
+        if (status === 'COMPLETED') {
+            completedAt = new Date();
+        }
         // 更新任务状态
-        const result = await taskService.updateTaskStatus(id, status);
-        // 返回成功响应
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: {
+                status,
+                completedAt,
+                updatedAt: new Date()
+            }
+        });
+        // 更新树木状态
+        let updatedTree = null;
+        try {
+            updatedTree = await taskTreeService.updateTreeOnTaskChange(id, status, currentTask.progress);
+        }
+        catch (treeError) {
+            console.error('更新关联树木失败:', treeError);
+        }
         return res.status(200).json({
             code: 200,
-            data: result,
-            message: 'Task status updated successfully',
+            data: {
+                task: updatedTask,
+                treeUpdated: !!updatedTree
+            },
+            message: '任务状态更新成功' + (updatedTree ? '，关联树木已更新' : ''),
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('更新任务状态失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '更新任务状态失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '更新任务状态失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 /**
  * 完成任务
  * @route POST /api/tasks/:id/complete
  */
-export const completeTask = async (req, res) => {
+export async function completeTask(req, res) {
     try {
         const { id } = req.params;
-        // 检查任务是否存在
-        const existingTask = await taskService.getTaskById(id);
-        if (!existingTask) {
-            return res.status(404).json({
-                code: 404,
-                data: null,
-                error: {
-                    message: '任务不存在',
-                    type: 'NOT_FOUND'
-                },
-                message: 'Not Found',
-                timestamp: Date.now()
-            });
-        }
-        // 如果任务已完成，返回错误
-        if (existingTask.status === 'COMPLETED') {
+        if (!id) {
             return res.status(400).json({
                 code: 400,
                 data: null,
-                error: {
-                    message: '任务已完成',
-                    type: 'VALIDATION_ERROR'
-                },
+                error: { message: '无效的任务ID' },
                 message: 'Bad Request',
                 timestamp: Date.now()
             });
         }
-        // 完成任务
-        const result = await taskService.completeTask(id);
-        // 返回成功响应
+        // 检查任务是否存在
+        const task = await prisma.task.findUnique({
+            where: { id }
+        });
+        if (!task) {
+            return res.status(404).json({
+                code: 404,
+                data: null,
+                error: { message: '任务不存在' },
+                message: 'Not Found',
+                timestamp: Date.now()
+            });
+        }
+        // 更新任务状态为已完成
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: {
+                status: 'COMPLETED',
+                completedAt: new Date(),
+                updatedAt: new Date()
+            }
+        });
+        // 更新树木状态
+        let updatedTree = null;
+        try {
+            updatedTree = await taskTreeService.updateTreeOnTaskChange(id, 'COMPLETED', 100);
+        }
+        catch (treeError) {
+            console.error('更新关联树木失败:', treeError);
+        }
         return res.status(200).json({
             code: 200,
-            data: result,
-            message: 'Task completed successfully',
+            data: {
+                task: updatedTask,
+                treeUpdated: !!updatedTree
+            },
+            message: '任务已标记为完成' + (updatedTree ? '，关联树木已更新' : ''),
             timestamp: Date.now()
         });
     }
     catch (error) {
         console.error('完成任务失败:', error);
-        // 返回错误响应
         return res.status(500).json({
             code: 500,
             data: null,
-            error: {
-                message: '完成任务失败',
-                type: 'INTERNAL_ERROR'
-            },
+            error: { message: '完成任务失败' },
             message: 'Internal Server Error',
             timestamp: Date.now()
         });
     }
-};
+}
 export default {
     getTasks,
     getTask,

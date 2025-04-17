@@ -258,4 +258,89 @@ function getTreeAppearance(healthState: number) {
 ## 参考资料
 
 - [TaskForest产品说明文档](/product/TaskForest产品说明文档.md)
-- [TaskForest流程图说明](/product/TaskForest流程图说明.md) 
+- [TaskForest流程图说明](/product/TaskForest流程图说明.md)
+
+## 生长阶段计算
+
+树木生长阶段是基于任务进度计算的，共分为4个阶段(0-3)：
+
+| 进度范围 | 阶段值 | 阶段名称 | 说明 |
+|---------|------|--------|------|
+| 0-33%   | 0    | 种子    | 初始阶段，树木刚开始生长 |
+| 33-66%  | 1    | 幼苗    | 树木开始展现形态 |
+| 66-99%  | 2    | 成长阶段 | 树木明显生长 |
+| 100%    | 3    | 成熟    | 任务完成，树木完全成熟 |
+
+生长阶段的计算遵循以下规则：
+
+```javascript
+// 根据任务进度计算生长阶段
+function calculateGrowthStage(progress) {
+  if (progress >= 100) {
+    return 3; // 完成 - 成熟阶段
+  } else if (progress >= 66) {
+    return 2; // 进度超过66% - 成长阶段
+  } else if (progress >= 33) {
+    return 1; // 进度超过33% - 幼苗阶段
+  } else {
+    return 0; // 进度低于33% - 种子阶段
+  }
+}
+```
+
+生长阶段与健康状态相互独立，但都受任务进度影响：
+- 生长阶段：完全由任务进度决定，表示任务完成的程度
+- 健康状态：由任务进度和截止日期共同决定，表示任务的紧急程度
+
+### 监控生长阶段
+
+可以通过专用API端点监控树木生长阶段：
+
+```
+GET /api/trees/:id/growth-history
+```
+
+此API返回树木当前生长阶段和达到各阶段所需的进度要求。示例响应：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "treeId": "tree-1001",
+    "currentStage": 2,
+    "currentProgress": 92,
+    "growthStages": [
+      {
+        "stage": 0,
+        "name": "种子阶段 (0-33%)",
+        "progressRequirement": "0%",
+        "reached": true
+      },
+      {
+        "stage": 1,
+        "name": "幼苗阶段 (33-66%)",
+        "progressRequirement": "33%",
+        "reached": true
+      },
+      {
+        "stage": 2,
+        "name": "成长阶段 (66-100%)",
+        "progressRequirement": "66%",
+        "reached": true,
+        "reachedAt": "2025-04-16T12:29:17.130Z"
+      },
+      {
+        "stage": 3,
+        "name": "成熟阶段 (100%)",
+        "progressRequirement": "100%",
+        "reached": false,
+        "progressNeeded": "8%"
+      }
+    ],
+    "taskId": "1001",
+    "taskTitle": "完成项目报告"
+  },
+  "message": "获取树木生长阶段历史成功",
+  "timestamp": 1744806560980
+}
+``` 

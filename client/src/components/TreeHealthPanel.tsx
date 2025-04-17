@@ -28,6 +28,7 @@ interface TreeHealthPanelProps {
   treeId?: string;
   taskId?: string;
   onProgressUpdate?: (taskId: string, progress: number) => void;
+  onGrowthStageChange?: (stage: number) => void;
 }
 
 // 获取树木类型的颜色
@@ -124,100 +125,63 @@ const getTrendInfo = (trend: HealthTrend): { name: string; icon: React.ReactNode
   }
 };
 
-const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onProgressUpdate }) => {
+const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onProgressUpdate, onGrowthStageChange }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [treeHealth, setTreeHealth] = useState<TreeHealthDetails | null>(null);
   const [taskHealth, setTaskHealth] = useState<TaskTreeHealth | null>(null);
   const [updateProgress, setUpdateProgress] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [growthStage, setGrowthStage] = useState<number>(0);
 
   // 加载树木健康状态
   useEffect(() => {
-    const fetchTreeHealth = async () => {
-      if (!treeId && !taskId) {
-        setError('未提供树木ID或任务ID，无法获取健康状态');
-        return;
-      }
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        if (treeId) {
-          console.log('获取树木健康状态:', treeId); // 调试日志
-          
-          // 获取树木健康状态
-          const healthData = await treeHealthService.getTreeHealth(treeId);
-          console.log('获取到树木健康数据:', healthData); // 调试日志
-          
-          setTreeHealth(healthData);
-          
-          // 如果有关联任务，设置初始进度值
-          if (healthData.task?.progress !== undefined) {
-            setUpdateProgress(healthData.task.progress);
-          }
-        } else if (taskId) {
-          console.log('获取任务关联的树木健康状态:', taskId); // 调试日志
-          
-          // 获取任务与树木健康关联
-          const healthData = await treeHealthService.getTaskTreeHealth(taskId);
-          console.log('获取到任务树木健康数据:', healthData); // 调试日志
-          
-          setTaskHealth(healthData);
-          // 设置初始进度值为当前任务进度
-          setUpdateProgress(healthData.progress);
-        }
-      } catch (error) {
-        console.error('获取健康状态失败:', error);
-        setError(`获取健康状态数据失败: ${error instanceof Error ? error.message : '未知错误'}`);
-        
-        // 创建默认健康数据（用于演示）
-        if (treeId) {
-          setTreeHealth({
-            treeId,
-            healthState: 75,
-            healthCategory: HealthCategory.HEALTHY,
-            lastUpdated: new Date().toISOString(),
-            task: {
-              id: '1',
-              title: '示例任务',
-              progress: 80,
-              deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-            }
-          });
-          setUpdateProgress(80);
-        } else if (taskId) {
-          setTaskHealth({
-            taskId,
-            taskTitle: '示例任务',
-            progress: 60,
-            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            tree: {
-              id: '1',
-              type: 'OAK',
-              stage: 2,
-              healthState: 65,
-              healthCategory: HealthCategory.SLIGHTLY_WILTED,
-              lastUpdated: new Date().toISOString()
-            },
-            healthPrediction: {
-              currentTrend: HealthTrend.IMPROVING,
-              estimatedHealthAt: [
-                { date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), health: 80 },
-                { date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), health: 90 }
-              ],
-              recommendedProgress: 75
-            }
-          });
-          setUpdateProgress(60);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchTreeHealth();
   }, [treeId, taskId]);
+
+  // 提取健康状态获取函数，便于刷新调用
+  const fetchTreeHealth = async () => {
+    if (!treeId && !taskId) {
+      setError('未提供树木ID或任务ID，无法获取健康状态');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (treeId) {
+        console.log('获取树木健康状态:', treeId); // 调试日志
+        
+        // 获取树木健康状态
+        const healthData = await treeHealthService.getTreeHealth(treeId);
+        console.log('获取到树木健康数据:', healthData); // 调试日志
+        
+        setTreeHealth(healthData);
+        
+        // 如果有关联任务，设置初始进度值
+        if (healthData.task?.progress !== undefined) {
+          setUpdateProgress(healthData.task.progress);
+        }
+      } else if (taskId) {
+        console.log('获取任务关联的树木健康状态:', taskId); // 调试日志
+        
+        // 获取任务与树木健康关联
+        const healthData = await treeHealthService.getTaskTreeHealth(taskId);
+        console.log('获取到任务树木健康数据:', healthData); // 调试日志
+        
+        setTaskHealth(healthData);
+        // 设置初始进度值为当前任务进度
+        setUpdateProgress(healthData.progress);
+      }
+    } catch (error) {
+      console.error('获取健康状态失败:', error);
+      setError(`获取健康状态数据失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      // 不再创建默认数据，保持状态为null，UI将展示错误信息
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 处理进度更新
   const handleProgressUpdate = async () => {
@@ -229,17 +193,13 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
       console.log(`更新任务 ${taskId} 进度为 ${updateProgress}%`);
       
       // 更新任务进度
-      await treeHealthService.updateTaskProgress(taskId, updateProgress);
+      const progressResult = await treeHealthService.updateTaskProgress(taskId, updateProgress);
       
-      // 根据进度更新计算生长阶段
-      let newGrowthStage = 0;
-      if (updateProgress >= 100) {
-        newGrowthStage = 3; // 完成 - 成熟阶段
-      } else if (updateProgress >= 70) {
-        newGrowthStage = 2; // 进度超过70% - 生长阶段
-      } else if (updateProgress >= 30) {
-        newGrowthStage = 1; // 进度超过30% - 幼苗阶段
-      }
+      // 根据进度值计算生长阶段（0-3）- 与ForestScene组件保持一致
+      const newGrowthStage = calculateGrowthStage(updateProgress);
+      
+      console.log(`任务${taskId}的生长阶段已更新为: ${newGrowthStage} (${getGrowthStageName(newGrowthStage)})`);
+      setGrowthStage(newGrowthStage);
       
       // 通知父组件任务进度已更新
       if (onProgressUpdate) {
@@ -255,9 +215,31 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
         setTaskHealth(healthData);
       }
       
+      // 显示变化信息
+      let healthChangeMessage = '';
+      if (progressResult.tree) {
+        const healthBefore = progressResult.tree.healthStateBefore;
+        const healthAfter = progressResult.tree.healthStateAfter;
+        const healthDiff = healthAfter - healthBefore;
+        
+        if (healthBefore !== healthAfter) {
+          const changeSymbol = healthDiff > 0 ? '↑' : '↓';
+          const changeColor = healthDiff > 0 ? '#52c41a' : '#f5222d';
+          
+          healthChangeMessage = `，健康状态从 ${healthBefore}% 变为 ${healthAfter}% (${changeSymbol}${Math.abs(healthDiff)}%)`;
+          
+          // 根据健康状态变化记录日志
+          if (healthDiff > 0) {
+            console.log(`树木健康状态改善: ${healthBefore}% → ${healthAfter}% (+${healthDiff}%)`);
+          } else {
+            console.warn(`树木健康状态恶化: ${healthBefore}% → ${healthAfter}% (${healthDiff}%)`);
+          }
+        }
+      }
+      
       // 显示成功消息
       message.success(
-        `任务进度已更新为 ${updateProgress}%，树木进入${getGrowthStageName(newGrowthStage)}阶段`
+        `任务进度已更新为 ${updateProgress}%，树木进入${getGrowthStageName(newGrowthStage)}阶段${healthChangeMessage}`
       );
     } catch (error) {
       console.error('更新任务进度失败:', error);
@@ -267,102 +249,90 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
     }
   };
   
+  // 计算生长阶段 (0-3)
+  const calculateGrowthStage = (progress: number): number => {
+    if (progress >= 100) {
+      return 3; // 成熟阶段
+    } else if (progress >= 66) {
+      return 2; // 成长阶段
+    } else if (progress >= 33) {
+      return 1; // 幼苗阶段
+    } else {
+      return 0; // 种子阶段
+    }
+  };
+
   // 获取生长阶段名称
   const getGrowthStageName = (stage: number): string => {
-    const stageNames = [
-      '种子',
-      '幼苗',
-      '成长',
-      '成熟'
-    ];
-    
-    return stageNames[stage] || '未知阶段';
+    switch (stage) {
+      case 0:
+        return '种子';
+      case 1:
+        return '幼苗';
+      case 2:
+        return '成长';
+      case 3:
+        return '成熟';
+      default:
+        return '未知';
+    }
   };
-  
-  // 渲染树木生长阶段信息
-  const renderGrowthStageInfo = () => {
-    // 计算生长阶段
-    let growthStage = 0;
-    let progress = 0;
-    
-    if (taskHealth) {
-      progress = taskHealth.progress || 0;
-    } else if (treeHealth && treeHealth.task) {
-      progress = treeHealth.task.progress || 0;
+
+  // 获取生长阶段颜色
+  const getGrowthStageColor = (stage: number): string => {
+    switch (stage) {
+      case 0:
+        return '#8B4513'; // 种子阶段 - 棕色
+      case 1:
+        return '#90EE90'; // 幼苗阶段 - 浅绿色
+      case 2:
+        return '#228B22'; // 成长阶段 - 森林绿
+      case 3:
+        return '#006400'; // 成熟阶段 - 深绿色
+      default:
+        return '#d9d9d9';
     }
+  };
+
+  // 获取生长阶段进度
+  const getGrowthStageProgress = (progress: number, logPrefixValue: string) => {
+    // 计算当前生长阶段
+    const stage = calculateGrowthStage(progress);
     
-    // 根据进度确定生长阶段
-    if (progress >= 100) {
-      growthStage = 3; // 成熟
-    } else if (progress >= 70) {
-      growthStage = 2; // 生长
-    } else if (progress >= 30) {
-      growthStage = 1; // 幼苗
-    } else {
-      growthStage = 0; // 种子
-    }
-    
-    // 计算到下一阶段的进度
-    let nextStageThreshold = 100;
     let stageProgress = 0;
-    
-    if (growthStage === 0) {
-      nextStageThreshold = 30;
-      stageProgress = (progress / 30) * 100;
-    } else if (growthStage === 1) {
-      nextStageThreshold = 70;
-      stageProgress = ((progress - 30) / 40) * 100;
-    } else if (growthStage === 2) {
-      nextStageThreshold = 100;
-      stageProgress = ((progress - 70) / 30) * 100;
+    // 计算在当前阶段内的进度百分比
+    if (stage === 0) {
+      // 种子阶段: 0% - 33%
+      stageProgress = (progress / 33) * 100;
+    } else if (stage === 1) {
+      // 幼苗阶段: 33% - 66%
+      stageProgress = ((progress - 33) / 33) * 100;
+    } else if (stage === 2) {
+      // 成长阶段: 66% - 100%
+      stageProgress = ((progress - 66) / 34) * 100;
     } else {
+      // 成熟阶段: 100%
       stageProgress = 100;
     }
     
-    return (
-      <div style={{ marginBottom: '16px' }}>
-        <Divider orientation="left">生长阶段</Divider>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{ flex: 1 }}>
-            <Tag color={getGrowthStageColor(growthStage)}>{getGrowthStageName(growthStage)}</Tag>
-            {growthStage < 3 && (
-              <Text type="secondary" style={{ marginLeft: '8px' }}>
-                距离{getGrowthStageName(growthStage + 1)}阶段还需要{nextStageThreshold - progress}%进度
-              </Text>
-            )}
-            {growthStage === 3 && (
-              <Text type="success" style={{ marginLeft: '8px' }}>
-                树木已经完全成熟！
-              </Text>
-            )}
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: '100%' }}>
-            <Progress 
-              percent={stageProgress} 
-              status={stageProgress === 100 ? 'success' : 'active'} 
-              strokeColor={getGrowthStageColor(growthStage)}
-              size="small"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // 获取生长阶段颜色
-  const getGrowthStageColor = (stage: number): string => {
-    const stageColors = [
-      '#8BC34A', // 种子 - 草绿色
-      '#4CAF50', // 幼苗 - 绿色
-      '#2E7D32', // 成长 - 深绿色
-      '#1B5E20'  // 成熟 - 墨绿色
-    ];
+    console.log(`${logPrefixValue} | 生长阶段: ${stage} (${getGrowthStageName(stage)}), 阶段内进度: ${stageProgress.toFixed(2)}%`);
     
-    return stageColors[stage] || stageColors[0];
+    return {
+      stage,
+      stageName: getGrowthStageName(stage),
+      stageColor: getGrowthStageColor(stage),
+      stageProgress
+    };
   };
+
+  // 更新生长阶段状态
+  useEffect(() => {
+    if (taskHealth && taskHealth.progress !== undefined) {
+      const newGrowthStage = calculateGrowthStage(taskHealth.progress);
+      setGrowthStage(newGrowthStage);
+      console.log(`任务${taskId}的进度为${taskHealth.progress}%，生长阶段已设置为: ${newGrowthStage} (${getGrowthStageName(newGrowthStage)})`);
+    }
+  }, [taskHealth, taskId]);
 
   // 渲染树木健康状态信息
   const renderTreeHealthInfo = () => {
@@ -549,15 +519,41 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
     );
   };
 
+  // 手动刷新健康状态
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchTreeHealth();
+      message.success('健康状态数据已更新');
+    } catch (error) {
+      message.error('更新健康状态失败');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // 批量更新所有树木健康状态
+  const handleBatchUpdate = async () => {
+    try {
+      setRefreshing(true);
+      const result = await treeHealthService.batchUpdateTreesHealth();
+      message.success(`${result.message}`);
+      // 更新当前显示的树木健康状态
+      await fetchTreeHealth();
+    } catch (error) {
+      message.error('批量更新树木健康状态失败');
+      console.error('批量更新树木健康状态失败:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // 如果没有treeId或taskId，显示错误提示
   if (!treeId && !taskId) {
     return (
-      <Alert
-        message="无法显示树木健康状态"
-        description="未提供树木ID或任务ID，请确保正确关联了树木和任务"
-        type="error"
-        showIcon
-      />
+      <Card title="树木健康状态" bordered={false}>
+        <Alert message="请选择一棵树或任务" type="info" />
+      </Card>
     );
   }
 
@@ -571,31 +567,75 @@ const TreeHealthPanel: React.FC<TreeHealthPanelProps> = ({ treeId, taskId, onPro
     );
   }
 
-  // 如果有错误且没有数据，显示错误提示
-  if (error && !treeHealth && !taskHealth) {
+  // 渲染错误提示
+  if (error) {
     return (
-      <Alert
-        message="获取健康状态失败"
-        description={error}
-        type="error"
-        showIcon
-        action={
-          <Button type="primary" size="small" onClick={() => window.location.reload()}>
-            重新加载
+      <Card 
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>树木健康状态</span>
+            <Button 
+              type="primary" 
+              onClick={handleRefresh} 
+              loading={refreshing}
+              icon={<SyncOutlined />}
+            >
+              重新获取
+            </Button>
+          </div>
+        } 
+        extra={
+          <Button 
+            type="link" 
+            onClick={handleBatchUpdate}
+            loading={refreshing}
+          >
+            批量更新所有树木
           </Button>
         }
-      />
+        bordered={false}
+      >
+        <Alert
+          message="获取健康状态失败"
+          description={error}
+          type="error"
+          showIcon
+        />
+      </Card>
     );
   }
 
   return (
-    <Card loading={loading} bordered={false}>
+    <Card 
+      title={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>树木健康状态</span>
+          <Button 
+            type="text" 
+            icon={<SyncOutlined spin={refreshing} />} 
+            onClick={handleRefresh}
+            loading={refreshing}
+          >
+            刷新
+          </Button>
+        </div>
+      } 
+      extra={
+        <Button 
+          type="link" 
+          onClick={handleBatchUpdate}
+          loading={refreshing}
+        >
+          批量更新所有树木
+        </Button>
+      }
+      bordered={false}
+    >
       {error ? (
         <Alert message={error} type="error" />
       ) : (
         <>
           {renderTreeHealthInfo()}
-          {renderGrowthStageInfo()}
           {renderHealthEffects()}
           {(taskId || (treeHealth?.task?.id && onProgressUpdate)) && (
             <div style={{ marginTop: 24 }}>

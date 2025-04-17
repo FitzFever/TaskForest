@@ -65,7 +65,7 @@ export interface TreeListResponseDto {
 }
 
 // 常量定义
-export const MAX_GROWTH_STAGE = 5; // 最大生长阶段
+export const MAX_GROWTH_STAGE = 3; // 最大生长阶段
 export const TREE_SPECIES = {
   OAK: 'OAK',       // 橡树 (普通任务)
   PINE: 'PINE',     // 松树 (重复任务)

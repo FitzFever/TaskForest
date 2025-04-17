@@ -140,7 +140,7 @@ class TaskTreeService {
 
       // 任务完成时，树木进入成熟阶段，健康状态最高
       if (status === 'COMPLETED') {
-        stage = 4; // 成熟阶段
+        stage = 3; // 成熟阶段
         healthState = 100;
       } 
       // 任务取消时，树木健康状态降低
@@ -149,12 +149,12 @@ class TaskTreeService {
       }
       // 进行中状态，根据进度更新树木阶段
       else if (status === 'IN_PROGRESS' && progress !== undefined) {
-        if (progress >= 75) {
-          stage = 3; // 高级阶段
-        } else if (progress >= 50) {
-          stage = 2; // 中级阶段
-        } else if (progress >= 25) {
-          stage = 1; // 初级阶段
+        if (progress >= 66) {
+          stage = 2; // 成长阶段
+        } else if (progress >= 33) {
+          stage = 1; // 幼苗阶段
+        } else {
+          stage = 0; // 种子阶段
         }
       }
 

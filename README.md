@@ -184,48 +184,12 @@ taskforest/
 
 ## 文档导航
 
-TaskForest 项目文档体系按功能模块和目的进行组织，以下是完整的文档索引：
-
-### 项目概览与入门
-
-- [项目架构概览](./docs/architecture/architecture_overview.md) - 系统整体架构设计
-- [系统设计文档](./docs/architecture/system_design.md) - 详细系统设计与技术选型
-- [快速开发指南](./docs/guides/development_quick_start.md) - 开发环境搭建与项目启动
-- [开发路线图](./docs/development/roadmap.md) - 项目开发计划与进度
-- [开发任务清单](./docs/development_tasks.md) - 详细开发任务和进度追踪
-
-### 产品与设计文档
-
-- [产品说明文档](./product/TaskForest产品说明文档.md) - 产品功能与价值说明
-- [产品原型设计](./product/TaskForest_产品原型设计.md) - 产品原型与交互设计
-- [流程图说明](./product/TaskForest流程图说明.md) - 业务流程与系统流程图
-
-### 开发规范与指南
-
-- [开发规范](./docs/development/standards.md) - 编码规范与开发流程
-- [贡献指南](./docs/development/contributing.md) - 项目贡献与协作指南
-- [故障排除指南](./docs/development/troubleshooting.md) - 开发常见问题解决方案
-
-### API 文档
-
-- [API 接口参考](./docs/api_reference.md) - 完整 API 接口规范
-- [树木健康 API](./docs/api/tree_health_api.md) - 树木健康状态系统 API
-
-### 核心模块文档
-
-- [树木健康系统概览](./docs/modules/tree_health_readme.md) - 树木健康系统总体说明
-- [树木健康系统设计](./docs/modules/tree_health_system.md) - 树木健康系统详细设计
-- [树木健康 3D 可视化](./docs/modules/tree_health_3d_visualization.md) - 树木健康状态可视化设计
-
-### 实施指南
-
-- [树木健康组件指南](./docs/guides/tree_health_components_guide.md) - 树木健康组件开发指南
-- [树木健康实现指南](./docs/guides/tree_health_implementation_guide.md) - 树木健康系统实现指南
-
-### 项目子模块
-
+- [项目架构文档](./docs/architecture/architecture_overview.md) - 系统架构设计
+- [开发规范](./docs/development/standards.md) - 开发规范和流程
 - [前端项目说明](./client/README.md) - 前端项目详细说明
 - [后端项目说明](./server/README.md) - 后端项目详细说明
+- [API 文档](./docs/api/api_reference.md) - API 接口参考
+- [故障排除指南](./docs/development/troubleshooting.md) - 开发常见问题解决方案
 
 ## 环境要求
 
