@@ -111,7 +111,7 @@ pnpm start
 ```
 
 开发脚本 `start-dev.sh` 会自动：
-1. 启动后端API服务
+1. 启动后端API服务（默认端口9000）
 2. 监控日志输出
 3. 在服务关闭时清理进程
 
@@ -138,6 +138,8 @@ TaskForest 后端提供 RESTful API 接口，遵循以下设计原则：
 4. 支持分页、过滤和排序
 5. 返回 JSON 格式数据
 
+服务默认运行在 http://localhost:9000，API基础路径为 http://localhost:9000/api
+
 主要接口：
 
 - `GET /api/tasks` - 获取任务列表
@@ -150,7 +152,7 @@ TaskForest 后端提供 RESTful API 接口，遵循以下设计原则：
 - `GET /api/trees/:id` - 获取单个树木
 - `PUT /api/trees/:id` - 更新树木
 
-详细的 API 文档请参考 [API 文档](../docs/api/api_reference.md)。
+详细的 API 文档请参考 [API 文档](../docs/api/api_reference.md) 或启动服务后访问 http://localhost:9000/api-docs。
 
 ## 核心数据模型
 

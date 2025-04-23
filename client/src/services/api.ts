@@ -19,7 +19,12 @@ export interface IApiResponse<T> {
 const getBaseUrl = (): string => {
   // 优先使用环境变量中的API地址
   // @ts-ignore - Vite特有的环境变量处理
-  const envApiUrl = import.meta.env.VITE_API_URL || '';
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  // @ts-ignore - 兼容start-dev.sh脚本设置的变量名
+  const reactAppDevApiUrl = import.meta.env.VITE_REACT_APP_DEV_API_URL || '';
+  
+  // 使用任一有效的API URL
+  const envApiUrl = apiUrl || reactAppDevApiUrl;
   
   console.log('API基础URL配置:', envApiUrl || '/api');
   
@@ -32,7 +37,7 @@ const getBaseUrl = (): string => {
  */
 const api = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -114,8 +119,12 @@ api.interceptors.response.use(
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
       // 请求发送但未收到响应
-      console.error('API错误: 服务器无响应');
-      return Promise.reject(new Error('服务器无响应'));
+      console.error('API错误: 服务器无响应或请求超时');
+      // 检查是否是超时问题
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        return Promise.reject(new Error('AI处理请求时间较长，请耐心等待或稍后再试'));
+      }
+      return Promise.reject(new Error('服务器无响应，请检查网络连接并重试'));
     } else {
       // 请求配置错误
       console.error('API错误:', error.message);
@@ -139,7 +148,9 @@ export const diagnoseApi = async (): Promise<void> => {
     // @ts-ignore - Vite特有的环境变量
     console.log('环境:', process.env.NODE_ENV);
     // @ts-ignore - Vite特有的环境变量
-    console.log('API URL环境变量:', import.meta.env.VITE_API_URL);
+    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+    // @ts-ignore - Vite特有的环境变量
+    console.log('VITE_REACT_APP_DEV_API_URL:', import.meta.env.VITE_REACT_APP_DEV_API_URL);
     console.log('当前API基础URL:', getBaseUrl());
     console.log('Axios配置:', {
       baseURL: api.defaults.baseURL,

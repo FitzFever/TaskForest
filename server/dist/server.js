@@ -3,8 +3,12 @@
  */
 import app from './app.js';
 import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 9000;
+// 加载环境变量
+dotenv.config();
+// 获取端口配置
+const PORT = process.env.PORT || 3000;
 // 连接数据库并启动服务器
 async function startServer() {
     try {
@@ -13,11 +17,9 @@ async function startServer() {
         console.log('✅ 数据库连接成功');
         // 启动服务器
         app.listen(PORT, () => {
-            console.log('✅ 服务已启动');
-            console.log(`🔗 服务地址: http://localhost:${PORT}`);
-            console.log(`🔗 API基础路径: http://localhost:${PORT}/api`);
-            console.log(`🔗 健康检查: http://localhost:${PORT}/api/health`);
-            console.log('\n开发环境准备就绪. 按 Ctrl+C 停止服务.\n');
+            console.log(`TaskForest API服务已启动，监听端口: ${PORT}`);
+            console.log(`服务访问地址: http://localhost:${PORT}`);
+            console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
         });
     }
     catch (error) {

@@ -10,7 +10,7 @@ dotenv.config();
 // 配置对象
 export const config = {
   // 服务器配置
-  port: process.env.PORT || 3000,
+  port: process.env.PORT || 9000,
   nodeEnv: process.env.NODE_ENV || 'development',
   
   // 数据库配置

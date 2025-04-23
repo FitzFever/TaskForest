@@ -6,12 +6,16 @@ import express from 'express';
 import cors from 'cors';
 import { loggerMiddleware } from './middleware/logger.js';
 import devRoutes from './routes/dev/index.js';
+import dotenv from 'dotenv';
+
+// 加载环境变量
+dotenv.config();
 
 // 设置编码
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 const app = express();
-const PORT = 9000;
+const PORT = process.env.PORT || 9000;
 
 // 启用CORS和JSON解析
 app.use(cors({

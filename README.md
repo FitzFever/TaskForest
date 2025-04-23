@@ -35,7 +35,11 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 - 🌲 **3D 森林场景**：直观展示任务完成情况
 - ❤️ **树木生命状态**：基于任务进度和截止日期的树木健康系统
 - 🏆 **奖励与解锁机制**：完成任务解锁不同树种和特殊装饰
-- 🤖 **AI 辅助功能**：智能任务拆解与建议（计划中）
+- 🤖 **AI 辅助功能**：
+  - ✅ 智能任务拆解：自动分析任务复杂度并拆解为子任务
+  - ✅ 批量任务创建：支持一次性创建多个相关任务和任务树
+  - ✅ 文本到任务转换：将长文本需求自动转换为结构化任务和任务树
+  - 🔄 AI任务优化建议：根据历史数据提供任务管理优化建议
 - 📊 **数据统计分析**：任务完成率与时间投入分析
 
 ### 🛠️ 技术栈
@@ -43,7 +47,7 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 - 🖥️ **后端**：Node.js 18 + Express 4 + Prisma 4 + TypeScript 5
 - 💾 **数据库**：SQLite 3
 - 📦 **包管理**：pnpm
-- 🧠 **AI 集成**：OpenAI API（计划中）
+- 🧠 **AI 集成**：DeepSeek API（已实现）+ OpenAI API（计划中）
 
 ## 📅 开发计划与进展
 
@@ -263,3 +267,68 @@ taskforest/
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 详见 [📜 LICENSE](LICENSE) 文件
+
+# TaskForest 项目
+
+TaskForest 是一个现代化的任务管理系统，它使用AI辅助技术帮助用户更有效地分解和管理任务。
+
+## 功能特点
+
+- 任务复杂度分析：使用DeepSeek API自动分析任务的复杂度
+- 任务分解：将大型任务自动分解为更小的可管理子任务
+- 任务树系统：任务完成时会成长的虚拟树，增加任务完成的成就感
+- 批量任务处理：支持批量创建任务和任务树
+
+## 技术栈
+
+- 前端：React, TypeScript, Ant Design
+- 后端：Node.js, Express, ES Modules
+- AI接口：DeepSeek API
+
+## 批量任务功能
+
+系统支持两种批量任务创建方式：
+
+1. 简单批量任务创建 - 创建多个独立任务
+2. 批量任务和任务树创建 - 创建主任务、子任务以及对应的任务树
+
+这些功能的实现包括：
+
+- 后端API接口 `/api/batch-tasks` 和 `/api/batch-tasks/with-trees`
+- 前端服务 `batchTaskService.ts` 与后端接口交互
+- 与AI任务分解结果集成，支持从AI分析结果直接创建任务和任务树
+
+## 启动项目
+
+### 后端
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+### 前端
+
+```bash
+cd client
+npm install
+npm start
+```
+
+## 运行测试
+
+```bash
+# 测试DeepSeek API
+npm run test:deepseek
+
+# 测试批量任务创建
+npm run test:batch
+
+# 测试任务集成
+npm run test:integration
+```
+
+## API文档
+
+启动项目后，可以通过访问 `http://localhost:3000/api-docs` 查看完整的API文档。

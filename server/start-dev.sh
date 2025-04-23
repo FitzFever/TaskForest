@@ -11,10 +11,24 @@ NC='\033[0m' # 无颜色
 echo -e "${BLUE}启动TaskForest开发环境...${NC}"
 echo "===================================="
 
+# 确保端口9000空闲
+if lsof -Pi :9000 -sTCP:LISTEN -t >/dev/null ; then
+  echo -e "${RED}端口9000已被占用，请关闭该端口上的服务后重试${NC}"
+  echo -e "${YELLOW}可以尝试运行: pkill -f node${NC}"
+  exit 1
+fi
+
+# 更新.env文件中的端口配置
+echo -e "${YELLOW}更新端口配置...${NC}"
+cd "$(dirname "$0")" # 确保在server目录中
+echo "PORT=9000" > .env.tmp
+grep -v "^PORT=" .env >> .env.tmp
+mv .env.tmp .env
+echo -e "${GREEN}服务器端口已设置为9000${NC}"
+
 # 启动后端API服务
 echo -e "${YELLOW}启动后端API服务...${NC}"
-cd "$(dirname "$0")" # 确保在server目录中
-node src/dev.js &
+node src/dev-server.js &
 BACKEND_PID=$!
 
 # 等待后端启动

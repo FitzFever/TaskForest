@@ -4,10 +4,13 @@
 
 ## API 基础信息
 
+- **服务器地址**：`http://localhost:9000`
 - **基础URL**：`/api`
+- **完整API路径**：`http://localhost:9000/api`
 - **内容类型**：`application/json`
 - **字符编码**：UTF-8
 - **版本控制**：在URL中包含版本号，如 `/api/v1/tasks`
+- **Swagger文档**：`http://localhost:9000/api-docs`
 
 ## 通用响应格式
 
@@ -451,9 +454,593 @@ POST /api/tasks/:id/complete
 }
 ```
 
-### 2. 树木管理
+### 2. 通知管理
 
-#### 2.1 获取树木列表
+#### 2.1 获取通知列表
+
+```
+GET /api/notifications
+```
+
+**请求参数**：
+
+| 参数名    | 类型    | 是否必须 | 说明                                               |
+|-----------|---------|----------|--------------------------------------------------|
+| page      | number  | 否       | 页码，默认1                                       |
+| limit     | number  | 否       | 每页数量，默认20                                  |
+| read      | boolean | 否       | 通知已读状态 (true, false)                        |
+| type      | string  | 否       | 通知类型 (DUE_DATE, TREE_HEALTH, TASK_ASSIGNED, TASK_UPDATED, SYSTEM)  |
+| priority  | string  | 否       | 通知优先级 (LOW, MEDIUM, HIGH, CRITICAL)          |
+| startDate | string  | 否       | 开始日期，格式为 YYYY-MM-DD                       |
+| endDate   | string  | 否       | 结束日期，格式为 YYYY-MM-DD                       |
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "notifications": [
+      {
+        "id": "2001",
+        "title": "任务即将到期: 完成项目报告",
+        "message": "您的任务 \"完成项目报告\" 将在 2023年5月20日 到期，请及时完成。",
+        "type": "DUE_DATE",
+        "priority": "HIGH",
+        "createdAt": "2023-05-19T09:00:00.000Z",
+        "read": false,
+        "readAt": null,
+        "taskId": "1001",
+        "data": {
+          "taskTitle": "完成项目报告",
+          "dueDate": "2023-05-20T00:00:00.000Z",
+          "priority": 3
+        }
+      }
+    ],
+    "total": 8,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  },
+  "message": "获取通知列表成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.2 获取通知统计
+
+```
+GET /api/notifications/stats
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "total": 8,
+    "unread": 3,
+    "typeStats": {
+      "DUE_DATE": 2,
+      "TREE_HEALTH": 1,
+      "TASK_ASSIGNED": 3,
+      "TASK_UPDATED": 1,
+      "SYSTEM": 1
+    }
+  },
+  "message": "获取通知统计成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.3 创建通知
+
+```
+POST /api/notifications
+```
+
+**请求体**：
+
+```json
+{
+  "title": "任务即将到期: 完成项目报告",
+  "message": "您的任务 \"完成项目报告\" 将在 2023年5月20日 到期，请及时完成。",
+  "type": "DUE_DATE",
+  "priority": "HIGH",
+  "taskId": "1001",
+  "data": {
+    "taskTitle": "完成项目报告",
+    "dueDate": "2023-05-20T00:00:00.000Z",
+    "priority": 3
+  }
+}
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 201,
+  "data": {
+    "id": "2001",
+    "title": "任务即将到期: 完成项目报告",
+    "message": "您的任务 \"完成项目报告\" 将在 2023年5月20日 到期，请及时完成。",
+    "type": "DUE_DATE",
+    "priority": "HIGH",
+    "createdAt": "2023-05-19T09:00:00.000Z",
+    "read": false,
+    "readAt": null,
+    "taskId": "1001",
+    "data": {
+      "taskTitle": "完成项目报告",
+      "dueDate": "2023-05-20T00:00:00.000Z",
+      "priority": 3
+    }
+  },
+  "message": "创建通知成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.4 获取单个通知
+
+```
+GET /api/notifications/:id
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "id": "2001",
+    "title": "任务即将到期: 完成项目报告",
+    "message": "您的任务 \"完成项目报告\" 将在 2023年5月20日 到期，请及时完成。",
+    "type": "DUE_DATE",
+    "priority": "HIGH",
+    "createdAt": "2023-05-19T09:00:00.000Z",
+    "read": false,
+    "readAt": null,
+    "taskId": "1001",
+    "data": {
+      "taskTitle": "完成项目报告",
+      "dueDate": "2023-05-20T00:00:00.000Z",
+      "priority": 3
+    }
+  },
+  "message": "获取通知成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.5 标记通知为已读
+
+```
+PATCH /api/notifications/:id/read
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "id": "2001",
+    "read": true,
+    "readAt": "2023-05-19T10:15:30.000Z"
+  },
+  "message": "通知已标记为已读",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.6 标记所有通知为已读
+
+```
+PATCH /api/notifications/read-all
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "success": true,
+    "count": 3
+  },
+  "message": "所有通知已标记为已读",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.7 删除通知
+
+```
+DELETE /api/notifications/:id
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 204,
+  "data": null,
+  "message": "通知删除成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.8 清除所有通知
+
+```
+DELETE /api/notifications
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 204,
+  "data": null,
+  "message": "所有通知已清除",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.9 获取通知设置
+
+```
+GET /api/notifications/settings
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "enabled": true,
+    "dueDateReminderHours": 24,
+    "dailyDigestEnabled": true,
+    "desktopNotificationsEnabled": true,
+    "inAppNotificationsEnabled": true,
+    "emailNotificationsEnabled": false
+  },
+  "message": "获取通知设置成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.10 更新通知设置
+
+```
+PUT /api/notifications/settings
+```
+
+**请求体**：
+
+```json
+{
+  "enabled": true,
+  "dueDateReminderHours": 48,
+  "dailyDigestEnabled": false,
+  "desktopNotificationsEnabled": true,
+  "inAppNotificationsEnabled": true,
+  "emailNotificationsEnabled": true
+}
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "enabled": true,
+    "dueDateReminderHours": 48,
+    "dailyDigestEnabled": false,
+    "desktopNotificationsEnabled": true,
+    "inAppNotificationsEnabled": true,
+    "emailNotificationsEnabled": true
+  },
+  "message": "更新通知设置成功",
+  "timestamp": 1675487562589
+}
+```
+
+#### 2.11 测试通知功能
+
+```
+POST /api/notifications/test
+```
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "id": "test-001",
+    "title": "测试通知",
+    "message": "这是一条测试通知，用于验证通知功能是否正常工作。",
+    "type": "SYSTEM",
+    "priority": "MEDIUM",
+    "createdAt": "2023-05-19T10:30:00.000Z",
+    "read": false
+  },
+  "message": "测试通知已发送",
+  "timestamp": 1675487562589
+}
+```
+
+### 3. AI 智能助手
+
+#### 3.1 任务分析
+
+```
+POST /api/analyze
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| taskId | string | 否 | 任务ID |
+| title | string | 是 | 任务标题 |
+| description | string | 否 | 任务详细描述 |
+
+**请求示例：**
+
+```json
+{
+  "taskId": "task-123",
+  "title": "实现用户登录功能",
+  "description": "开发一个完整的用户登录功能，包括表单验证、API集成、状态管理和错误处理。"
+}
+```
+
+**响应参数：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | object | 分析结果 |
+| data.taskId | string | 任务ID |
+| data.title | string | 任务标题 |
+| data.complexity | string | 任务复杂度，可能为SIMPLE、MEDIUM或COMPLEX |
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "taskId": "task-123",
+    "title": "实现用户登录功能",
+    "complexity": "MEDIUM"
+  }
+}
+```
+
+#### 3.2 任务拆解
+
+```
+POST /api/decompose
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| taskId | string | 否 | 任务ID |
+| title | string | 是 | 任务标题 |
+| description | string | 否 | 任务详细描述 |
+| complexity | string | 否 | 任务复杂度，可为SIMPLE、MEDIUM或COMPLEX |
+
+**URL查询参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| createTasks | boolean | 否 | 是否创建实际任务，默认为false |
+| createTrees | boolean | 否 | 是否创建相关树木，默认为true。仅当createTasks为true时有效 |
+
+**请求示例：**
+
+```json
+{
+  "taskId": "task-123",
+  "title": "实现用户登录功能",
+  "description": "开发一个完整的用户登录功能，包括表单验证、API集成、状态管理和错误处理。",
+  "complexity": "MEDIUM"
+}
+```
+
+**响应参数：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | array | 子任务列表（如createTasks=false）或创建结果（如createTasks=true） |
+
+**响应示例（createTasks=false）：**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "设计登录表单界面",
+      "description": "创建用户登录表单，包括用户名/邮箱输入框、密码输入框和登录按钮。",
+      "estimatedHours": 2
+    },
+    {
+      "title": "实现表单验证",
+      "description": "添加前端表单验证，包括非空检查、邮箱格式验证和密码长度验证。",
+      "estimatedHours": 1.5
+    },
+    // ... 更多子任务
+  ]
+}
+```
+
+**响应示例（createTasks=true）：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "mainTask": {
+      "id": "task-123",
+      "title": "实现用户登录功能",
+      "description": "开发一个完整的用户登录功能...",
+      "status": "TODO",
+      "complexity": "MEDIUM",
+      "createdAt": "2023-08-01T12:00:00Z"
+    },
+    "subTasks": [
+      {
+        "id": "subtask-1",
+        "title": "设计登录表单界面",
+        "description": "创建用户登录表单...",
+        "status": "TODO",
+        "parentTaskId": "task-123",
+        "estimatedHours": 2,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      // ... 更多子任务
+    ],
+    "trees": {
+      "mainTree": {
+        "id": "tree-1",
+        "taskId": "task-123",
+        "type": "REDWOOD",
+        "health": 100,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      "subTrees": [
+        {
+          "id": "tree-2",
+          "taskId": "subtask-1",
+          "type": "OAK",
+          "parentTreeId": "tree-1",
+          "health": 100,
+          "createdAt": "2023-08-01T12:00:00Z"
+        },
+        // ... 更多子树
+      ]
+    }
+  }
+}
+```
+
+#### 3.3 批量创建任务
+
+```
+POST /api/tasks/batch
+```
+
+**请求体**：
+
+```json
+{
+  "mainTask": {
+    "title": "准备Q2季度报告",
+    "description": "准备Q2季度报告，包括销售数据整理、客户反馈分析和团队绩效评估",
+    "type": "PROJECT",
+    "priority": 1,
+    "dueDate": "2023-08-15T00:00:00Z",
+    "tags": ["报告", "季度总结", "数据分析"]
+  },
+  "subTasks": [
+    {
+      "title": "收集Q2销售数据",
+      "description": "从CRM系统导出Q2销售数据，包括总销售额、产品销售明细和区域分布",
+      "type": "WORK",
+      "priority": 2,
+      "dueDate": "2023-08-05T00:00:00Z",
+      "tags": ["数据收集", "销售"]
+    },
+    // ... 其他子任务
+  ],
+  "createTrees": true
+}
+```
+
+**请求参数说明**：
+
+| 参数名      | 类型    | 是否必须 | 说明                               |
+|-------------|---------|----------|-----------------------------------|
+| mainTask    | object  | 是       | 主任务对象                         |
+| subTasks    | array   | 是       | 子任务对象数组                     |
+| createTrees | boolean | 否       | 是否同时创建关联树木，默认为true   |
+
+**成功响应**：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "mainTask": {
+      "id": "task-main-1234",
+      "title": "准备Q2季度报告",
+      "description": "准备Q2季度报告，包括销售数据整理、客户反馈分析和团队绩效评估",
+      "type": "PROJECT",
+      "priority": 1,
+      "dueDate": "2023-08-15T00:00:00Z",
+      "status": "TODO",
+      "createdAt": "2023-07-20T09:30:00Z",
+      "tags": ["报告", "季度总结", "数据分析"],
+      "treeId": "tree-main-5678",
+      "subTaskIds": ["task-sub-1111", "task-sub-2222", "task-sub-3333", "task-sub-4444", "task-sub-5555"]
+    },
+    "subTasks": [
+      {
+        "id": "task-sub-1111",
+        "title": "收集Q2销售数据",
+        "description": "从CRM系统导出Q2销售数据，包括总销售额、产品销售明细和区域分布",
+        "type": "WORK",
+        "priority": 2,
+        "dueDate": "2023-08-05T00:00:00Z",
+        "status": "TODO",
+        "createdAt": "2023-07-20T09:30:00Z",
+        "tags": ["数据收集", "销售"],
+        "parentTaskId": "task-main-1234",
+        "treeId": "tree-sub-1111"
+      },
+      // ... 其他创建的子任务
+    ],
+    "trees": {
+      "mainTree": {
+        "id": "tree-main-5678",
+        "taskId": "task-main-1234",
+        "type": "WILLOW",
+        "stage": 0,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "healthState": 100,
+        "createdAt": "2023-07-20T09:30:00Z",
+        "subTreeIds": ["tree-sub-1111", "tree-sub-2222", "tree-sub-3333", "tree-sub-4444", "tree-sub-5555"]
+      },
+      "subTrees": [
+        // ... 创建的子树木
+      ]
+    }
+  },
+  "message": "批量创建任务和树木成功",
+  "timestamp": 1679568234000
+}
+```
+
+### 4. 树木管理
+
+#### 4.1 获取树木列表
 
 ```
 GET /api/trees
@@ -520,7 +1107,7 @@ GET /api/trees
 }
 ```
 
-#### 2.2 获取单个树木
+#### 4.2 获取单个树木
 
 ```
 GET /api/trees/:id
@@ -573,7 +1160,7 @@ GET /api/trees/:id
 }
 ```
 
-#### 2.3 更新树木
+#### 4.3 更新树木
 
 ```
 PUT /api/trees/:id
@@ -642,7 +1229,7 @@ PUT /api/trees/:id
 }
 ```
 
-#### 2.4 获取任务关联的树木
+#### 4.4 获取任务关联的树木
 
 ```
 GET /api/trees/by-task/:taskId
@@ -688,7 +1275,7 @@ GET /api/trees/by-task/:taskId
 }
 ```
 
-#### 2.5 获取树木健康状态
+#### 4.5 获取树木健康状态
 
 ```
 GET /api/trees/:id/health
@@ -727,7 +1314,7 @@ GET /api/trees/:id/health
 }
 ```
 
-#### 2.6 更新树木健康状态
+#### 4.6 更新树木健康状态
 
 ```
 PUT /api/trees/:id/health
@@ -771,7 +1358,7 @@ PUT /api/trees/:id/health
 }
 ```
 
-#### 2.7 获取任务与树木健康关联
+#### 4.7 获取任务与树木健康关联
 
 ```
 GET /api/tasks/:id/tree-health
@@ -816,7 +1403,7 @@ GET /api/tasks/:id/tree-health
 }
 ```
 
-#### 2.8 更新任务进度（影响健康状态）
+#### 4.8 更新任务进度（影响健康状态）
 
 ```
 PUT /api/tasks/:id/progress
@@ -865,7 +1452,7 @@ PUT /api/tasks/:id/progress
 }
 ```
 
-#### 2.9 批量更新树木健康状态
+#### 4.9 批量更新树木健康状态
 
 ```
 POST /api/trees/health/batch-update
@@ -884,64 +1471,138 @@ POST /api/trees/health/batch-update
 }
 ```
 
-### 3. AI 助手
+### 8. 文本到任务转换
 
-#### 3.1 分析任务
+#### 8.1 从文本生成任务和任务树
 
 ```
-POST /api/ai/analyze-task
+POST /api/text-to-task
 ```
 
-**请求体**：
+将长文本内容分析并转换为结构化任务和任务树。系统会使用DeepSeek AI智能分析文本内容，提取核心任务信息，分析任务复杂度，并拆解为合理的子任务结构。
+
+**请求参数：**
+
+| 参数名 | 类型 | 是否必须 | 说明 |
+|--------|------|----------|------|
+| text | string | 是 | 要分析的文本内容，如项目需求、会议记录等 |
+| createTree | boolean | 否 | 是否同时创建任务树，默认为true |
+| treeType | string | 否 | 树木类型 (OAK, PINE, MAPLE, CHERRY, WILLOW)，默认为OAK |
+
+**请求示例：**
 
 ```json
 {
-  "task": {
-    "id": "abcd-1234-efgh-5678",
-    "title": "完成Q2季度报告",
-    "description": "整理第二季度项目进展详细报告，需要包含销售数据、客户反馈和团队绩效。"
+  "text": "我们需要实现一个在线学习平台的用户管理模块，包含以下功能：\n1. 用户注册与登录：\n   - 支持邮箱注册、手机号注册\n   - 支持密码登录和验证码登录\n   - 实现第三方登录（微信、QQ）...",
+  "createTree": true,
+  "treeType": "PINE"
+}
+```
+
+**成功响应：**
+
+```json
+{
+  "success": true,
+  "message": "成功从文本生成任务",
+  "data": {
+    "analysis": {
+      "taskId": "f1d2e3b4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+      "title": "在线学习平台用户管理模块",
+      "complexity": "HIGH",
+      "description": "实现包含用户注册、登录、个人信息管理和权限控制的用户管理系统"
+    },
+    "tasks": {
+      "mainTask": {
+        "id": "f1d2e3b4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+        "title": "在线学习平台用户管理模块",
+        "description": "实现包含用户注册、登录、个人信息管理和权限控制的用户管理系统",
+        "complexity": "HIGH",
+        "type": "PROJECT",
+        "priority": "HIGH"
+      },
+      "subTasks": [
+        {
+          "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+          "title": "用户注册功能开发",
+          "description": "实现邮箱注册、手机号注册功能，包含表单验证和安全措施",
+          "estimatedHours": 8,
+          "parentTaskId": "f1d2e3b4-5a6b-7c8d-9e0f-1a2b3c4d5e6f"
+        },
+        {
+          "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+          "title": "用户登录系统实现",
+          "description": "开发密码登录、验证码登录和第三方登录功能",
+          "estimatedHours": 10,
+          "parentTaskId": "f1d2e3b4-5a6b-7c8d-9e0f-1a2b3c4d5e6f"
+        },
+        // ... 更多子任务
+      ],
+      "tree": {
+        "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "name": "在线学习平台用户管理模块 任务树",
+        "type": "PINE",
+        "rootTaskId": "f1d2e3b4-5a6b-7c8d-9e0f-1a2b3c4d5e6f"
+      }
+    }
   }
 }
 ```
 
-**成功响应**：
+**错误响应：**
 
 ```json
 {
-  "code": 200,
+  "success": false,
+  "message": "从文本生成任务失败",
+  "error": "文本内容不能为空"
+}
+```
+
+**注意事项：**
+
+1. 文本内容越详细和结构化，AI分析的结果越准确
+2. 任务拆解的粒度和子任务数量会根据任务复杂度自动调整
+3. API调用可能需要较长处理时间，建议使用异步处理
+4. 文本长度限制为10MB
+
+#### 8.2 文本分析进度查询
+
+```
+GET /api/text-to-task/:jobId/status
+```
+
+查询长文本分析任务的处理状态，用于异步处理大型文本内容的进度追踪。
+
+**路径参数：**
+
+| 参数名 | 类型 | 是否必须 | 说明 |
+|--------|------|----------|------|
+| jobId | string | 是 | 文本分析任务ID，从提交分析请求响应中获取 |
+
+**成功响应：**
+
+```json
+{
+  "success": true,
   "data": {
-    "taskId": "abcd-1234-efgh-5678",
-    "analysis": {
-      "complexity": "MEDIUM",
-      "estimatedTime": "4-6小时",
-      "recommendedTags": ["报告", "销售", "客户反馈", "绩效"],
-      "suggestedDeadline": "2023-07-25T00:00:00Z"
-    },
-    "breakdown": [
-      {
-        "title": "收集销售数据",
-        "description": "从销售系统导出Q2销售数据，整理成报表格式",
-        "estimatedDuration": "1-2小时"
-      },
-      {
-        "title": "整理客户反馈",
-        "description": "从客户反馈系统提取Q2反馈数据，分析关键点",
-        "estimatedDuration": "1-2小时"
-      },
-      {
-        "title": "评估团队绩效",
-        "description": "收集团队KPI数据，分析Q2绩效表现",
-        "estimatedDuration": "1小时"
-      },
-      {
-        "title": "撰写最终报告",
-        "description": "合并所有数据，撰写最终报告文档",
-        "estimatedDuration": "2小时"
-      }
-    ]
-  },
-  "message": "Task analysis successful",
-  "timestamp": 1675487562589
+    "jobId": "job-1234-5678-90ab-cdef",
+    "status": "COMPLETED",  // 可能值: PENDING, PROCESSING, COMPLETED, FAILED
+    "progress": 100,
+    "message": "分析完成",
+    "startTime": "2023-10-01T12:30:45Z",
+    "endTime": "2023-10-01T12:31:30Z"
+  }
+}
+```
+
+**错误响应：**
+
+```json
+{
+  "success": false,
+  "message": "任务状态查询失败",
+  "error": "找不到指定任务ID"
 }
 ```
 
@@ -1088,3 +1749,578 @@ enum TreeType {
 
 ### 项目参考
 - [项目总览](../README.md) - 返回项目总览文档 
+
+## AI任务分析与拆解
+
+TaskForest集成了基于DeepSeek API的智能任务分析和拆解功能，帮助用户更高效地管理复杂任务。
+
+### 任务复杂度分析
+
+分析任务的复杂度，判断任务是简单、中等还是复杂。
+
+```
+POST /api/analyze
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| taskId | string | 否 | 任务ID |
+| title | string | 是 | 任务标题 |
+| description | string | 否 | 任务详细描述 |
+
+**请求示例：**
+
+```json
+{
+  "taskId": "task-123",
+  "title": "实现用户登录功能",
+  "description": "开发一个完整的用户登录功能，包括表单验证、API集成、状态管理和错误处理。"
+}
+```
+
+**响应参数：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | object | 分析结果 |
+| data.taskId | string | 任务ID |
+| data.title | string | 任务标题 |
+| data.complexity | string | 任务复杂度，可能为SIMPLE、MEDIUM或COMPLEX |
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "taskId": "task-123",
+    "title": "实现用户登录功能",
+    "complexity": "MEDIUM"
+  }
+}
+```
+
+### 任务拆解
+
+将任务拆解为多个子任务。如果未提供复杂度，会自动先进行复杂度分析。支持自动创建任务和树。
+
+```
+POST /api/decompose
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| taskId | string | 否 | 任务ID |
+| title | string | 是 | 任务标题 |
+| description | string | 否 | 任务详细描述 |
+| complexity | string | 否 | 任务复杂度，可为SIMPLE、MEDIUM或COMPLEX |
+
+**URL查询参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| createTasks | boolean | 否 | 是否创建实际任务，默认为false |
+| createTrees | boolean | 否 | 是否创建相关树木，默认为true。仅当createTasks为true时有效 |
+
+**请求示例：**
+
+```json
+{
+  "taskId": "task-123",
+  "title": "实现用户登录功能",
+  "description": "开发一个完整的用户登录功能，包括表单验证、API集成、状态管理和错误处理。",
+  "complexity": "MEDIUM"
+}
+```
+
+**响应参数：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | array | 子任务列表（如createTasks=false）或创建结果（如createTasks=true） |
+
+**响应示例（createTasks=false）：**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "设计登录表单界面",
+      "description": "创建用户登录表单，包括用户名/邮箱输入框、密码输入框和登录按钮。",
+      "estimatedHours": 2
+    },
+    {
+      "title": "实现表单验证",
+      "description": "添加前端表单验证，包括非空检查、邮箱格式验证和密码长度验证。",
+      "estimatedHours": 1.5
+    },
+    // ... 更多子任务
+  ]
+}
+```
+
+**响应示例（createTasks=true）：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "mainTask": {
+      "id": "task-123",
+      "title": "实现用户登录功能",
+      "description": "开发一个完整的用户登录功能...",
+      "status": "TODO",
+      "complexity": "MEDIUM",
+      "createdAt": "2023-08-01T12:00:00Z"
+    },
+    "subTasks": [
+      {
+        "id": "subtask-1",
+        "title": "设计登录表单界面",
+        "description": "创建用户登录表单...",
+        "status": "TODO",
+        "parentTaskId": "task-123",
+        "estimatedHours": 2,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      // ... 更多子任务
+    ],
+    "trees": {
+      "mainTree": {
+        "id": "tree-1",
+        "taskId": "task-123",
+        "type": "REDWOOD",
+        "health": 100,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      "subTrees": [
+        {
+          "id": "tree-2",
+          "taskId": "subtask-1",
+          "type": "OAK",
+          "parentTreeId": "tree-1",
+          "health": 100,
+          "createdAt": "2023-08-01T12:00:00Z"
+        },
+        // ... 更多子树
+      ]
+    }
+  }
+}
+```
+
+### 一次性分析并拆解
+
+一次性对任务进行复杂度分析和子任务拆解。
+
+```
+POST /api/analyze-and-decompose
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| taskId | string | 否 | 任务ID |
+| title | string | 是 | 任务标题 |
+| description | string | 否 | 任务详细描述 |
+
+**URL查询参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| createTasks | boolean | 否 | 是否创建实际任务，默认为false |
+| createTrees | boolean | 否 | 是否创建相关树木，默认为true。仅当createTasks为true时有效 |
+
+**请求示例：**
+
+```json
+{
+  "taskId": "task-123",
+  "title": "实现用户登录功能",
+  "description": "开发一个完整的用户登录功能，包括表单验证、API集成、状态管理和错误处理。"
+}
+```
+
+**响应参数（createTasks=false）：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | object | 分析和拆解结果 |
+| data.analysis | object | 复杂度分析结果 |
+| data.analysis.taskId | string | 任务ID |
+| data.analysis.title | string | 任务标题 |
+| data.analysis.complexity | string | 任务复杂度 |
+| data.subTasks | array | 子任务列表 |
+| data.subTasks[].title | string | 子任务标题 |
+| data.subTasks[].description | string | 子任务详细描述 |
+| data.subTasks[].estimatedHours | number | 预计完成时间（小时） |
+
+**响应参数（createTasks=true）：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | object | 分析、拆解和创建结果 |
+| data.analysis | object | 复杂度分析结果 |
+| data.subTasks | array | 子任务列表 |
+| data.createdTasks | object | 创建的任务和树信息 |
+| data.createdTasks.mainTask | object | 创建的主任务 |
+| data.createdTasks.subTasks | array | 创建的子任务列表 |
+| data.createdTasks.trees | object | 创建的树木信息（如createTrees=true） |
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "analysis": {
+      "taskId": "task-123",
+      "title": "实现用户登录功能",
+      "complexity": "MEDIUM"
+    },
+    "subTasks": [
+      {
+        "title": "设计登录表单界面",
+        "description": "创建用户登录表单...",
+        "estimatedHours": 2
+      },
+      {
+        "title": "实现表单验证",
+        "description": "添加前端表单验证...",
+        "estimatedHours": 1.5
+      },
+      // ... 更多子任务
+    ]
+  }
+}
+```
+
+### 将分析结果转化为任务和树
+
+使用已有的分析结果，直接创建任务和相关的树。
+
+```
+POST /api/create-tasks
+```
+
+**请求参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| analysis | object | 是 | 任务分析结果 |
+| analysis.taskId | string | 否 | 任务ID |
+| analysis.title | string | 是 | 任务标题 |
+| analysis.description | string | 否 | 任务详细描述 |
+| analysis.complexity | string | 是 | 任务复杂度 |
+| subTasks | array | 是 | 子任务列表 |
+| subTasks[].title | string | 是 | 子任务标题 |
+| subTasks[].description | string | 否 | 子任务详细描述 |
+| subTasks[].estimatedHours | number | 是 | 预计完成时间（小时） |
+
+**URL查询参数：**
+
+| 参数名 | 类型 | 必填 | 描述 |
+|-------|------|------|------|
+| createTrees | boolean | 否 | 是否创建相关树木，默认为true |
+
+**请求示例：**
+
+```json
+{
+  "analysis": {
+    "taskId": "task-123",
+    "title": "实现用户登录功能",
+    "description": "开发一个完整的用户登录功能...",
+    "complexity": "MEDIUM"
+  },
+  "subTasks": [
+    {
+      "title": "设计登录表单界面",
+      "description": "创建用户登录表单...",
+      "estimatedHours": 2
+    },
+    {
+      "title": "实现表单验证",
+      "description": "添加前端表单验证...",
+      "estimatedHours": 1.5
+    },
+    // ... 更多子任务
+  ]
+}
+```
+
+**响应参数：**
+
+| 参数名 | 类型 | 描述 |
+|-------|------|------|
+| success | boolean | 请求是否成功 |
+| data | object | 创建结果 |
+| data.mainTask | object | 创建的主任务 |
+| data.subTasks | array | 创建的子任务列表 |
+| data.trees | object/null | 创建的树木信息（如createTrees=true）或null |
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "mainTask": {
+      "id": "task-123",
+      "title": "实现用户登录功能",
+      "description": "开发一个完整的用户登录功能...",
+      "status": "TODO",
+      "complexity": "MEDIUM",
+      "createdAt": "2023-08-01T12:00:00Z"
+    },
+    "subTasks": [
+      {
+        "id": "subtask-1",
+        "title": "设计登录表单界面",
+        "description": "创建用户登录表单...",
+        "status": "TODO",
+        "parentTaskId": "task-123",
+        "estimatedHours": 2,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      // ... 更多子任务
+    ],
+    "trees": {
+      "mainTree": {
+        "id": "tree-1",
+        "taskId": "task-123",
+        "type": "REDWOOD",
+        "health": 100,
+        "createdAt": "2023-08-01T12:00:00Z"
+      },
+      "subTrees": [
+        {
+          "id": "tree-2",
+          "taskId": "subtask-1",
+          "type": "OAK",
+          "parentTreeId": "tree-1",
+          "health": 100,
+          "createdAt": "2023-08-01T12:00:00Z"
+        },
+        // ... 更多子树
+      ]
+    }
+  }
+}
+``` 
+
+### 批量任务创建
+
+**端点**: `POST /api/tasks/batch`
+
+**描述**: 批量创建多个任务和任务树。
+
+**请求参数**:
+
+```json
+{
+  "tasks": [
+    {
+      "title": "主任务标题1",
+      "description": "任务描述1",
+      "status": "待处理",
+      "priority": "高",
+      "dueDate": "2023-12-31",
+      "subTasks": [
+        {
+          "title": "子任务标题1",
+          "description": "子任务描述1",
+          "status": "待处理",
+          "priority": "中",
+          "dueDate": "2023-12-25"
+        }
+      ]
+    },
+    {
+      "title": "主任务标题2",
+      "description": "任务描述2",
+      "status": "待处理",
+      "priority": "中",
+      "dueDate": "2024-01-15",
+      "subTasks": []
+    }
+  ],
+  "createTrees": true
+}
+```
+
+**成功响应** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "createdTasks": [
+      {
+        "id": "task-uuid-1",
+        "title": "主任务标题1",
+        "description": "任务描述1",
+        "status": "待处理",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": [
+          {
+            "id": "subtask-uuid-1",
+            "title": "子任务标题1",
+            "parentId": "task-uuid-1"
+          }
+        ],
+        "treeId": "tree-uuid-1"
+      },
+      {
+        "id": "task-uuid-2",
+        "title": "主任务标题2",
+        "description": "任务描述2",
+        "status": "待处理",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": [],
+        "treeId": "tree-uuid-2"
+      }
+    ],
+    "createdTrees": [
+      {
+        "id": "tree-uuid-1",
+        "name": "树木1",
+        "taskId": "task-uuid-1",
+        "health": 100,
+        "growthStage": "幼苗"
+      },
+      {
+        "id": "tree-uuid-2",
+        "name": "树木2",
+        "taskId": "task-uuid-2",
+        "health": 100,
+        "growthStage": "幼苗"
+      }
+    ]
+  }
+}
+```
+
+**错误响应** (400 Bad Request):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "请求格式不正确或缺少必要参数"
+  }
+}
+```
+
+**错误响应** (500 Internal Server Error):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SERVER_ERROR",
+    "message": "批量创建任务失败"
+  }
+}
+```
+
+### 文本到任务转换
+
+**端点**: `POST /api/ai/text-to-tasks`
+
+**描述**: 将长文本内容转换为结构化的任务和子任务。
+
+**请求参数**:
+
+```json
+{
+  "text": "需要开发一个用户认证系统，包括登录、注册、密码重置和双因素认证功能。系统需要支持多种登录方式，如手机号、邮箱和第三方账号登录。",
+  "title": "用户认证系统开发",
+  "createTrees": true
+}
+```
+
+**成功响应** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "mainTask": {
+      "id": "task-uuid-1",
+      "title": "用户认证系统开发",
+      "description": "需要开发一个用户认证系统，包括登录、注册、密码重置和双因素认证功能。系统需要支持多种登录方式，如手机号、邮箱和第三方账号登录。",
+      "complexity": "高",
+      "estimatedHours": 40,
+      "status": "待处理",
+      "createdAt": "2023-11-10T12:00:00Z",
+      "updatedAt": "2023-11-10T12:00:00Z",
+      "treeId": "tree-uuid-1"
+    },
+    "subTasks": [
+      {
+        "id": "subtask-uuid-1",
+        "title": "用户注册功能开发",
+        "description": "实现用户注册表单、数据验证和存储",
+        "complexity": "中",
+        "estimatedHours": 8,
+        "parentId": "task-uuid-1",
+        "status": "待处理"
+      },
+      {
+        "id": "subtask-uuid-2",
+        "title": "用户登录功能开发",
+        "description": "实现多种登录方式，包括手机号、邮箱和第三方账号登录",
+        "complexity": "中",
+        "estimatedHours": 10,
+        "parentId": "task-uuid-1",
+        "status": "待处理"
+      }
+    ],
+    "tree": {
+      "id": "tree-uuid-1",
+      "name": "认证系统之树",
+      "taskId": "task-uuid-1",
+      "health": 100,
+      "growthStage": "幼苗"
+    }
+  }
+}
+```
+
+**错误响应** (400 Bad Request):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_TEXT",
+    "message": "提供的文本内容不足以生成任务"
+  }
+}
+```
+
+**错误响应** (500 Internal Server Error):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "AI_SERVICE_ERROR",
+    "message": "AI服务处理失败"
+  }
+}
+```

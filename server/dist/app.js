@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
 import taskRoutes from './routes/taskRoutes.js';
 import treeRoutes from './routes/treeRoutes.js';
+import taskAnalysisRoutes from './routes/taskAnalysisRoutes.js';
 // 初始化Express应用
 const app = express();
 const prisma = new PrismaClient();
@@ -33,6 +34,7 @@ app.get('/api/health', (req, res) => {
 // API路由
 app.use('/api/tasks', taskRoutes);
 app.use('/api/trees', treeRoutes);
+app.use('/api/tasks', taskAnalysisRoutes);
 // 添加获取任务统计信息API
 app.get('/api/tasks/stats', async (req, res) => {
     try {
