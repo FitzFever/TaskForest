@@ -2,7 +2,7 @@
  * 任务相关的路由处理
  */
 import express from 'express';
-import { tasks } from '../dataStore.js';
+import taskService from '../services/taskService.js';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ const router = express.Router();
  * 获取所有任务
  * @route GET /api/tasks
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     // 获取查询参数
     const {
@@ -28,7 +28,9 @@ router.get('/', (req, res) => {
       sortOrder = 'asc'
     } = req.query;
 
-    let filteredTasks = [...tasks];
+    // 从服务中获取最新任务数据，确保使用最新的全局数据
+    const allTasks = await taskService.getAllTasks();
+    let filteredTasks = [...allTasks];
     
     // 应用过滤条件
     if (status) {
@@ -145,7 +147,7 @@ router.get('/', (req, res) => {
  * 获取单个任务
  * @route GET /api/tasks/:id
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -159,9 +161,16 @@ router.get('/:id', (req, res) => {
       });
     }
     
-    const task = tasks.find(t => t.id === id);
+    try {
+      const task = await taskService.getTask(id);
     
-    if (!task) {
+      return res.status(200).json({
+        code: 200,
+        data: task,
+        message: '获取任务成功',
+        timestamp: Date.now()
+      });
+    } catch (error) {
       return res.status(404).json({
         code: 404,
         data: null,
@@ -170,13 +179,6 @@ router.get('/:id', (req, res) => {
         timestamp: Date.now()
       });
     }
-    
-    return res.status(200).json({
-      code: 200,
-      data: task,
-      message: '获取任务成功',
-      timestamp: Date.now()
-    });
   } catch (error) {
     console.error('获取任务失败:', error);
     return res.status(500).json({
@@ -193,7 +195,7 @@ router.get('/:id', (req, res) => {
  * 创建任务
  * @route POST /api/tasks
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { 
       title, 
@@ -222,23 +224,17 @@ router.post('/', (req, res) => {
       });
     }
     
-    const newTask = {
-      id: `task-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    const newTask = await taskService.createTask({
       title,
       description: description || '',
       type: type || 'default',
       status: status || 'todo',
       priority: priority || 'medium',
-      progress: 0,
       dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
       tags: tags || [],
       treeType: treeType || 'oak',
-      growthStage: 'seed'
-    };
-    
-    tasks.push(newTask);
+      growthStage: 0
+    });
     
     return res.status(201).json({
       code: 201,
@@ -262,7 +258,7 @@ router.post('/', (req, res) => {
  * 更新任务
  * @route PUT /api/tasks/:id
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -277,9 +273,22 @@ router.put('/:id', (req, res) => {
       });
     }
     
-    const taskIndex = tasks.findIndex(t => t.id === id);
-    
-    if (taskIndex === -1) {
+    try {
+      // 先检查任务是否存在
+      await taskService.getTask(id);
+      
+      // 避免更新id、创建时间等敏感字段
+      const { id: _, createdAt: __, ...validUpdates } = updates;
+      
+      const updatedTask = await taskService.updateTask(id, validUpdates);
+      
+      return res.status(200).json({
+        code: 200,
+        data: updatedTask,
+        message: '任务更新成功',
+        timestamp: Date.now()
+      });
+    } catch (error) {
       return res.status(404).json({
         code: 404,
         data: null,
@@ -288,24 +297,6 @@ router.put('/:id', (req, res) => {
         timestamp: Date.now()
       });
     }
-    
-    // 避免更新id、创建时间等敏感字段
-    const { id: _, createdAt: __, ...validUpdates } = updates;
-    
-    const updatedTask = {
-      ...tasks[taskIndex],
-      ...validUpdates,
-      updatedAt: new Date().toISOString()
-    };
-    
-    tasks[taskIndex] = updatedTask;
-    
-    return res.status(200).json({
-      code: 200,
-      data: updatedTask,
-      message: '任务更新成功',
-      timestamp: Date.now()
-    });
   } catch (error) {
     console.error('更新任务失败:', error);
     return res.status(500).json({
@@ -322,7 +313,7 @@ router.put('/:id', (req, res) => {
  * 删除任务
  * @route DELETE /api/tasks/:id
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -336,9 +327,20 @@ router.delete('/:id', (req, res) => {
       });
     }
     
-    const taskIndex = tasks.findIndex(t => t.id === id);
-    
-    if (taskIndex === -1) {
+    try {
+      // 先检查任务是否存在
+      await taskService.getTask(id);
+      
+      // 删除任务
+      await taskService.deleteTask(id);
+      
+      return res.status(200).json({
+        code: 200,
+        data: { id },
+        message: '任务删除成功',
+        timestamp: Date.now()
+      });
+    } catch (error) {
       return res.status(404).json({
         code: 404,
         data: null,
@@ -347,16 +349,6 @@ router.delete('/:id', (req, res) => {
         timestamp: Date.now()
       });
     }
-    
-    const deletedTask = tasks[taskIndex];
-    tasks.splice(taskIndex, 1);
-    
-    return res.status(200).json({
-      code: 200,
-      data: { id },
-      message: '任务删除成功',
-      timestamp: Date.now()
-    });
   } catch (error) {
     console.error('删除任务失败:', error);
     return res.status(500).json({

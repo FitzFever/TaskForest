@@ -2,10 +2,9 @@
  * 任务优先级枚举
  */
 export enum TaskPriority {
-  LOW = 1,
-  MEDIUM = 2,
-  HIGH = 3,
-  URGENT = 4
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH'
 }
 
 /**
@@ -14,8 +13,7 @@ export enum TaskPriority {
 export enum TaskStatus {
   TODO = 'TODO',
   IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  COMPLETED = 'COMPLETED'
 }
 
 /**
@@ -36,10 +34,8 @@ export enum TaskType {
 export enum TreeType {
   OAK = 'OAK',
   PINE = 'PINE',
-  CHERRY = 'CHERRY',
-  PALM = 'PALM',
-  APPLE = 'APPLE',
   MAPLE = 'MAPLE',
+  CHERRY = 'CHERRY',
   WILLOW = 'WILLOW'
 }
 
@@ -47,7 +43,7 @@ export enum TreeType {
  * 任务接口
  */
 export interface Task {
-  id: string | number;
+  id: number | string;
   title: string;
   description?: string;
   type: TaskType;
@@ -60,7 +56,7 @@ export interface Task {
   completedAt?: string;
   completed?: boolean;
   tags?: string[];
-  treeType?: TreeType;
+  treeType?: string;
   growthStage?: number;
   progress?: number;
   categoryId?: number;
@@ -147,4 +143,11 @@ export interface TaskFilters {
   categoryId?: number;
   startDate?: string;
   endDate?: string;
+}
+
+export interface FilterParams {
+  searchText?: string;
+  statusFilter?: string;
+  priorityFilter?: string;
+  tagFilter?: string;
 } 

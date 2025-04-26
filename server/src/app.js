@@ -13,6 +13,7 @@ import taskBreakdownRoutes from './routes/taskBreakdownRoutes.js';
 import taskIntegrationRoutes from './routes/taskIntegrationRoutes.js';
 import textToTaskRoutes from './routes/textToTaskRoutes.js';
 import batchTaskRoutes from './routes/batchTaskRoutes.js';
+import treeRoutes from './routes/treeRoutes.js';
 
 // 获取当前模块的目录名
 const __filename = fileURLToPath(import.meta.url);
@@ -61,7 +62,8 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/tasks', taskBreakdownRoutes);
 app.use('/api/tasks', taskIntegrationRoutes);
 app.use('/api/text-to-task', textToTaskRoutes);
-app.use('/api', batchTaskRoutes);
+app.use('/api/batch-tasks', batchTaskRoutes);
+app.use('/api/trees', treeRoutes);
 
 // 健康检查路由
 app.get('/health', (req, res) => {

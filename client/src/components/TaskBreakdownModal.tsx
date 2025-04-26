@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Input, Spin, Typography, List, Card, Tag, Divider, Tooltip, message } from 'antd';
 import { FieldTimeOutlined, QuestionCircleOutlined, CheckOutlined, EditOutlined } from '@ant-design/icons';
 import taskBreakdownService, { SubTask, TaskAnalysisResult, TaskBreakdownResult } from '../services/taskBreakdownService';
+import { TREES_UPDATE_EVENT } from '../pages/ForestPage';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -71,13 +72,36 @@ const TaskBreakdownModal: React.FC<TaskBreakdownModalProps> = ({ visible, onClos
         subTasks: editedSubTasks
       };
       
+      console.log('准备创建任务和树木，createTrees参数:', createTrees);
+      console.log('主任务数据:', breakdownData.analysis);
+      console.log('子任务数量:', breakdownData.subTasks.length);
+      
       // 调用API创建任务和树
       const result = await taskBreakdownService.createTasksFromAnalysis(breakdownData, createTrees);
       
-      message.success('成功创建任务和树');
+      console.log('创建任务和树木的API响应:', result);
+      
+      // 检查是否创建了树
+      if (createTrees && result.trees && result.trees.length > 0) {
+        console.log('成功创建树木:', result.trees.length, '棵, 详情:', result.trees);
+        message.success(`成功创建 ${result.tasks.length} 个任务和 ${result.trees.length} 棵树`);
+        
+        // 使用延迟触发事件，确保后端有足够时间处理数据
+        setTimeout(() => {
+          console.log('触发树木更新事件 - 时间戳:', Date.now());
+          const treeUpdateEvent = new CustomEvent(TREES_UPDATE_EVENT);
+          window.dispatchEvent(treeUpdateEvent);
+          
+          console.log('事件已触发，等待森林页面响应');
+        }, 1000); // 延迟1秒触发，给后端处理时间
+      } else {
+        console.log('没有创建树木或创建失败');
+        message.success(`成功创建 ${result.tasks.length} 个任务`);
+      }
       
       // 通知父组件
       if (onTasksCreated) {
+        console.log('通知父组件任务创建完成');
         onTasksCreated(result);
       }
       

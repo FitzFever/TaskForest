@@ -283,9 +283,9 @@ const AITaskGenerator: React.FC = () => {
                         {subtask.type && (
                           <Tag color="blue">{subtask.type}</Tag>
                         )}
-                        <Tooltip title="预计工时">
-                          <Tag icon={<ClockCircleOutlined />}>{subtask.estimatedHours} 小时</Tag>
-                        </Tooltip>
+                      <Tooltip title="预计工时">
+                        <Tag icon={<ClockCircleOutlined />}>{subtask.estimatedHours} 小时</Tag>
+                      </Tooltip>
                       </Space>
                     </div>
                   }

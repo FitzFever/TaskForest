@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // 获取端口
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 9000;
 
 // 启动服务器
 app.listen(PORT, () => {

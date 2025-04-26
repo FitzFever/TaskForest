@@ -2,7 +2,8 @@
  * 树木相关的路由处理
  */
 import express from 'express';
-import { trees } from '../dataStore.js';
+import { trees, findTreeByTaskId, printStoreStatus } from '../dataStore.js';
+import * as TreeModel from '../models/treeModel.js';
 
 const router = express.Router();
 
@@ -60,6 +61,98 @@ router.get('/', (req, res) => {
       code: 500,
       data: null,
       error: { message: '获取树木列表失败' },
+      message: 'Internal Server Error',
+      timestamp: Date.now()
+    });
+  }
+});
+
+/**
+ * 根据任务ID获取关联的树木
+ * @route GET /api/trees/by-task/:taskId
+ */
+router.get('/by-task/:taskId', (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    if (!taskId) {
+      return res.status(400).json({
+        code: 400,
+        data: null,
+        error: { message: '无效的任务ID' },
+        message: 'Bad Request',
+        timestamp: Date.now()
+      });
+    }
+    
+    console.log(`【树木查询】尝试查找任务ID="${taskId}"的树木`);
+    printStoreStatus(); // 打印全部存储内容，帮助调试
+    
+    // 记录batchCreatedTrees的状态
+    console.log(`【树木查询】treeRoutes中的batchCreatedTrees类型: ${typeof global.batchCreatedTrees}`);
+    console.log(`【树木查询】batchCreatedTrees是否为数组: ${Array.isArray(global.batchCreatedTrees)}`);
+    if (global.batchCreatedTrees && Array.isArray(global.batchCreatedTrees)) {
+      console.log(`【树木查询】batchCreatedTrees长度: ${global.batchCreatedTrees.length}`);
+    }
+    
+    console.log(`【树木查询】总共有 ${trees.length} 个树木 (${trees.filter(t => t.id.startsWith('tree-')).length} 个初始树木 + ${global.batchCreatedTrees && Array.isArray(global.batchCreatedTrees) ? global.batchCreatedTrees.length : 0} 个批量创建的树木)`);
+    
+    // 使用TreeModel的方法查找树木
+    const tree = TreeModel.getTreeByTaskId(taskId);
+    
+    // 如果在全局trees中找不到，尝试在批量创建的树木中查找
+    if (!tree && global.batchCreatedTrees && Array.isArray(global.batchCreatedTrees)) {
+      console.log(`【树木查询】在全局trees中未找到，尝试在batchCreatedTrees中查找`);
+      
+      const batchTree = global.batchCreatedTrees.find(t => 
+        (t.taskId && String(t.taskId) === String(taskId)) || 
+        (t.mainTaskId && String(t.mainTaskId) === String(taskId))
+      );
+      
+      if (batchTree) {
+        console.log(`【树木查询】在batchCreatedTrees中找到了任务ID为"${taskId}"的树木: ${batchTree.id}`);
+        
+        return res.status(200).json({
+          code: 200,
+          data: batchTree,
+          message: '获取任务关联的树木成功 (从批量创建树木中)',
+          timestamp: Date.now()
+        });
+      }
+    }
+    
+    if (!tree) {
+      return res.status(404).json({
+        code: 404,
+        data: null,
+        error: { 
+          message: `Tree not found for task: ${taskId}`,
+          debugInfo: {
+            searchedTaskId: taskId,
+            totalTrees: trees.length,
+            initialTrees: trees.filter(t => t.id.startsWith('tree-')).length,
+            batchTrees: global.batchCreatedTrees && Array.isArray(global.batchCreatedTrees) ? global.batchCreatedTrees.length : 0
+          }
+        },
+        message: 'Not Found',
+        timestamp: Date.now()
+      });
+    }
+    
+    console.log(`【树木查询】找到任务ID="${taskId}"的树木:`, tree);
+    
+    return res.status(200).json({
+      code: 200,
+      data: tree,
+      message: '获取任务关联的树木成功',
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error('获取任务关联的树木失败:', error);
+    return res.status(500).json({
+      code: 500,
+      data: null,
+      error: { message: '获取任务关联的树木失败' },
       message: 'Internal Server Error',
       timestamp: Date.now()
     });

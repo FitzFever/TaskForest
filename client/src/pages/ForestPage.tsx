@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Spin, message, Tooltip, Drawer, Empty, Divider, List, Tag, Row, Col, Space } from 'antd';
-import { PlusOutlined, ZoomInOutlined, ZoomOutOutlined, SyncOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, ZoomInOutlined, ZoomOutOutlined, SyncOutlined, ExclamationCircleOutlined, ReloadOutlined, BugOutlined, DeleteOutlined } from '@ant-design/icons';
 import ForestScene, { TreeData } from '../three/ForestScene';
 import TreeHealthPanel from '../components/TreeHealthPanel';
 import { TreeType } from '../types/Tree';
-import { TaskStatus, Task } from '../types/Task';
+import { Task, TaskStatus } from '../types/Task';
 import { modelLoader } from '../three/ModelLoader';
 import * as taskService from '../services/taskService';
+import * as treeService from '../services/treeService';
 import * as treeHealthService from '../services/treeHealthService';
 import api from '../services/api';
 
 // 自定义事件名称定义
-export const TASK_UPDATE_EVENT = 'taskforest_task_updated';
+const TASK_UPDATE_EVENT = 'taskforest_task_updated';
+const TREES_UPDATE_EVENT = 'taskforest_trees_updated';
 
 /**
  * 森林页面组件
@@ -34,6 +36,8 @@ const ForestPage: React.FC = () => {
     try {
       setLoading(true);
       setLoadError(null);
+      
+      console.log('开始加载树木数据 - 时间戳:', Date.now());
       
       // 预加载模型 - 添加更多详细的日志和错误处理
       try {
@@ -61,16 +65,23 @@ const ForestPage: React.FC = () => {
       // 使用API服务获取树木数据
       console.log('森林页面: 开始获取树木数据...');
       const treeResponse = await api.get('/trees');
-      console.log('森林页面: 获取树木数据成功:', treeResponse);
+      console.log('森林页面: 获取树木数据成功, 状态码:', treeResponse.status);
+      console.log('森林页面: 原始响应数据:', JSON.stringify(treeResponse.data, null, 2));
       
       // 确保使用正确的数据结构
       const treeData = treeResponse.data;
       
-      console.log('森林页面: 树木响应结构:', treeData); // 调试日志
+      console.log('森林页面: 树木响应结构:', JSON.stringify(treeData, null, 2)); // 调试日志
       
       // 用于从多种可能的数据格式中提取树木数据的函数
       const extractTreesArray = (data: any): any[] => {
         console.log('尝试提取树木数组，数据结构:', JSON.stringify(data, null, 2));
+        
+        // 防止空数据导致错误
+        if (!data) {
+          console.warn('提取树木数组时收到空数据');
+          return [];
+        }
         
         // 尝试多种可能的数据路径
         if (data && data.data && Array.isArray(data.data.trees)) {
@@ -94,13 +105,34 @@ const ForestPage: React.FC = () => {
           return data; // 直接数组格式: [...]
         }
         
+        // 新增: 检查响应中的trees字段 (新增的可能性)
+        if (data && data.data && data.data.trees && Array.isArray(data.data.trees)) {
+          console.log('找到API响应格式数据: { data: { data: { trees: [...] } } }，树木数量:', data.data.trees.length);
+          return data.data.trees;
+        }
+        
         console.warn('无法识别的树木数据格式:', data);
         
         // 在控制台详细显示数据结构，帮助调试
         if (data) {
           console.log('尝试直接分析响应结构:');
           Object.keys(data).forEach(key => {
-            console.log(`- 键: ${key}, 类型: ${typeof data[key]}, 值:`, JSON.stringify(data[key]).substring(0, 100));
+            console.log(`- 键: ${key}, 类型: ${typeof data[key]}, 值:`, 
+              typeof data[key] === 'object' ? 
+                JSON.stringify(data[key], null, 2).substring(0, 200) + '...' : 
+                data[key]
+            );
+            
+            // 如果是对象，进一步探索子结构
+            if (data[key] && typeof data[key] === 'object') {
+              Object.keys(data[key]).forEach(subKey => {
+                console.log(`  - 子键: ${subKey}, 类型: ${typeof data[key][subKey]}, 值:`, 
+                  typeof data[key][subKey] === 'object' ? 
+                    JSON.stringify(data[key][subKey], null, 2).substring(0, 200) + '...' : 
+                    data[key][subKey]
+                );
+              });
+            }
           });
         }
         
@@ -164,6 +196,20 @@ const ForestPage: React.FC = () => {
           
           // 将API返回的树木数据转换为组件所需格式，过滤掉无效任务关联的树木
           const formattedTrees = treesArray
+            .filter(tree => {
+              // 过滤掉没有taskId的树木
+              if (!tree.taskId) {
+                console.warn(`树木 ID=${tree.id} 没有关联任务ID，将被过滤掉`);
+                return false;
+              }
+              
+              // 检查taskId是否在有效的任务ID列表中
+              const isValid = validTaskIds.includes(String(tree.taskId));
+              if (!isValid) {
+                console.warn(`树木 ID=${tree.id} 关联的任务ID ${tree.taskId} 不存在，将被过滤掉`);
+              }
+              return isValid;
+            })
             .map((tree, index) => {
               console.log(`处理树木: ID=${tree.id}, 类型=${tree.type}, 位置=`, tree.position);
               
@@ -296,7 +342,16 @@ const ForestPage: React.FC = () => {
           console.error('获取任务数据失败:', taskError);
           
           // 即使获取任务失败，也尝试处理树木数据
-          const simpleFormattedTrees = treesArray.map(tree => {
+          const simpleFormattedTrees = treesArray
+            .filter(tree => {
+              // 即使无法验证任务存在性，也过滤掉没有taskId的树木
+              if (!tree.taskId) {
+                console.warn(`树木 ID=${tree.id} 没有关联任务ID，将被过滤掉`);
+                return false;
+              }
+              return true;
+            })
+            .map(tree => {
             return {
               id: tree.id,
               type: tree.type as TreeType || TreeType.OAK,
@@ -328,31 +383,41 @@ const ForestPage: React.FC = () => {
     }
   };
   
-  // 初始加载树木数据
-  useEffect(() => {
-    loadTrees();
-    
-    // 添加API诊断功能，仅在开发环境执行
-    if (process.env.NODE_ENV === 'development') {
-      setTimeout(() => {
-        console.log('正在执行森林页面API诊断...');
-        diagnoseTrees();
-      }, 2000);
-    }
-    
-    // 添加全局事件监听器，当任务变更时刷新森林
+  // 处理任务更新事件
     const handleTaskUpdate = () => {
       console.log('监听到任务更新事件，但不会重新加载所有树木数据以避免位置变化');
       // 这里不再调用loadTrees()，避免位置重新计算
       // 如果需要更新任务状态，应该只更新任务状态相关的数据，而不是重新加载所有树木
     };
     
-    // 添加全局事件监听
+  // 简单防抖函数
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout | null = null;
+    return function(...args: any[]) {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => { func.apply(this, args); }, wait);
+    };
+  };
+  
+  // 在组件挂载时加载树木数据，并设置事件监听器
+  useEffect(() => {
+    loadTrees();
+    
+    // 监听任务更新事件
     window.addEventListener(TASK_UPDATE_EVENT, handleTaskUpdate);
     
-    // 清理事件监听
+    // 监听树木更新事件 - 使用防抖函数避免短时间内多次刷新
+    const handleTreesUpdate = debounce(() => {
+      console.log('检测到树木更新事件，准备刷新森林... - 时间戳:', Date.now());
+      handleRefresh();
+    }, 1500); // 防抖1.5秒
+    
+    window.addEventListener(TREES_UPDATE_EVENT, handleTreesUpdate as EventListener);
+    
+    // 在组件卸载时清理事件监听器
     return () => {
       window.removeEventListener(TASK_UPDATE_EVENT, handleTaskUpdate);
+      window.removeEventListener(TREES_UPDATE_EVENT, handleTreesUpdate as EventListener);
     };
   }, []);
   
@@ -489,10 +554,27 @@ const ForestPage: React.FC = () => {
   
   // 刷新森林
   const handleRefresh = async () => {
+    console.log('执行森林刷新 - 时间戳:', Date.now());
     setRefreshing(true);
-    await loadTrees(); // 使用提取的loadTrees函数
+    
+    try {
+      // 强制等待一小段时间，确保API有足够时间处理数据
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 清除之前的树木数据，确保完全重新加载
+      setTrees([]);
+      
+      // 使用提取的loadTrees函数
+      await loadTrees();
+      
+      message.success('森林已刷新');
+      console.log('森林刷新完成 - 时间戳:', Date.now());
+    } catch (error) {
+      console.error('刷新森林时出错:', error);
+      message.error('刷新森林失败，请稍后重试');
+    } finally {
     setRefreshing(false);
-    message.success('森林已刷新');
+    }
   };
   
   // 将树木类型枚举值转换为友好名称
@@ -510,7 +592,7 @@ const ForestPage: React.FC = () => {
     return nameMap[treeType] || treeType;
   };
   
-  // 诊断工具 - 检测树木加载问题
+  // 诊断树木数据
   const diagnoseTrees = async () => {
     console.group('===== 森林诊断工具 =====');
     try {
@@ -617,6 +699,80 @@ const ForestPage: React.FC = () => {
     }
   };
   
+  // 清理孤立的树木（没有关联到有效任务的树木）
+  const cleanupOrphanedTrees = async () => {
+    try {
+      setLoading(true);
+      message.info('开始检查孤立的树木...');
+      
+      // 获取所有树木
+      const treeResponse = await treeService.getTrees();
+      const treesArray = treeResponse?.data?.data?.trees || [];
+      
+      // 获取所有任务ID
+      const taskResponse = await taskService.getTasks();
+      let validTaskIds: string[] = [];
+      
+      if (taskResponse?.data) {
+        // 尝试多种可能的数据结构
+        let tasksArray: any[] = [];
+        
+        if (taskResponse.data.data && Array.isArray(taskResponse.data.data.tasks)) {
+          tasksArray = taskResponse.data.data.tasks;
+        } else if (taskResponse.data && Array.isArray(taskResponse.data.tasks)) {
+          tasksArray = taskResponse.data.tasks;
+        } else if (Array.isArray(taskResponse.data)) {
+          tasksArray = taskResponse.data;
+        }
+        
+        // 提取有效任务ID
+        validTaskIds = tasksArray.map(task => task.id.toString());
+      }
+      
+      // 找出孤立的树木
+      const orphanedTrees = treesArray.filter(tree => 
+        !tree.taskId || !validTaskIds.includes(String(tree.taskId))
+      );
+      
+      console.log(`发现 ${orphanedTrees.length} 棵孤立的树木`);
+      
+      if (orphanedTrees.length === 0) {
+        message.success('没有发现孤立的树木，数据一致性良好');
+        setLoading(false);
+        return;
+      }
+      
+      // 确认删除
+      if (confirm(`发现 ${orphanedTrees.length} 棵孤立的树木（没有关联到有效任务）。是否删除这些树木？`)) {
+        let successCount = 0;
+        let failCount = 0;
+        
+        // 删除孤立的树木
+        for (const tree of orphanedTrees) {
+          try {
+            await treeService.deleteTree(tree.id.toString());
+            successCount++;
+          } catch (error) {
+            console.error(`删除树木 ID=${tree.id} 失败:`, error);
+            failCount++;
+          }
+        }
+        
+        message.success(`清理完成: 成功删除 ${successCount} 棵孤立的树木，失败 ${failCount} 棵`);
+        
+        // 刷新树木数据
+        await loadTrees();
+      } else {
+        message.info('取消清理操作');
+      }
+    } catch (error) {
+      console.error('清理孤立树木失败:', error);
+      message.error('清理孤立树木失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // 在页面加载后添加一个调试功能，显示所有树木与任务的关联状态
   useEffect(() => {
     if (!loading && trees.length > 0) {
@@ -664,6 +820,21 @@ const ForestPage: React.FC = () => {
               disabled={loading || refreshing}
             >
               刷新
+            </Button>
+            <Button
+              icon={<BugOutlined />}
+              onClick={diagnoseTrees}
+              title="诊断森林问题"
+            >
+              诊断森林
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={cleanupOrphanedTrees}
+              title="清理没有关联任务的树木"
+              danger
+            >
+              清理孤立树木
             </Button>
           </Space>
         }

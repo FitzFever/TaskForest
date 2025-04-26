@@ -127,6 +127,20 @@ export const getTreeHealth = async (id: string): Promise<AxiosResponse<ApiRespon
   return await api.get(`/trees/${id}/health`);
 };
 
+/**
+ * 删除树木
+ * @param id 树木ID
+ * @returns 响应
+ */
+export const deleteTree = async (id: string): Promise<AxiosResponse<ApiResponse<any>>> => {
+  try {
+    return await api.delete(`/trees/${id}`);
+  } catch (error) {
+    console.error(`删除树木失败: ${id}`, error);
+    throw error;
+  }
+};
+
 // 导出默认对象
 export default {
   getTrees,
@@ -134,5 +148,6 @@ export default {
   getTreeByTask,
   getTreeByTaskId,
   updateTree,
-  getTreeHealth
+  getTreeHealth,
+  deleteTree
 }; 

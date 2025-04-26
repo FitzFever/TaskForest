@@ -65,17 +65,59 @@ api.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     
+    // 提取URL中的查询参数并单独记录
+    let urlWithoutParams = config.url || '';
+    let queryParams = {};
+    
+    if (urlWithoutParams.includes('?')) {
+      const [path, query] = urlWithoutParams.split('?');
+      urlWithoutParams = path;
+      
+      // 解析查询字符串
+      const searchParams = new URLSearchParams(query);
+      searchParams.forEach((value, key) => {
+        // 处理同名参数(比如多个tags)
+        if (queryParams[key]) {
+          if (Array.isArray(queryParams[key])) {
+            queryParams[key].push(value);
+          } else {
+            queryParams[key] = [queryParams[key], value];
+          }
+        } else {
+          queryParams[key] = value;
+        }
+      });
+    }
+    
+    // 拼接完整的URL（含baseURL）
+    const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+    console.log('完整请求URL:', fullUrl);
+    
+    // 记录分页参数，确保它们存在
+    if (config.url?.includes('/tasks')) {
+      const hasPaginationParams = queryParams['page'] || queryParams['limit'];
+      if (!hasPaginationParams) {
+        console.warn('⚠️ 请求任务列表但缺少分页参数，这可能导致返回默认分页结果。请确保传递page和limit参数。');
+      } else {
+        console.log('✅ 任务列表分页参数:', 
+          `page=${queryParams['page'] || '默认值'}, ` + 
+          `limit=${queryParams['limit'] || '默认值'}`
+        );
+      }
+    }
+    
     // 增强日志输出
     const requestInfo = {
       method: config.method?.toUpperCase(),
-      url: config.url,
+      url: urlWithoutParams,
       baseURL: config.baseURL,
-      fullUrl: `${config.baseURL || ''}${config.url || ''}`,
+      fullUrl: fullUrl,
+      queryParams,
       params: config.params,
       data: config.data
     };
     
-    console.log('API请求详情:', requestInfo);
+    console.log('API请求详情:', JSON.stringify(requestInfo, null, 2));
     
     return config;
   },
@@ -99,13 +141,38 @@ api.interceptors.response.use(
       console.log(`API业务状态码: ${apiResponse.code}, 消息: ${apiResponse.message}`);
       
       // 处理业务逻辑错误
-      if (apiResponse.code !== 200 && apiResponse.code !== 201) {
+      if (apiResponse.code >= 400) {
         console.error(`业务错误: [${apiResponse.code}] ${apiResponse.message}`);
         return Promise.reject(new Error(apiResponse.message));
       }
       
+      // 如果响应没有包含success字段，但有code字段，添加success字段以兼容期望success的代码
+      if (!('success' in data)) {
+        data.success = apiResponse.code >= 200 && apiResponse.code < 300;
+        console.log(`为响应添加了success字段: ${data.success}`);
+      }
+      
       // 返回原始axios响应，保持一致性
       return response;
+    }
+    
+    // 如果响应有success字段，兼容旧格式
+    if (data && typeof data === 'object' && 'success' in data) {
+      const legacyResponse = data as { success: boolean, message: string, data: unknown };
+      
+      console.log(`使用旧式API响应格式 (success: ${legacyResponse.success})`);
+      
+      // 如果响应没有code字段，添加code字段以兼容期望code的代码
+      if (!('code' in data)) {
+        data.code = legacyResponse.success ? 200 : 400;
+        console.log(`为响应添加了code字段: ${data.code}`);
+      }
+      
+      // 转换为新格式
+      if (!legacyResponse.success) {
+        console.error(`业务错误: ${legacyResponse.message}`);
+        return Promise.reject(new Error(legacyResponse.message));
+      }
     }
     
     // 直接返回原始axios响应
@@ -114,7 +181,7 @@ api.interceptors.response.use(
   error => {
     if (error.response) {
       // 服务器返回错误状态码
-      const errorMessage = error.response.data?.message || '请求失败';
+      const errorMessage = error.response.data?.message || error.response.data?.error?.message || '请求失败';
       console.error(`API错误: [${error.response.status}] ${errorMessage}`);
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {

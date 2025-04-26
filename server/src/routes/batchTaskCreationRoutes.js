@@ -8,7 +8,7 @@ const router = express.Router();
  * /api/batch-tasks:
  *   post:
  *     summary: 批量创建任务
- *     description: 批量创建主任务和子任务
+ *     description: 批量创建多个任务
  *     tags: [批量任务]
  *     requestBody:
  *       required: true
@@ -17,52 +17,28 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - mainTask
- *               - subTasks
+ *               - tasks
  *             properties:
- *               mainTask:
- *                 type: object
- *                 required:
- *                   - title
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: 主任务ID（可选，系统会自动生成）
- *                   title:
- *                     type: string
- *                     description: 主任务标题
- *                   description:
- *                     type: string
- *                     description: 主任务描述
- *                   priority:
- *                     type: string
- *                     enum: [LOW, MEDIUM, HIGH]
- *                     description: 优先级
- *                   estimatedHours:
- *                     type: number
- *                     description: 估计小时数
- *                   status:
- *                     type: string
- *                     enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, CANCELLED]
- *                     description: 任务状态
- *                   tags:
- *                     type: array
- *                     items:
- *                       type: string
- *                     description: 任务标签
- *               subTasks:
+ *               tasks:
  *                 type: array
  *                 items:
  *                   type: object
  *                   required:
  *                     - title
  *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: 任务ID（可选，系统会自动生成）
  *                     title:
  *                       type: string
- *                       description: 子任务标题
+ *                       description: 任务标题
  *                     description:
  *                       type: string
- *                       description: 子任务描述
+ *                       description: 任务描述
+ *                     type:
+ *                       type: string
+ *                       enum: [NORMAL, WORK, LEARNING, PROJECT, LEISURE]
+ *                       description: 任务类型
  *                     priority:
  *                       type: string
  *                       enum: [LOW, MEDIUM, HIGH]
@@ -90,12 +66,13 @@ const router = express.Router();
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 批量任务创建成功
  *                 data:
  *                   type: object
  *                   properties:
- *                     mainTask:
- *                       type: object
- *                     subTasks:
+ *                     tasks:
  *                       type: array
  *                       items:
  *                         type: object
@@ -104,7 +81,7 @@ router.post('/', batchTaskCreationController.createTasks);
 
 /**
  * @swagger
- * /api/batch-tasks/with-tree:
+ * /api/batch-tasks/with-trees:
  *   post:
  *     summary: 批量创建任务和任务树
  *     description: 批量创建主任务和子任务，并同时创建关联的任务树
@@ -116,59 +93,36 @@ router.post('/', batchTaskCreationController.createTasks);
  *           schema:
  *             type: object
  *             required:
- *               - mainTask
- *               - subTasks
+ *               - tasks
  *             properties:
- *               mainTask:
- *                 type: object
- *                 required:
- *                   - title
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: 主任务ID（可选，系统会自动生成）
- *                   title:
- *                     type: string
- *                     description: 主任务标题
- *                   description:
- *                     type: string
- *                     description: 主任务描述
- *                   priority:
- *                     type: string
- *                     enum: [LOW, MEDIUM, HIGH]
- *                     description: 优先级
- *                   estimatedHours:
- *                     type: number
- *                     description: 估计小时数
- *                   status:
- *                     type: string
- *                     enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, CANCELLED]
- *                     description: 任务状态
- *                   tags:
- *                     type: array
- *                     items:
- *                       type: string
- *                     description: 任务标签
- *               subTasks:
+ *               tasks:
  *                 type: array
  *                 items:
  *                   type: object
  *                   required:
  *                     - title
  *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: 主任务ID（可选，系统会自动生成）
  *                     title:
  *                       type: string
- *                       description: 子任务标题
+ *                       description: 主任务标题
  *                     description:
  *                       type: string
- *                       description: 子任务描述
+ *                       description: 主任务描述
+ *                     type:
+ *                       type: string
+ *                       enum: [NORMAL, WORK, LEARNING, PROJECT, LEISURE]
+ *                       description: 任务类型
  *                     priority:
  *                       type: string
  *                       enum: [LOW, MEDIUM, HIGH]
  *                       description: 优先级
- *                     estimatedHours:
- *                       type: number
- *                       description: 估计小时数
+ *                     complexity:
+ *                       type: string
+ *                       enum: [LOW, MEDIUM, HIGH, VERY_HIGH]
+ *                       description: 复杂度
  *                     status:
  *                       type: string
  *                       enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, CANCELLED]
@@ -178,11 +132,43 @@ router.post('/', batchTaskCreationController.createTasks);
  *                       items:
  *                         type: string
  *                       description: 任务标签
- *               treeType:
- *                 type: string
- *                 description: 任务树类型
- *                 default: DEFAULT
- *                 enum: [DEFAULT, OAK, PINE, MAPLE, CHERRY, PROJECT]
+ *                     subTasks:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required:
+ *                           - title
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             description: 子任务标题
+ *                           description:
+ *                             type: string
+ *                             description: 子任务描述
+ *                           type:
+ *                             type: string
+ *                             enum: [NORMAL, WORK, LEARNING, PROJECT, LEISURE]
+ *                             description: 任务类型
+ *                           priority:
+ *                             type: string
+ *                             enum: [LOW, MEDIUM, HIGH]
+ *                             description: 优先级
+ *                           estimatedHours:
+ *                             type: number
+ *                             description: 估计小时数
+ *                           status:
+ *                             type: string
+ *                             enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, CANCELLED]
+ *                             description: 任务状态
+ *                           tags:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                             description: 任务标签
+ *               createTrees:
+ *                 type: boolean
+ *                 description: 是否创建任务树
+ *                 default: true
  *     responses:
  *       201:
  *         description: 批量创建任务和任务树成功
@@ -194,18 +180,28 @@ router.post('/', batchTaskCreationController.createTasks);
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 批量任务和任务树创建成功
  *                 data:
  *                   type: object
  *                   properties:
- *                     mainTask:
- *                       type: object
- *                     subTasks:
+ *                     tasks:
  *                       type: array
  *                       items:
  *                         type: object
- *                     tree:
- *                       type: object
+ *                         properties:
+ *                           mainTask:
+ *                             type: object
+ *                           subTasks:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                     trees:
+ *                       type: array
+ *                       items:
+ *                         type: object
  */
-router.post('/with-tree', batchTaskCreationController.createTasksWithTree);
+router.post('/with-trees', batchTaskCreationController.createTasksWithTree);
 
 export default router; 

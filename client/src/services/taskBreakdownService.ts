@@ -1,5 +1,6 @@
 import api from './api';
 import { AxiosResponse } from 'axios';
+import { createTasksFromDecomposition } from './batchTaskService';
 
 /**
  * 任务分析和分解服务
@@ -176,6 +177,45 @@ class TaskBreakdownService {
       };
     } catch (error) {
       console.error('任务分析和分解失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 从分析结果创建任务和任务树
+   * @param breakdownData 任务分解结果
+   * @param createTrees 是否创建任务树
+   * @returns 创建结果
+   */
+  async createTasksFromAnalysis(
+    breakdownData: TaskBreakdownResult,
+    createTrees: boolean = true
+  ) {
+    try {
+      console.log('从分析结果创建任务和树:', breakdownData, '创建树:', createTrees);
+      
+      const { analysis, subTasks } = breakdownData;
+      
+      // 准备主任务数据
+      const mainTask = {
+        title: analysis.title,
+        description: analysis.description,
+        complexity: analysis.complexity,
+        type: 'NORMAL',
+        tags: ['AI生成']
+      };
+      
+      // 调用批量任务创建服务
+      const response = await createTasksFromDecomposition(
+        mainTask,
+        subTasks,
+        createTrees
+      );
+      
+      console.log('任务和树创建成功:', response.data.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('从分析结果创建任务失败:', error);
       throw error;
     }
   }

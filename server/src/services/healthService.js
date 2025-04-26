@@ -2,7 +2,8 @@
  * 健康服务模块
  * 负责处理树木健康状态相关的业务逻辑
  */
-import { tasks, trees } from '../dataStore.js';
+import { tasks, trees, getAllTasks, getAllTrees } from '../dataStore.js';
+import logger from '../utils/logger.js';
 
 /**
  * 健康状态分类枚举
@@ -289,200 +290,361 @@ export function batchUpdateTreesHealth() {
 }
 
 /**
- * 获取树木健康状态详情
+ * 计算并更新树木健康状态
  * @param {string} treeId - 树木ID
- * @returns {Object|null} 健康状态详情或null
+ * @param {number} progress - 任务进度(0-100)
+ * @returns {Object} 更新后的树木健康状态
  */
-export function getTreeHealth(treeId) {
-  const tree = trees.find(t => t.id === treeId);
+function updateTreeHealthByProgress(treeId, progress) {
+  // 获取所有树木
+  const allTrees = getAllTrees();
   
-  if (!tree) return null;
+  // 在数组中查找树木
+  const treeIndex = allTrees.findIndex(t => t.id === treeId);
   
-  // 计算健康状态分类
-  const healthCategory = getHealthCategory(tree.healthState);
-  
-  // 构建基础健康状态详情
-  const response = {
-    treeId: tree.id,
-    healthState: tree.healthState,
-    healthCategory,
-    lastUpdated: tree.updatedAt || new Date().toISOString()
-  };
-  
-  // 获取关联的任务
-  const task = tasks.find(t => t.id === tree.taskId);
-  
-  // 如果有关联任务，添加任务信息
-  if (task) {
-    const now = new Date();
-    const deadline = new Date(task.dueDate);
-    const createdAt = new Date(task.createdAt);
-    const totalDuration = deadline.getTime() - createdAt.getTime();
-    const remainingTime = deadline.getTime() - now.getTime();
-    
-    // 确保时间比例在合理范围内
-    const timeRatio = Math.max(0, Math.min(1, remainingTime / totalDuration));
-    const expectedProgress = 100 - (timeRatio * 100);
-    
-    // 构建任务信息
-    response.task = {
-      id: task.id,
-      title: task.title,
-      progress: task.progress || 0,
-      deadline: task.dueDate
-    };
-    
-    // 添加详细信息
-    response.details = {
-      timeRatio,
-      expectedProgress: Math.round(expectedProgress),
-      actualProgress: task.progress || 0
-    };
+  if (treeIndex === -1) {
+    return null;
   }
   
-  return response;
+  const tree = allTrees[treeIndex];
+  const oldHealth = tree.healthState || 100;
+  let newHealth = oldHealth;
+  
+  // 如果任务已完成，树木完全健康
+  if (progress === 100) {
+    newHealth = 100;
+  } else {
+    // 获取所有任务
+    const allTasks = getAllTasks();
+    
+    // 查找关联的任务
+    const task = allTasks.find(t => t.id === tree.taskId);
+    
+    if (task) {
+      const now = new Date();
+      const deadline = task.dueDate ? new Date(task.dueDate) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const createdAt = task.createdAt ? new Date(task.createdAt) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      // 计算任务总时长(毫秒)
+      const totalDuration = deadline.getTime() - createdAt.getTime();
+      
+      // 计算剩余时间(毫秒)
+      const remainingTime = deadline.getTime() - now.getTime();
+      
+      // 确保时间比例在合理范围内
+      const timeRatio = Math.max(0, Math.min(1, remainingTime / totalDuration));
+      
+      // 计算基础健康值(基于剩余时间比例)
+      newHealth = Math.min(100, Math.max(20, timeRatio * 100));
+      
+      // 根据任务进度调整健康值
+      const expectedProgress = 100 - (timeRatio * 100);
+      
+      if (progress > expectedProgress) {
+        newHealth = Math.min(100, newHealth + ((progress - expectedProgress) / 2));
+      } else if (progress < expectedProgress * 0.8) {
+        newHealth = Math.max(20, newHealth - ((expectedProgress - progress) / 2));
+      }
+      
+      // 进度更新后给予健康值奖励
+      const healthBonus = 10;
+      newHealth += healthBonus * (progress / 100);
+      newHealth = Math.min(100, newHealth);
+    }
+  }
+  
+  // 更新树木健康状态
+  tree.healthState = Math.round(newHealth);
+  tree.lastUpdated = new Date().toISOString();
+  
+  // 计算健康状态分类
+  let healthCategory = 'HEALTHY';
+  if (newHealth < 25) {
+    healthCategory = 'SEVERELY_WILTED';
+  } else if (newHealth < 50) {
+    healthCategory = 'MODERATELY_WILTED';
+  } else if (newHealth < 75) {
+    healthCategory = 'SLIGHTLY_WILTED';
+  }
+  
+  // 计算健康状态变化类型
+  let healthChange = 'UNCHANGED';
+  if (Math.round(newHealth) > oldHealth) {
+    healthChange = 'IMPROVED';
+  } else if (Math.round(newHealth) < oldHealth) {
+    healthChange = 'DECLINED';
+  }
+  
+  return {
+    id: tree.id,
+    healthStateBefore: oldHealth,
+    healthStateAfter: Math.round(newHealth),
+    healthChange,
+    healthCategory
+  };
+}
+
+/**
+ * 更新任务进度并影响树木健康状态
+ * @param {string} taskId - 任务ID
+ * @param {number} progress - 任务进度(0-100)
+ * @param {string} notes - 进度更新说明
+ * @returns {Object} 更新结果
+ */
+export function updateTaskProgress(taskId, progress, notes) {
+  try {
+    logger.info(`更新任务进度: taskId=${taskId}, progress=${progress}, 正在收集数据...`);
+    
+    // 获取所有任务
+    const allTasks = getAllTasks();
+    
+    // 打印所有任务ID进行调试
+    logger.info(`系统中所有任务ID: ${allTasks.map(t => t.id).join(', ')}`);
+    
+    // 在任务数组中查找任务
+    const task = allTasks.find(t => t.id === taskId);
+    
+    logger.info(task ? `找到任务: ${task.title}` : `未找到ID为${taskId}的任务`);
+    
+    if (!task) {
+      logger.warn(`更新任务进度失败：未找到ID为${taskId}的任务`);
+      return null;
+    }
+    
+    // 更新任务进度
+    const oldProgress = task.progress || 0;
+    task.progress = progress;
+    task.updatedAt = new Date().toISOString();
+    
+    // 更新任务备注
+    if (notes) {
+      task.notes = notes;
+    }
+    
+    // 判断是否需要更新任务状态
+    if (progress === 100 && task.status !== 'COMPLETED') {
+      task.status = 'COMPLETED';
+      task.completedAt = new Date().toISOString();
+    } else if (progress > 0 && progress < 100 && (task.status === 'TODO' || task.status === '未开始')) {
+      task.status = 'IN_PROGRESS';
+    }
+    
+    logger.info(`已更新任务 ${taskId} 的进度: ${oldProgress}% -> ${progress}%`);
+    
+    // 响应对象
+    const response = {
+      taskId,
+      progress,
+      updatedAt: task.updatedAt
+    };
+    
+    // 处理树木健康状态
+    // 获取所有树木
+    const allTrees = getAllTrees();
+    
+    // 打印所有树木进行调试
+    logger.info(`系统中所有树木ID: ${allTrees.map(t => t.id).join(', ')}`);
+    
+    // 查找关联的树木
+    const tree = allTrees.find(t => t.taskId === taskId);
+    
+    logger.info(tree ? `找到关联树木: ${tree.id}` : `未找到任务${taskId}关联的树木`);
+    
+    if (tree) {
+      // 更新树木健康状态
+      const treeHealth = updateTreeHealthByProgress(tree.id, progress);
+      
+      if (treeHealth) {
+        response.tree = treeHealth;
+        
+        // 根据任务进度计算生长阶段
+        let newStage = tree.stage || 0;
+        
+        if (progress >= 100) {
+          newStage = 3; // 完成 - 完全成长阶段
+        } else if (progress >= 66) {
+          newStage = 2; // 进度超过66% - 成长阶段
+        } else if (progress >= 33) {
+          newStage = 1; // 进度超过33% - 幼苗阶段
+        } else {
+          newStage = 0; // 进度低于33% - 种子阶段
+        }
+        
+        // 更新树木生长阶段
+        if (newStage !== tree.stage) {
+          tree.stage = newStage;
+          tree.lastGrowth = new Date().toISOString();
+          logger.info(`树木 ${tree.id} 的生长阶段已更新: ${tree.stage}`);
+        }
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    logger.error(`更新任务进度失败: ${error.message}`, { error });
+    return null;
+  }
+}
+
+/**
+ * 获取树木健康状态
+ * @param {string} treeId - 树木ID
+ * @returns {Object} 树木健康状态
+ */
+export function getTreeHealth(treeId) {
+  try {
+    // 获取所有树木
+    const allTrees = getAllTrees();
+    
+    // 查找树木
+    const tree = allTrees.find(t => t.id === treeId);
+    
+    if (!tree) {
+      return null;
+    }
+    
+    // 计算健康状态分类
+    let healthCategory = 'HEALTHY';
+    if (tree.healthState < 25) {
+      healthCategory = 'SEVERELY_WILTED';
+    } else if (tree.healthState < 50) {
+      healthCategory = 'MODERATELY_WILTED';
+    } else if (tree.healthState < 75) {
+      healthCategory = 'SLIGHTLY_WILTED';
+    }
+    
+    const response = {
+      treeId: tree.id,
+      healthState: tree.healthState || 100,
+      healthCategory,
+      lastUpdated: tree.lastUpdated || tree.updatedAt || new Date().toISOString()
+    };
+    
+    // 获取关联任务
+    // 获取所有任务
+    const allTasks = getAllTasks();
+    
+    const task = allTasks.find(t => t.id === tree.taskId);
+    
+    if (task) {
+      response.task = {
+        id: task.id,
+        title: task.title,
+        progress: task.progress || 0,
+        deadline: task.dueDate
+      };
+    }
+    
+    return response;
+  } catch (error) {
+    logger.error(`获取树木健康状态失败: ${error.message}`, { error });
+    return null;
+  }
 }
 
 /**
  * 更新树木健康状态
  * @param {string} treeId - 树木ID
- * @param {number} healthState - 健康状态值
- * @param {string} [notes] - 可选的更新说明
- * @returns {Object|null} 更新后的健康状态或null
+ * @param {number} healthState - 健康状态值(0-100)
+ * @param {string} notes - 更新说明
+ * @returns {Object} 更新后的树木健康状态
  */
 export function updateTreeHealth(treeId, healthState, notes) {
-  // 验证健康状态值
-  if (typeof healthState !== 'number' || healthState < 0 || healthState > 100) {
-    throw new Error('无效的健康状态值');
+  try {
+    // 获取所有树木
+    const allTrees = getAllTrees();
+    
+    // 查找树木
+    const tree = allTrees.find(t => t.id === treeId);
+    
+    if (!tree) {
+      return null;
+    }
+    
+    // 更新树木健康状态
+    tree.healthState = healthState;
+    tree.lastUpdated = new Date().toISOString();
+    
+    // 更新备注
+    if (notes) {
+      tree.notes = notes;
+    }
+    
+    // 计算健康状态分类
+    let healthCategory = 'HEALTHY';
+    if (healthState < 25) {
+      healthCategory = 'SEVERELY_WILTED';
+    } else if (healthState < 50) {
+      healthCategory = 'MODERATELY_WILTED';
+    } else if (healthState < 75) {
+      healthCategory = 'SLIGHTLY_WILTED';
+    }
+    
+    return {
+      treeId: tree.id,
+      healthState,
+      healthCategory,
+      lastUpdated: tree.lastUpdated
+    };
+  } catch (error) {
+    logger.error(`更新树木健康状态失败: ${error.message}`, { error });
+    return null;
   }
-  
-  const treeIndex = trees.findIndex(t => t.id === treeId);
-  
-  if (treeIndex === -1) return null;
-  
-  // 更新树木健康状态
-  trees[treeIndex] = {
-    ...trees[treeIndex],
-    healthState: Math.round(healthState),
-    updatedAt: new Date().toISOString()
-  };
-  
-  // 获取健康状态分类
-  const healthCategory = getHealthCategory(healthState);
-  
-  return {
-    treeId,
-    healthState: Math.round(healthState),
-    healthCategory,
-    lastUpdated: new Date().toISOString(),
-    notes
-  };
 }
 
 /**
  * 获取任务关联的树木健康状态
  * @param {string} taskId - 任务ID
- * @returns {Object|null} 任务树木健康关联信息或null
+ * @returns {Object} 任务树木健康关联信息
  */
 export function getTaskTreeHealth(taskId) {
-  const task = tasks.find(t => t.id === taskId);
-  
-  if (!task) return null;
-  
-  // 获取关联的树木
-  const tree = trees.find(t => t.taskId === taskId);
-  
-  if (!tree) return null;
-  
-  // 计算健康状态分类
-  const healthCategory = getHealthCategory(tree.healthState);
-  
-  // 构建响应
-  const response = {
-    taskId: task.id,
-    taskTitle: task.title,
-    progress: task.progress || 0,
-    deadline: task.dueDate,
-    tree: {
-      id: tree.id,
-      type: tree.type,
-      stage: tree.stage,
-      healthState: tree.healthState,
-      healthCategory,
-      lastUpdated: tree.updatedAt || new Date().toISOString()
+  try {
+    // 获取所有任务
+    const allTasks = getAllTasks();
+    
+    // 查找任务
+    const task = allTasks.find(t => t.id === taskId);
+    
+    if (!task) {
+      return null;
     }
-  };
-  
-  // 预测健康状态
-  response.healthPrediction = predictHealthStatus(task, tree);
-  
-  return response;
-}
-
-/**
- * 更新任务进度和相关树木健康状态
- * @param {string} taskId - 任务ID
- * @param {number} progress - 进度值(0-100)
- * @param {string} [notes] - 可选的更新说明
- * @returns {Object|null} 更新结果或null
- */
-export function updateTaskProgress(taskId, progress, notes) {
-  // 验证进度值
-  if (typeof progress !== 'number' || progress < 0 || progress > 100) {
-    throw new Error('无效的进度值');
-  }
-  
-  const taskIndex = tasks.findIndex(t => t.id === taskId);
-  
-  if (taskIndex === -1) return null;
-  
-  // 更新任务进度
-  const oldProgress = tasks[taskIndex].progress || 0;
-  tasks[taskIndex] = {
-    ...tasks[taskIndex],
-    progress,
-    updatedAt: new Date().toISOString()
-  };
-  
-  // 判断是否需要更新任务状态
-  if (progress === 100 && tasks[taskIndex].status !== 'COMPLETED') {
-    tasks[taskIndex].status = 'COMPLETED';
-    tasks[taskIndex].completedAt = new Date().toISOString();
-  } else if (progress > 0 && progress < 100 && tasks[taskIndex].status === 'TODO') {
-    tasks[taskIndex].status = 'IN_PROGRESS';
-  }
-  
-  // 构建响应
-  const response = {
-    taskId,
-    progress,
-    updatedAt: new Date().toISOString()
-  };
-  
-  // 获取关联的树木
-  const treeIndex = trees.findIndex(t => t.taskId === taskId);
-  
-  if (treeIndex !== -1) {
-    // 计算健康状态变化
-    const healthStateBefore = trees[treeIndex].healthState;
-    const healthStateAfter = calculateHealthState(tasks[taskIndex], trees[treeIndex]);
     
-    // 更新树木健康状态
-    trees[treeIndex] = {
-      ...trees[treeIndex],
-      healthState: Math.round(healthStateAfter),
-      updatedAt: new Date().toISOString()
-    };
+    // 获取所有树木
+    const allTrees = getAllTrees();
     
-    // 添加树木信息到响应
-    response.tree = {
-      id: trees[treeIndex].id,
-      healthStateBefore,
-      healthStateAfter: Math.round(healthStateAfter),
-      healthChange: (Math.round(healthStateAfter) > healthStateBefore ? '+' : '') + 
-        (Math.round(healthStateAfter) - healthStateBefore).toString()
+    // 查找关联的树木
+    const tree = allTrees.find(t => t.taskId === taskId);
+    
+    if (!tree) {
+      return null;
+    }
+    
+    // 计算健康状态分类
+    let healthCategory = 'HEALTHY';
+    if (tree.healthState < 25) {
+      healthCategory = 'SEVERELY_WILTED';
+    } else if (tree.healthState < 50) {
+      healthCategory = 'MODERATELY_WILTED';
+    } else if (tree.healthState < 75) {
+      healthCategory = 'SLIGHTLY_WILTED';
+    }
+    
+    return {
+      taskId: task.id,
+      taskTitle: task.title,
+      progress: task.progress || 0,
+      deadline: task.dueDate,
+      tree: {
+        id: tree.id,
+        type: tree.type,
+        stage: tree.stage || 0,
+        healthState: tree.healthState || 100,
+        healthCategory,
+        lastUpdated: tree.lastUpdated || tree.updatedAt || new Date().toISOString()
+      }
     };
+  } catch (error) {
+    logger.error(`获取任务关联的树木健康状态失败: ${error.message}`, { error });
+    return null;
   }
-  
-  return response;
 } 

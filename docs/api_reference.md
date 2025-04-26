@@ -2237,6 +2237,225 @@ POST /api/create-tasks
 }
 ```
 
+### 批量任务创建
+
+**端点**: `POST /api/batch-tasks`
+
+**描述**: 批量创建多个任务。
+
+**请求参数**:
+
+```json
+{
+  "tasks": [
+    {
+      "title": "主任务标题1",
+      "description": "任务描述1",
+      "status": "未开始",
+      "priority": "高",
+      "dueDate": "2023-12-31",
+      "subTasks": [
+        {
+          "title": "子任务标题1",
+          "description": "子任务描述1",
+          "status": "未开始",
+          "priority": "中",
+          "estimatedHours": 2.5
+        }
+      ]
+    },
+    {
+      "title": "主任务标题2",
+      "description": "任务描述2",
+      "status": "未开始",
+      "priority": "中",
+      "dueDate": "2024-01-15",
+      "subTasks": []
+    }
+  ]
+}
+```
+
+**成功响应** (201 Created):
+
+```json
+{
+  "success": true,
+  "message": "批量任务创建成功",
+  "data": {
+    "tasks": [
+      {
+        "id": "task-uuid-1",
+        "title": "主任务标题1",
+        "description": "任务描述1",
+        "status": "未开始",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": [
+          {
+            "id": "subtask-uuid-1",
+            "title": "子任务标题1",
+            "parentId": "task-uuid-1"
+          }
+        ]
+      },
+      {
+        "id": "task-uuid-2",
+        "title": "主任务标题2",
+        "description": "任务描述2",
+        "status": "未开始",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": []
+      }
+    ]
+  }
+}
+```
+
+**错误响应** (400 Bad Request):
+
+```json
+{
+  "success": false,
+  "message": "任务数据必须是非空数组"
+}
+```
+
+**错误响应** (500 Internal Server Error):
+
+```json
+{
+  "success": false,
+  "message": "批量创建任务失败",
+  "error": "服务器内部错误"
+}
+```
+
+### 批量创建任务和任务树
+
+**端点**: `POST /api/batch-tasks/with-trees`
+
+**描述**: 批量创建多个任务及其子任务，并创建对应的任务树。
+
+**请求参数**:
+
+```json
+{
+  "tasks": [
+    {
+      "title": "主任务标题1",
+      "description": "任务描述1",
+      "status": "未开始",
+      "priority": "高",
+      "dueDate": "2023-12-31",
+      "subTasks": [
+        {
+          "title": "子任务标题1",
+          "description": "子任务描述1",
+          "status": "未开始",
+          "priority": "中",
+          "estimatedHours": 2.5
+        }
+      ]
+    },
+    {
+      "title": "主任务标题2",
+      "description": "任务描述2",
+      "status": "未开始",
+      "priority": "中",
+      "dueDate": "2024-01-15",
+      "subTasks": []
+    }
+  ],
+  "createTrees": true
+}
+```
+
+**成功响应** (201 Created):
+
+```json
+{
+  "success": true,
+  "message": "批量任务和任务树创建成功",
+  "data": {
+    "tasks": [
+      {
+        "id": "task-uuid-1",
+        "title": "主任务标题1",
+        "description": "任务描述1",
+        "status": "未开始",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": [
+          {
+            "id": "subtask-uuid-1",
+            "title": "子任务标题1",
+            "parentId": "task-uuid-1"
+          }
+        ],
+        "treeId": "tree-uuid-1"
+      },
+      {
+        "id": "task-uuid-2",
+        "title": "主任务标题2",
+        "description": "任务描述2",
+        "status": "未开始",
+        "createdAt": "2023-11-10T12:00:00Z",
+        "updatedAt": "2023-11-10T12:00:00Z",
+        "subTasks": [],
+        "treeId": "tree-uuid-2"
+      }
+    ],
+    "trees": [
+      {
+        "id": "tree-uuid-1",
+        "name": "树木1",
+        "taskId": "task-uuid-1",
+        "health": 100,
+        "growthStage": "幼苗",
+        "children": [
+          {
+            "id": "subtree-uuid-1",
+            "name": "子树1",
+            "taskId": "subtask-uuid-1",
+            "health": 100,
+            "growthStage": "幼苗",
+            "parentId": "tree-uuid-1"
+          }
+        ]
+      },
+      {
+        "id": "tree-uuid-2",
+        "name": "树木2",
+        "taskId": "task-uuid-2",
+        "health": 100,
+        "growthStage": "幼苗"
+      }
+    ]
+  }
+}
+```
+
+**错误响应** (400 Bad Request):
+
+```json
+{
+  "success": false,
+  "message": "任务数据必须是非空数组"
+}
+```
+
+**错误响应** (500 Internal Server Error):
+
+```json
+{
+  "success": false,
+  "message": "批量创建任务和任务树失败",
+  "error": "服务器内部错误"
+}
+```
+
 ### 文本到任务转换
 
 **端点**: `POST /api/ai/text-to-tasks`

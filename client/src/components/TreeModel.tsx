@@ -32,10 +32,30 @@ const TreeModel: React.FC<TreeModelProps> = ({
     }
   }, [type, growthStage, healthState]);
   
-  // 计算树木缩放比例
-  const scale = 0.5 + (growthStage * 0.15); // 根据生长阶段缩放
+  // 计算树木缩放比例 - 更明显的阶段变化
+  const getTreeScale = () => {
+    const baseScale = 0.3; // 最小尺寸
+    const stageMultiplier = 0.2; // 每个阶段增加的尺寸
+    
+    // 确保生长阶段在有效范围内
+    const validStage = Math.max(1, Math.min(5, growthStage || 1));
+    
+    return baseScale + (validStage * stageMultiplier);
+  };
   
-  // 根据健康状态获取颜色
+  // 获取成长阶段的名称
+  const getGrowthStageName = () => {
+    switch(growthStage) {
+      case 1: return '幼苗';
+      case 2: return '小树';
+      case 3: return '成长中';
+      case 4: return '将成熟';
+      case 5: return '成熟';
+      default: return `未知阶段${growthStage}`;
+    }
+  };
+  
+  // 根据健康状态获取树叶颜色
   const getLeafColor = () => {
     // 记录健康状态计算
     console.log(`计算树木(${type})叶子颜色 - 健康状态: ${healthState}`);
@@ -63,19 +83,58 @@ const TreeModel: React.FC<TreeModelProps> = ({
     }
     
     console.log(`树木(${type})健康状态良好 - 使用基础颜色`);
-    return baseColor; // 健康状态良好 - 使用默认绿色
+    return baseColor;
   };
   
+  // 获取树干材质
+  const getTrunkMaterial = () => {
+    // 根据树木类型和健康状态决定树干颜色
+    if (healthState < 30) {
+      return '#5D4037'; // 极度不健康的树干
+    }
+    
+    // 不同树木类型的树干颜色
+    switch(type) {
+      case TreeType.CHERRY: return '#96504b'; // 樱花树树干
+      case TreeType.MAPLE: return '#6D4C41'; // 枫树树干
+      case TreeType.PINE: return '#795548'; // 松树树干
+      case TreeType.OAK: return '#8D6E63'; // 橡树树干
+      default: return '#A1887F'; // 默认树干颜色
+    }
+  };
+  
+  // 计算实际的缩放值
+  const scale = getTreeScale();
+  
+  // 树木显示名称 - 用于调试
+  const displayName = `${type}-${getGrowthStageName()}-健康${healthState}%`;
+  
   return (
-    <group position={position} onClick={onClick}>
-      {/* 树干 */}
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.3, 1 * scale, 8]} />
-        <meshStandardMaterial color={healthState < 25 ? '#5D4037' : 'brown'} />
+    <group position={position} onClick={onClick} name={displayName}>
+      {/* 根部 - 只在树木生长到第3阶段以上才显示 */}
+      {growthStage >= 3 && (
+        <mesh position={[0, 0.05, 0]} castShadow>
+          <cylinderGeometry args={[0.4 * scale, 0.5 * scale, 0.1, 8]} />
+          <meshStandardMaterial color={getTrunkMaterial()} />
+        </mesh>
+      )}
+      
+      {/* 树干 - 根据生长阶段高度不同 */}
+      <mesh position={[0, 0.5 * scale, 0]} castShadow>
+        <cylinderGeometry 
+          args={[
+            0.2 * scale, 
+            0.3 * scale, 
+            1 * scale * (0.6 + growthStage * 0.1), // 高度随生长阶段增加
+            8
+          ]} 
+        />
+        <meshStandardMaterial color={getTrunkMaterial()} />
       </mesh>
       
-      {/* 树冠/叶子 */}
-      <mesh position={[0, 1.2 + scale/2, 0]} castShadow>
+      {/* 树冠/叶子 - 只在生长阶段 >= 2 时才显示 */}
+      {growthStage >= 2 && (
+        <mesh position={[0, 1.2 * scale, 0]} castShadow>
         {type === TreeType.PINE ? (
           <coneGeometry args={[0.8 * scale, 2 * scale, 8]} />
         ) : type === TreeType.OAK ? (
@@ -92,6 +151,68 @@ const TreeModel: React.FC<TreeModelProps> = ({
         
         <meshStandardMaterial color={getLeafColor()} />
       </mesh>
+      )}
+      
+      {/* 额外的枝叶 - 只在生长阶段 >= 4 时才显示 */}
+      {growthStage >= 4 && (
+        <>
+          {/* 额外的枝叶球体，稍微偏移位置 */}
+          <mesh position={[0.4 * scale, 1.0 * scale, 0.3 * scale]} castShadow>
+            <sphereGeometry args={[0.5 * scale, 16, 16]} />
+            <meshStandardMaterial color={getLeafColor()} />
+          </mesh>
+          
+          <mesh position={[-0.3 * scale, 1.1 * scale, -0.4 * scale]} castShadow>
+            <sphereGeometry args={[0.5 * scale, 16, 16]} />
+            <meshStandardMaterial color={getLeafColor()} />
+          </mesh>
+        </>
+      )}
+      
+      {/* 最顶层装饰 - 只在生长阶段 = 5 (完全成熟) 时才显示 */}
+      {growthStage === 5 && (
+        <>
+          {type === TreeType.CHERRY && (
+            // 樱花树的花朵
+            <group position={[0, 1.5 * scale, 0]}>
+              {[...Array(8)].map((_, i) => (
+                <mesh 
+                  key={i} 
+                  position={[
+                    Math.sin(i/8 * Math.PI * 2) * 0.6 * scale,
+                    Math.random() * 0.5 * scale,
+                    Math.cos(i/8 * Math.PI * 2) * 0.6 * scale
+                  ]}
+                  castShadow
+                >
+                  <sphereGeometry args={[0.15 * scale, 8, 8]} />
+                  <meshStandardMaterial color="#ffb7c5" />
+                </mesh>
+              ))}
+            </group>
+          )}
+          
+          {type === TreeType.APPLE && (
+            // 苹果树的果实
+            <group position={[0, 1.5 * scale, 0]}>
+              {[...Array(5)].map((_, i) => (
+                <mesh 
+                  key={i} 
+                  position={[
+                    Math.sin(i/5 * Math.PI * 2) * 0.7 * scale,
+                    Math.random() * 0.4 * scale - 0.2 * scale,
+                    Math.cos(i/5 * Math.PI * 2) * 0.7 * scale
+                  ]}
+                  castShadow
+                >
+                  <sphereGeometry args={[0.1 * scale, 8, 8]} />
+                  <meshStandardMaterial color="#e74c3c" />
+                </mesh>
+              ))}
+            </group>
+          )}
+        </>
+      )}
     </group>
   );
 };

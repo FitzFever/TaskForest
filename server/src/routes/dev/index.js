@@ -1,6 +1,5 @@
 /**
- * TaskForest开发环境API路由
- * 整合所有子路由
+ * 开发环境路由索引
  */
 import express from 'express';
 import taskRoutes from './taskRoutes.js';
@@ -11,6 +10,15 @@ import textToTaskRoutes from '../../routes/textToTaskRoutes.js';
 import taskBreakdownRoutes from '../../routes/taskBreakdownRoutes.js';
 
 const router = express.Router();
+
+// 健康检查接口
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    message: 'TaskForest开发环境服务正常运行'
+  });
+});
 
 // 使用任务相关路由
 router.use('/tasks', taskRoutes);

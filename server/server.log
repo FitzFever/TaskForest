@@ -1,0 +1,40 @@
+
+> taskforest-server@1.0.0 dev
+> nodemon --watch src --exec "node --experimental-specifier-resolution=node src/server.js"
+
+[33m[nodemon] 3.1.9[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): src/**/*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node --experimental-specifier-resolution=node src/server.js`[39m
+(node:11319) ExperimentalWarning: The Node.js specifier resolution flag is experimental. It could change or be removed at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-04-25 15:40:28 [32minfo[39m: 从全局数据存储初始化了 0 个任务
+[32minfo[39m: 从全局数据存储初始化了 0 个任务 {"service":"taskforest-server","timestamp":"2025-04-25 15:40:28"}
+2025-04-25 15:40:28 [32minfo[39m: DeepSeek服务初始化
+[32minfo[39m: DeepSeek服务初始化 {"baseURL":"https://api.deepseek.com/v1","maxRetries":5,"model":"deepseek-chat","service":"taskforest-server","timeout":30000,"timestamp":"2025-04-25 15:40:28"}
+node:internal/modules/cjs/loader:1140
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module '.prisma/client/default'
+Require stack:
+- /Users/fitzchen/MyProject/TaskForest/server/node_modules/@prisma/client/default.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1140:15)
+    at Module._load (node:internal/modules/cjs/loader:981:27)
+    at Module.require (node:internal/modules/cjs/loader:1231:19)
+    at require (node:internal/modules/helpers:177:18)
+    at Object.<anonymous> (/Users/fitzchen/MyProject/TaskForest/server/node_modules/@prisma/client/default.js:2:6)
+    at Module._compile (node:internal/modules/cjs/loader:1364:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+    at Module.load (node:internal/modules/cjs/loader:1203:32)
+    at Module._load (node:internal/modules/cjs/loader:1019:12)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:203:29) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/fitzchen/MyProject/TaskForest/server/node_modules/@prisma/client/default.js'
+  ]
+}
+
+Node.js v18.20.8
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

@@ -11,8 +11,8 @@ import dotenv from 'dotenv';
 // 加载环境变量
 dotenv.config();
 
-// 设置编码
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+// 设置环境变量
+process.env.NODE_ENV = 'development';
 
 const app = express();
 const PORT = process.env.PORT || 9000;

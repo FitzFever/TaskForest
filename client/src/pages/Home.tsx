@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, List, Input, Modal, Form, DatePicker, Select, message, Popconfirm, Tag, Space, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import * as taskService from '../services/taskService';
-import { Task, TaskStatus, TaskPriority, TaskType, CreateTaskRequest } from '../types/Task';
+import { Task, TaskStatus, TaskPriority, TaskType, CreateTaskRequest, FilterParams } from '../types/Task';
 import dayjs from 'dayjs';
 
 // 删除模拟任务数据
@@ -17,11 +17,30 @@ const Home: React.FC = () => {
   const [editForm] = Form.useForm();
   const [searchForm] = Form.useForm();
   
+  // 添加错误状态
+  const [error, setError] = useState<string | null>(null);
+  
+  // 添加分页状态
+  const [page, setPage] = useState(1);
+  const [tasksPerPage, setTasksPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTasks, setTotalTasks] = useState(0);
+  
+  // 添加筛选状态
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortField, setSortField] = useState<string>('createdAt');
+  const [sortDirection, setSortDirection] = useState<string>('desc');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTreeType, setSelectedTreeType] = useState<string>('ALL');
+  
   // 搜索参数
-  const [searchParams, setSearchParams] = useState({
-    search: '',
-    status: undefined,
-    tags: [] as string[],
+  const [searchParams, setSearchParams] = useState<FilterParams>({
+    searchText: '',
+    statusFilter: undefined,
+    priorityFilter: undefined,
+    tagFilter: undefined,
   });
 
   // 常用标签建议
@@ -30,24 +49,128 @@ const Home: React.FC = () => {
   ]);
 
   // 从API获取任务
-  const fetchTasks = async (params = searchParams) => {
-    setLoading(true);
+  const fetchTasks = async () => {
     try {
-      // 调用真实API
+      setLoading(true);
+      setError(null);
+      
+      console.log('开始获取任务列表，参数:', {
+        page,
+        limit: tasksPerPage,
+        status: selectedStatus,
+        priority: selectedPriority,
+        search: searchTerm,
+        sortBy: sortField,
+        sortOrder: sortDirection,
+        tags: selectedTags,
+        treeType: selectedTreeType
+      });
+      
+      // 构建API查询参数
+      const params: any = {
+        page,
+        limit: tasksPerPage,
+        status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
+        priority: selectedPriority !== 'ALL' ? selectedPriority : undefined,
+        search: searchTerm || undefined,
+        sortBy: sortField,
+        sortOrder: sortDirection as 'asc' | 'desc',
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        treeType: selectedTreeType !== 'ALL' ? selectedTreeType : undefined
+      };
+      
+      // 调用API获取任务
       const response = await taskService.getTasks(params);
-      console.log('获取到的任务响应:', response); // 添加日志输出
-      // 访问正确的数据路径
-      if (response && response.data && response.data.code === 200) {
-        setTasks(response.data.data.tasks);
+      
+      // 打印详细的响应信息用于调试
+      console.log('API响应数据结构:', JSON.stringify(response.data, null, 2));
+      
+      // 检查响应格式，处理不同的响应结构
+      let fetchedTasks = [];
+      let pagination: any = null;
+      
+      if (response && response.data) {
+        if (response.data.code === 200 && response.data.data) {
+          // 新版API格式 {code, data: {tasks, pagination}, message, timestamp}
+          if (response.data.data.tasks) {
+            fetchedTasks = response.data.data.tasks;
+            pagination = response.data.data.pagination;
+            console.log(`检测到新版API格式，包含${fetchedTasks.length}个任务`);
+          } 
+          // 旧版API格式可能直接返回任务数组
+          else if (Array.isArray(response.data.data)) {
+            fetchedTasks = response.data.data;
+            console.log(`检测到旧版API格式，包含${fetchedTasks.length}个任务`);
+          }
+          // 兼容处理
+          else {
+            console.warn('API响应中没有找到tasks字段:', response.data);
+            fetchedTasks = [];
+          }
+        } 
+        // 支持旧版success字段格式
+        else if (response.data.success && response.data.data) {
+          if (Array.isArray(response.data.data.tasks)) {
+            fetchedTasks = response.data.data.tasks;
+            pagination = response.data.data.pagination;
+          } else if (Array.isArray(response.data.data)) {
+            fetchedTasks = response.data.data;
+          } else {
+            fetchedTasks = [];
+          }
+        }
+        else {
+          console.error('API响应格式错误:', response.data);
+          throw new Error('API响应格式错误');
+        }
+      }
+      
+      // 处理API返回的任务列表
+      if (Array.isArray(fetchedTasks)) {
+        console.log(`成功获取到 ${fetchedTasks.length} 个任务`);
+        setTasks(fetchedTasks);
         
         // 分析并更新常用标签
-        updateCommonTags(response.data.data.tasks);
+        updateCommonTags(fetchedTasks);
+        
+        // 处理分页信息
+        if (pagination) {
+          setTotalPages(pagination.pages || Math.ceil(pagination.total / tasksPerPage));
+          setTotalTasks(pagination.total || fetchedTasks.length);
+        } else {
+          // 如果没有分页信息，假设当前页就是全部
+          setTotalPages(1);
+          setTotalTasks(fetchedTasks.length);
+        }
       } else {
-        throw new Error('API响应格式错误');
+        console.error('获取到的任务不是数组格式:', fetchedTasks);
+        setError('获取任务失败：服务器返回数据格式不正确');
+        setTasks([]);
+        setTotalPages(1);
+        setTotalTasks(0);
       }
     } catch (error) {
       console.error('获取任务失败:', error);
-      message.error('获取任务列表失败');
+      
+      // 针对不同类型的错误提供不同的错误信息
+      let errorMessage = '获取任务失败：发生未知错误';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('API响应格式错误')) {
+          errorMessage = '获取任务失败：服务器返回数据格式不正确';
+        } else if (error.message.includes('Network Error')) {
+          errorMessage = '获取任务失败：网络连接错误，请检查网络连接';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '获取任务失败：请求超时，请稍后重试';
+        } else {
+          errorMessage = `获取任务失败：${error.message}`;
+        }
+      } 
+      
+      setError(errorMessage);
+      setTasks([]);
+      setTotalPages(1);
+      setTotalTasks(0);
     } finally {
       setLoading(false);
     }
@@ -90,24 +213,26 @@ const Home: React.FC = () => {
   // 处理搜索提交
   const handleSearch = (values: any) => {
     const params = {
-      search: values.search || '',
-      status: values.status,
-      tags: values.tags || [],
+      searchText: values.search || '',
+      statusFilter: values.status,
+      priorityFilter: values.priority,
+      tagFilter: values.tags?.join(',') || '',
     };
     setSearchParams(params);
-    fetchTasks(params);
+    fetchTasks();
   };
   
   // 重置搜索
   const handleResetSearch = () => {
     searchForm.resetFields();
     const emptyParams = {
-      search: '',
-      status: undefined,
-      tags: [],
+      searchText: '',
+      statusFilter: undefined,
+      priorityFilter: undefined,
+      tagFilter: undefined,
     };
     setSearchParams(emptyParams);
-    fetchTasks(emptyParams);
+    fetchTasks();
   };
 
   // 处理创建任务
@@ -244,7 +369,7 @@ const Home: React.FC = () => {
         tags: newTags
       };
       setSearchParams(params);
-      fetchTasks(params);
+      fetchTasks();
     }
   };
 

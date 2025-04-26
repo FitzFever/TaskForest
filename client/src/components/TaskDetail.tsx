@@ -31,35 +31,31 @@ const { Title, Text } = Typography;
 const { confirm } = Modal;
 
 // 状态颜色映射
-const statusColors: Record<TaskStatus, string> = {
+const statusColors: Record<string, string> = {
   [TaskStatus.TODO]: 'default',
   [TaskStatus.IN_PROGRESS]: 'processing',
   [TaskStatus.COMPLETED]: 'success',
-  [TaskStatus.CANCELLED]: 'error'
 };
 
 // 优先级颜色映射
-const priorityColors: Record<TaskPriority, string> = {
+const priorityColors: Record<string, string> = {
   [TaskPriority.LOW]: 'green',
   [TaskPriority.MEDIUM]: 'blue',
   [TaskPriority.HIGH]: 'orange',
-  [TaskPriority.URGENT]: 'red'
 };
 
 // 状态名称映射
-const statusNames: Record<TaskStatus, string> = {
+const statusNames: Record<string, string> = {
   [TaskStatus.TODO]: '待办',
   [TaskStatus.IN_PROGRESS]: '进行中',
   [TaskStatus.COMPLETED]: '已完成',
-  [TaskStatus.CANCELLED]: '已取消'
 };
 
 // 优先级名称映射
-const priorityNames: Record<TaskPriority, string> = {
+const priorityNames: Record<string, string> = {
   [TaskPriority.LOW]: '低',
   [TaskPriority.MEDIUM]: '中',
   [TaskPriority.HIGH]: '高',
-  [TaskPriority.URGENT]: '紧急'
 };
 
 // 树木类型名称映射
@@ -68,8 +64,6 @@ const treeTypeNames: Record<string, string> = {
   'PINE': '松树',
   'CHERRY': '樱花树',
   'MAPLE': '枫树',
-  'PALM': '棕榈树',
-  'APPLE': '苹果树',
   'WILLOW': '柳树'
 };
 
@@ -313,11 +307,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   const getStatusDisplay = () => {
     if (!task || !task.status) return null;
     
-    const statusMap: Record<TaskStatus, { text: string, status: 'success' | 'processing' | 'default' | 'error' | 'warning' }> = {
+    const statusMap: Record<string, { text: string, status: 'success' | 'processing' | 'default' | 'error' | 'warning' }> = {
       [TaskStatus.TODO]: { text: '待办', status: 'default' },
       [TaskStatus.IN_PROGRESS]: { text: '进行中', status: 'processing' },
-      [TaskStatus.COMPLETED]: { text: '已完成', status: 'success' },
-      [TaskStatus.CANCELLED]: { text: '已取消', status: 'error' }
+      [TaskStatus.COMPLETED]: { text: '已完成', status: 'success' }
     };
     
     const statusInfo = statusMap[task.status] || { text: String(task.status), status: 'default' };
@@ -325,13 +318,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   };
 
   // 根据树木类型获取颜色
-  const getTreeTypeColor = (treeType: TreeType): string => {
-    const colorMap: Record<TreeType, string> = {
+  const getTreeTypeColor = (treeType: string): string => {
+    const colorMap: Record<string, string> = {
       [TreeType.OAK]: 'green',
       [TreeType.PINE]: 'cyan',
       [TreeType.MAPLE]: 'orange',
-      [TreeType.PALM]: 'lime',
-      [TreeType.APPLE]: 'red',
+      [TreeType.CHERRY]: 'red',
       [TreeType.WILLOW]: 'purple'
     };
     
@@ -339,13 +331,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
   };
   
   // 获取树木类型的名称
-  const getTreeTypeName = (treeType: TreeType): string => {
-    const nameMap: Record<TreeType, string> = {
+  const getTreeTypeName = (treeType: string): string => {
+    const nameMap: Record<string, string> = {
       [TreeType.OAK]: '橡树',
       [TreeType.PINE]: '松树',
       [TreeType.MAPLE]: '枫树',
-      [TreeType.PALM]: '棕榈树',
-      [TreeType.APPLE]: '苹果树',
+      [TreeType.CHERRY]: '樱花树',
       [TreeType.WILLOW]: '柳树'
     };
     
@@ -382,8 +373,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
                   优先级: {priorityNames[task.priority as TaskPriority]}
                 </Tag>
                 {task.treeType && (
-                  <Tag color={getTreeTypeColor(task.treeType as TreeType)}>
-                    {getTreeTypeName(task.treeType as TreeType)}
+                  <Tag color={getTreeTypeColor(task.treeType as string)}>
+                    {getTreeTypeName(task.treeType as string)}
                   </Tag>
                 )}
               </Col>
@@ -480,10 +471,39 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
                     <TreeTypeTag type={task.treeType as TreeType} />
                   </Descriptions.Item>
                   <Descriptions.Item label="生长阶段">
-                    {treeInfo.stage}/4
-                    <Progress percent={treeInfo.stage * 25} status="active" />
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <div>
+                        <Text strong>阶段 {treeInfo.stage}/5</Text>
+                        {treeInfo.stage === 1 && <Text type="secondary"> (幼苗)</Text>}
+                        {treeInfo.stage === 2 && <Text type="secondary"> (小树)</Text>}
+                        {treeInfo.stage === 3 && <Text type="secondary"> (成长中)</Text>}
+                        {treeInfo.stage === 4 && <Text type="secondary"> (将成熟)</Text>}
+                        {treeInfo.stage === 5 && <Text type="secondary"> (成熟)</Text>}
+                      </div>
+                      <Progress 
+                        percent={treeInfo.stage * 20} 
+                        status="active"
+                        steps={5}
+                        strokeColor="#52c41a"
+                      />
+                    </Space>
                   </Descriptions.Item>
                   <Descriptions.Item label="健康状态">
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <div>
+                        <Text 
+                          strong
+                          type={
+                            treeInfo.healthState > 80 ? 'success' : 
+                            treeInfo.healthState > 60 ? undefined : 
+                            treeInfo.healthState > 40 ? 'warning' : 'danger'
+                          }
+                        >
+                          {treeInfo.healthState > 80 ? '非常健康' : 
+                           treeInfo.healthState > 60 ? '健康' : 
+                           treeInfo.healthState > 40 ? '需要关注' : '状态不佳'}
+                        </Text>
+                      </div>
                     <Progress 
                       percent={treeInfo.healthState} 
                       status={
@@ -496,8 +516,46 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
                         treeInfo.healthState > 25 ? '#faad14' : '#f5222d'
                       }
                     />
+                    </Space>
+                  </Descriptions.Item>
+                  
+                  {/* 生长预测 */}
+                  <Descriptions.Item label="生长预测">
+                    {task.status === TaskStatus.COMPLETED ? (
+                      <Text type="success">任务已完成，树木已完全生长</Text>
+                    ) : (
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div>
+                          <Text>预计完成后树木将升至阶段 {Math.min(5, treeInfo.stage + 1)}</Text>
+                        </div>
+                        <div>
+                          <Text type="secondary">完成任务将促进树木生长和提高健康度</Text>
+                        </div>
+                      </Space>
+                    )}
                   </Descriptions.Item>
                 </Descriptions>
+                
+                {/* 树木视觉提示 */}
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                  {Array(5).fill(0).map((_, index) => (
+                    <span 
+                      key={index}
+                      style={{
+                        display: 'inline-block',
+                        width: 24,
+                        height: 24 + (index * 10),
+                        backgroundColor: index < treeInfo.stage ? '#52c41a' : '#f0f0f0',
+                        margin: '0 8px',
+                        borderRadius: '2px',
+                        position: 'relative'
+                      }}
+                    >
+                      {index === 0 && <div style={{ position: 'absolute', bottom: -20, width: '100%', textAlign: 'center', fontSize: 12 }}>幼苗</div>}
+                      {index === 4 && <div style={{ position: 'absolute', bottom: -20, width: '100%', textAlign: 'center', fontSize: 12 }}>成熟</div>}
+                    </span>
+                  ))}
+                </div>
               </Card>
             ) : (
               <Text type="secondary">无关联树木</Text>

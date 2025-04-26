@@ -52,15 +52,30 @@ app.get('/api/health', (req, res) => {
 
 // 获取所有任务
 app.get('/api/tasks', (req, res) => {
+  // 从查询参数中获取分页参数
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  
+  console.log(`收到任务列表请求，分页参数: page=${page}, limit=${limit}`);
+  console.log('查询参数:', req.query);
+  
+  // 计算分页
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  // 获取当前页的任务
+  const paginatedTasks = tasks.slice(startIndex, endIndex);
+  
+  // 返回分页后的数据
   res.json({
     code: 200,
     data: {
-      tasks,
+      tasks: paginatedTasks,
       pagination: {
         total: tasks.length,
-        page: 1,
-        limit: tasks.length,
-        pages: 1
+        page: page,
+        limit: limit,
+        pages: Math.ceil(tasks.length / limit)
       }
     },
     message: 'Success',
