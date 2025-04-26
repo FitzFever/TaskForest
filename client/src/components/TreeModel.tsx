@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { TreeType } from '../types/Tree';
+import { TREE_BASE_SCALE, GLOBAL_TREE_SCALE_MULTIPLIER, TREE_TYPE_SCALE_FACTORS } from '../constants/treeConfig';
 
 // TreeModel组件接口
 interface TreeModelProps {
@@ -8,6 +9,7 @@ interface TreeModelProps {
   position: [number, number, number]; 
   onClick: () => void;
   healthState?: number;
+  useGeometry?: boolean; // 是否强制使用几何体渲染
 }
 
 // 树木3D模型组件
@@ -16,7 +18,8 @@ const TreeModel: React.FC<TreeModelProps> = ({
   growthStage, 
   position, 
   onClick, 
-  healthState = 100 
+  healthState = 100,
+  useGeometry = false
 }) => {
   // 记录组件实例
   const renderCount = useRef(0);
@@ -24,23 +27,37 @@ const TreeModel: React.FC<TreeModelProps> = ({
   // 每次渲染时记录状态
   useEffect(() => {
     renderCount.current += 1;
-    console.log(`树木(${type})渲染 #${renderCount.current} - 健康状态: ${healthState}, 生长阶段: ${growthStage}`);
+    console.log(`树木(${type})渲染 #${renderCount.current} - 健康状态: ${healthState}, 生长阶段: ${growthStage}, 位置: [${position.join(', ')}]`);
     
     // 检查健康状态是否异常
     if (healthState === undefined || healthState === null) {
       console.warn(`警告: 树木(${type})缺少健康状态值, 使用默认值100`);
     }
-  }, [type, growthStage, healthState]);
+    
+    // 检查生长阶段是否有效
+    if (growthStage === undefined || growthStage === null || 
+        typeof growthStage !== 'number' || isNaN(growthStage)) {
+      console.warn(`警告: 树木(${type})生长阶段值无效: ${growthStage}, 使用默认值0`);
+    }
+    
+    // 检查位置是否有效
+    if (!position || position.some(val => val === undefined || val === null || isNaN(val))) {
+      console.error(`错误: 树木(${type})位置值无效: [${position}], 可能无法正确渲染`);
+    }
+  }, [type, growthStage, healthState, position]);
   
   // 计算树木缩放比例 - 更明显的阶段变化
   const getTreeScale = () => {
-    const baseScale = 0.3; // 最小尺寸
-    const stageMultiplier = 0.2; // 每个阶段增加的尺寸
+    const { BASE_SCALE, STAGE_MULTIPLIER } = TREE_BASE_SCALE.COMPONENT;
+    
+    // 获取树木类型的专用缩放系数
+    const typeScaleFactor = TREE_TYPE_SCALE_FACTORS[type as TreeType] || 1.0;
     
     // 确保生长阶段在有效范围内
     const validStage = Math.max(1, Math.min(5, growthStage || 1));
     
-    return baseScale + (validStage * stageMultiplier);
+    // 应用全局缩放
+    return (BASE_SCALE + (validStage * STAGE_MULTIPLIER)) * GLOBAL_TREE_SCALE_MULTIPLIER * typeScaleFactor;
   };
   
   // 获取成长阶段的名称
@@ -109,6 +126,67 @@ const TreeModel: React.FC<TreeModelProps> = ({
   // 树木显示名称 - 用于调试
   const displayName = `${type}-${getGrowthStageName()}-健康${healthState}%`;
   
+  // 使用几何体渲染树木 - 当3D模型无法加载或强制使用几何体时使用
+  const renderGeometryTree = () => {
+    return (
+      <group position={position} onClick={onClick} name={`${displayName}-geometry`}>
+        {/* 树干 */}
+        <mesh position={[0, 0.5 * scale, 0]} castShadow>
+          <cylinderGeometry 
+            args={[0.2 * scale, 0.3 * scale, 1 * scale * (0.6 + growthStage * 0.1), 8]} 
+          />
+          <meshStandardMaterial color={getTrunkMaterial()} />
+        </mesh>
+        
+        {/* 树冠 - 根据树木类型使用不同形状 */}
+        {growthStage >= 1 && (
+          <mesh position={[0, 1.2 * scale, 0]} castShadow>
+            {type === TreeType.PINE ? (
+              // 松树 - 圆锥形
+              <coneGeometry args={[0.8 * scale, 1.5 * scale, 8]} />
+            ) : type === TreeType.OAK || type === TreeType.MAPLE ? (
+              // 橡树/枫树 - 球形
+              <sphereGeometry args={[0.8 * scale, 8, 8]} />
+            ) : type === TreeType.WILLOW ? (
+              // 柳树 - 更宽的椭球形
+              <sphereGeometry args={[1.0 * scale, 0.8 * scale, 8, 8]} />
+            ) : (
+              // 其他所有树 - 标准球形
+              <sphereGeometry args={[0.7 * scale, 8, 8]} />
+            )}
+            <meshStandardMaterial color={getLeafColor()} />
+          </mesh>
+        )}
+        
+        {/* 简单装饰 - 只在生长阶段高时显示 */}
+        {growthStage >= 2 && (
+          <group position={[0, 1.5 * scale, 0]}>
+            {type === TreeType.CHERRY && (
+              // 樱花装饰
+              <mesh position={[0, 0.2 * scale, 0]} castShadow>
+                <sphereGeometry args={[0.3 * scale, 8, 8]} />
+                <meshStandardMaterial color="#ffb7c5" />
+              </mesh>
+            )}
+            {type === TreeType.APPLE && (
+              // 苹果装饰
+              <mesh position={[0.3 * scale, 0, 0]} castShadow>
+                <sphereGeometry args={[0.15 * scale, 8, 8]} />
+                <meshStandardMaterial color="#e74c3c" />
+              </mesh>
+            )}
+          </group>
+        )}
+      </group>
+    );
+  };
+  
+  // 如果强制使用几何体渲染，则使用几何体版本
+  if (useGeometry) {
+    return renderGeometryTree();
+  }
+  
+  // 默认返回标准的模型渲染
   return (
     <group position={position} onClick={onClick} name={displayName}>
       {/* 根部 - 只在树木生长到第3阶段以上才显示 */}
@@ -145,7 +223,15 @@ const TreeModel: React.FC<TreeModelProps> = ({
           <sphereGeometry args={[1.0 * scale, 16, 16]} />
         ) : type === TreeType.APPLE ? (
           <sphereGeometry args={[0.85 * scale, 16, 16]} />
+        ) : type === TreeType.MAPLE ? (
+          <sphereGeometry args={[0.9 * scale, 16, 16]} />
+        ) : type === TreeType.PALM ? (
+          // 棕榈树特殊形状
+          <group>
+            <sphereGeometry args={[0.7 * scale, 16, 16]} />
+          </group>
         ) : (
+          // 默认形状 - 任何未知类型
           <sphereGeometry args={[0.8 * scale, 16, 16]} />
         )}
         

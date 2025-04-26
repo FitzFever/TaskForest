@@ -7,12 +7,30 @@ import cors from 'cors';
 import { loggerMiddleware } from './middleware/logger.js';
 import devRoutes from './routes/dev/index.js';
 import dotenv from 'dotenv';
+import taskRoutes from './routes/dev/taskRoutes.js';
+import healthRoutes from './routes/dev/healthRoutes.js';
+import treeRoutes from './routes/dev/treeRoutes.js';
+import batchTaskRoutes from './routes/batchTaskRoutes.js';
+import constantsRoutes from './routes/dev/constantsRoutes.js';
+import clearDataRoutes from './routes/dev/clearDataRoutes.js';
+import dataManagementRoutes from './routes/dev/dataManagementRoutes.js';
 
 // 加载环境变量
 dotenv.config();
 
 // 设置环境变量
 process.env.NODE_ENV = 'development';
+
+// 初始化全局函数和变量
+if (typeof global.getBatchCreatedTrees !== 'function') {
+  global._batchCreatedTrees = global._batchCreatedTrees || [];
+  global.getBatchCreatedTrees = () => global._batchCreatedTrees;
+}
+
+if (typeof global.getBatchCreatedTasks !== 'function') {
+  global._batchCreatedTasks = global._batchCreatedTasks || [];
+  global.getBatchCreatedTasks = () => global._batchCreatedTasks;
+}
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -34,6 +52,13 @@ console.log('正在启动...');
 
 // 使用路由
 app.use('/api', devRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api', healthRoutes);
+app.use('/api/trees', treeRoutes);
+app.use('/api/batch-tasks', batchTaskRoutes);
+app.use('/api/constants', constantsRoutes);
+app.use('/api/admin', clearDataRoutes);
+app.use('/api/dev/data-management', dataManagementRoutes);
 
 // 启动服务器
 app.listen(PORT, () => {

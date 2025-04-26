@@ -5,6 +5,15 @@
 
 // 任务类型到树木类型的映射关系
 export const TASK_TYPE_TO_TREE_TYPE_MAPPING = {
+  // 英文任务类型 (API文档中定义的)
+  'NORMAL': 'OAK',           // 普通任务 -> 橡树
+  'RECURRING': 'PINE',       // 定期重复任务 -> 松树
+  'PROJECT': 'WILLOW',       // 长期项目任务 -> 柳树
+  'LEARNING': 'APPLE',       // 学习类任务 -> 苹果树
+  'WORK': 'MAPLE',           // 工作类任务 -> 枫树
+  'LEISURE': 'PALM',         // 休闲类任务 -> 棕榈树
+  
+  // 中文任务类型 (兼容现有实现)
   '一般任务': 'OAK',            // 普通橡树
   '学习任务': 'MAPLE',          // 枫树
   '工作任务': 'PINE',           // 松树
@@ -26,6 +35,12 @@ export const TASK_TYPE_TO_TREE_TYPE_MAPPING = {
 
 // 任务状态对树木生长的影响
 export const TASK_STATUS_TO_TREE_GROWTH = {
+  // 英文状态
+  'NOT_STARTED': 0,  // 未开始的任务不提供生长点数
+  'IN_PROGRESS': 1,  // 进行中的任务每次检查提供1点生长
+  'COMPLETED': 3,    // 已完成的任务一次性提供3点生长
+  
+  // 中文状态
   '未开始': 0,     // 未开始的任务不提供生长点数
   '进行中': 1,     // 进行中的任务每次检查提供1点生长
   '已完成': 3      // 已完成的任务一次性提供3点生长
@@ -51,9 +66,9 @@ export function calculateGrowthPoints(status, completionPercentage = 0) {
   const basePoints = TASK_STATUS_TO_TREE_GROWTH[status] || 0;
   
   // 如果任务已完成，额外奖励基于完成百分比
-  if (status === '已完成' && completionPercentage === 100) {
+  if ((status === '已完成' || status === 'COMPLETED') && completionPercentage === 100) {
     return basePoints + 2; // 完全完成的任务获得额外奖励
-  } else if (status === '进行中' && completionPercentage > 50) {
+  } else if ((status === '进行中' || status === 'IN_PROGRESS') && completionPercentage > 50) {
     return basePoints + 1; // 超过50%的进行中任务获得额外奖励
   }
   

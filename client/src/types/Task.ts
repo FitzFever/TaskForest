@@ -81,6 +81,7 @@ export interface CreateTaskRequest {
   tags?: string[];
   treeType?: TreeType;
   categoryId?: number;
+  autoCreateTree?: boolean;
 }
 
 /**

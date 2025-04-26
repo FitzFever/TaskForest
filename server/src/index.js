@@ -4,10 +4,38 @@ import config from './config/config.js';
 import routes from './routes/index.js';
 import logger from './utils/logger.js';
 import { trees, tasks, batchTrees } from './dataStore.js';
+// 导入devData中的测试数据
+import { tasks as devTasks, trees as devTrees } from './data/devData.js';
 
 // 初始化全局变量
 global.batchCreatedTasks = global.batchCreatedTasks || [];
 global.batchCreatedTrees = global.batchCreatedTrees || [];
+
+// 检查是否应该加载示例数据
+const shouldLoadDemoData = process.env.LOAD_DEMO_DATA === 'true';
+
+// 将测试数据加载到内存中（仅当环境变量指定时）
+if (shouldLoadDemoData && Array.isArray(devTasks) && devTasks.length > 0) {
+  logger.info(`正在加载开发环境任务数据，数量: ${devTasks.length}`);
+  devTasks.forEach(task => {
+    if (!tasks.some(t => t.id === task.id)) {
+      tasks.push({...task});
+    }
+  });
+} else {
+  logger.info('跳过加载开发环境任务示例数据');
+}
+
+if (shouldLoadDemoData && Array.isArray(devTrees) && devTrees.length > 0) {
+  logger.info(`正在加载开发环境树木数据，数量: ${devTrees.length}`);
+  devTrees.forEach(tree => {
+    if (!trees.some(t => t.id === tree.id)) {
+      trees.push({...tree});
+    }
+  });
+} else {
+  logger.info('跳过加载开发环境树木示例数据');
+}
 
 // 服务器初始化
 const app = express();

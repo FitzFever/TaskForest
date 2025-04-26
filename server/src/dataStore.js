@@ -203,7 +203,28 @@ export function getAllTrees() {
     });
   }
   
-  return allTrees;
+  // 使用Map对树木进行去重（基于ID）
+  const uniqueTreesMap = new Map();
+  allTrees.forEach(tree => {
+    if (tree && tree.id) {
+      uniqueTreesMap.set(tree.id, tree);
+    }
+  });
+  
+  // 从Map中提取唯一的树木
+  const uniqueTrees = Array.from(uniqueTreesMap.values());
+  
+  // 过滤掉没有关联任务ID的树木
+  const validTrees = uniqueTrees.filter(tree => {
+    const hasTaskId = Boolean(tree.taskId || tree.mainTaskId);
+    if (!hasTaskId) {
+      console.log(`[DataStore] 过滤掉没有任务ID的树木: ${tree.id}`);
+    }
+    return hasTaskId;
+  });
+  
+  console.log(`[DataStore] getAllTrees: 总共找到 ${allTrees.length} 棵树，去重后 ${uniqueTrees.length} 棵，过滤后返回 ${validTrees.length} 棵有效的树`);
+  return validTrees;
 }
 
 // 清空所有数据

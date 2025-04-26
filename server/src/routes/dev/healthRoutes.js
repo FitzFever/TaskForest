@@ -3,10 +3,39 @@
  */
 import express from 'express';
 import * as healthService from '../../services/healthService.js';
-import { tasks, trees } from '../../data/devData.js';
+import { tasks as globalTasks, trees as globalTrees } from '../../dataStore.js';
+import { tasks as devTasks, trees as devTrees } from '../../data/devData.js';
 import logger from '../../utils/logger.js';
 
 const router = express.Router();
+
+// 获取当前使用的树木数据
+const getTrees = () => {
+  // 检查是否应该加载示例数据
+  const shouldLoadDemoData = process.env.LOAD_DEMO_DATA === 'true';
+  
+  if (shouldLoadDemoData) {
+    // 如果启用示例数据，合并全局数据和开发数据
+    return [...globalTrees, ...devTrees];
+  } else {
+    // 如果不启用示例数据，只使用全局数据
+    return [...globalTrees];
+  }
+};
+
+// 获取当前使用的任务数据
+const getTasks = () => {
+  // 检查是否应该加载示例数据
+  const shouldLoadDemoData = process.env.LOAD_DEMO_DATA === 'true';
+  
+  if (shouldLoadDemoData) {
+    // 如果启用示例数据，合并全局数据和开发数据
+    return [...globalTasks, ...devTasks];
+  } else {
+    // 如果不启用示例数据，只使用全局数据
+    return [...globalTasks];
+  }
+};
 
 // 健康检查接口
 router.get('/health', (req, res) => {
@@ -243,7 +272,7 @@ router.get('/tasks/:id', (req, res) => {
     }
     
     // 在所有可能的数组中查找任务
-    let allTasks = [...tasks];
+    let allTasks = [...getTasks()];
     
     // 获取全局批量创建的任务
     if (global.batchCreatedTasks && Array.isArray(global.batchCreatedTasks)) {
@@ -287,9 +316,9 @@ router.post('/trees/health/batch-update', (req, res) => {
     let updatedCount = 0;
     
     // 遍历所有树木
-    for (let i = 0; i < trees.length; i++) {
-      const tree = trees[i];
-      const task = tasks.find(t => t.id === tree.taskId);
+    for (let i = 0; i < getTrees().length; i++) {
+      const tree = getTrees()[i];
+      const task = getTasks().find(t => t.id === tree.taskId);
       
       if (task) {
         // 重新计算健康状态
@@ -335,7 +364,7 @@ router.post('/trees/health/batch-update', (req, res) => {
         }
         
         // 根据任务进度计算生长阶段
-        const tree = trees[i];
+        const tree = getTrees()[i];
         let newStage = tree.stage;
         if (task.progress !== undefined) {
           if (task.progress >= 100) {
@@ -353,7 +382,7 @@ router.post('/trees/health/batch-update', (req, res) => {
         
         // 更新树木健康状态和生长阶段
         if (Math.round(healthState) !== tree.healthState || newStage !== tree.stage) {
-          trees[i] = {
+          getTrees()[i] = {
             ...tree,
             healthState: Math.round(healthState),
             stage: newStage,
@@ -390,7 +419,7 @@ router.get('/trees/:id/growth-history', (req, res) => {
     const treeId = req.params.id;
     
     // 检查树木是否存在
-    const tree = trees.find(t => t.id === treeId);
+    const tree = getTrees().find(t => t.id === treeId);
     if (!tree) {
       return res.status(404).json({
         code: 404,
@@ -402,7 +431,7 @@ router.get('/trees/:id/growth-history', (req, res) => {
     }
     
     // 查找关联的任务
-    const task = tasks.find(t => t.id === tree.taskId);
+    const task = getTasks().find(t => t.id === tree.taskId);
     
     // 基于任务进度计算各阶段时间点
     const growthStages = [];

@@ -157,6 +157,27 @@ chmod +x start.sh
 ./start.sh -h
 ```
 
+### 🌱 启动带示例数据的开发服务器
+
+如果你希望在开发环境中加载预设的示例数据，可以使用以下方式：
+
+```bash
+# 使用示例数据启动脚本
+cd server
+chmod +x start-with-demo-data.sh
+./start-with-demo-data.sh
+```
+
+或者，你可以通过环境变量控制：
+
+```bash
+# 通过环境变量启用示例数据
+cd server
+LOAD_DEMO_DATA=true node src/index.js
+```
+
+详细的示例数据说明请参阅 [📚 示例数据加载指南](./docs/示例数据加载指南.md)。
+
 ### 🛠️ 手动启动
 
 如果你不想使用启动脚本，也可以手动启动项目：

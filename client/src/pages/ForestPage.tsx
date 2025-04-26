@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Spin, message, Tooltip, Drawer, Empty, Divider, List, Tag, Row, Col, Space } from 'antd';
-import { PlusOutlined, ZoomInOutlined, ZoomOutOutlined, SyncOutlined, ExclamationCircleOutlined, ReloadOutlined, BugOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, ZoomInOutlined, ZoomOutOutlined, SyncOutlined, ExclamationCircleOutlined, ReloadOutlined, BugOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons';
 import ForestScene, { TreeData } from '../three/ForestScene';
 import TreeHealthPanel from '../components/TreeHealthPanel';
 import { TreeType } from '../types/Tree';
 import { Task, TaskStatus } from '../types/Task';
 import { modelLoader } from '../three/ModelLoader';
-import * as taskService from '../services/taskService';
 import * as treeService from '../services/treeService';
+import * as taskService from '../services/taskService';
 import * as treeHealthService from '../services/treeHealthService';
 import api from '../services/api';
+import useTreeStore from '../store/treeStore';
 
 // 自定义事件名称定义
 const TASK_UPDATE_EVENT = 'taskforest_task_updated';
@@ -145,7 +146,20 @@ const ForestPage: React.FC = () => {
         console.log(`Tree ${index+1}:`, JSON.stringify(tree, null, 2));
       });
       
-      if (treesArray && treesArray.length > 0) {
+      // 首先过滤掉没有任务ID的树木
+      const treesWithTaskId = treesArray.filter(tree => {
+        const hasTaskId = Boolean(tree.taskId || tree.mainTaskId);
+        if (!hasTaskId) {
+          console.log(`[ForestPage] 过滤掉没有任务ID的树木: ${tree.id}`);
+        }
+        return hasTaskId;
+      });
+      
+      if (treesArray.length !== treesWithTaskId.length) {
+        console.log(`[ForestPage] 过滤前树木数量: ${treesArray.length}, 过滤后: ${treesWithTaskId.length}`);
+      }
+      
+      if (treesWithTaskId && treesWithTaskId.length > 0) {
         // 获取所有任务以验证树木关联
         try {
           console.log('获取任务数据以验证树木关联');
@@ -195,16 +209,11 @@ const ForestPage: React.FC = () => {
           console.log('森林页面: 有效任务IDs:', validTaskIds);
           
           // 将API返回的树木数据转换为组件所需格式，过滤掉无效任务关联的树木
-          const formattedTrees = treesArray
+          const formattedTrees = treesWithTaskId
             .filter(tree => {
-              // 过滤掉没有taskId的树木
-              if (!tree.taskId) {
-                console.warn(`树木 ID=${tree.id} 没有关联任务ID，将被过滤掉`);
-                return false;
-              }
-              
               // 检查taskId是否在有效的任务ID列表中
-              const isValid = validTaskIds.includes(String(tree.taskId));
+              const taskIdStr = String(tree.taskId);
+              const isValid = validTaskIds.includes(taskIdStr);
               if (!isValid) {
                 console.warn(`树木 ID=${tree.id} 关联的任务ID ${tree.taskId} 不存在，将被过滤掉`);
               }
@@ -257,7 +266,7 @@ const ForestPage: React.FC = () => {
                 // 使用基于ID的确定性角度分布，而不是索引分布
                 const angle = tree.id ? 
                   (getStableRandomOffset(tree.id, Math.PI) + Math.PI) : // 0 到 2π 之间
-                  (index / treesArray.length) * Math.PI * 2;
+                  (index / treesWithTaskId.length) * Math.PI * 2;
                 
                 const distance = radius * (0.4 + (tree.id ? 
                   Math.abs(getStableRandomOffset(tree.id + '_dist', 0.6)) : 
@@ -342,13 +351,14 @@ const ForestPage: React.FC = () => {
           console.error('获取任务数据失败:', taskError);
           
           // 即使获取任务失败，也尝试处理树木数据
-          const simpleFormattedTrees = treesArray
+          const simpleFormattedTrees = treesWithTaskId
             .filter(tree => {
               // 即使无法验证任务存在性，也过滤掉没有taskId的树木
               if (!tree.taskId) {
                 console.warn(`树木 ID=${tree.id} 没有关联任务ID，将被过滤掉`);
                 return false;
               }
+              
               return true;
             })
             .map(tree => {
@@ -773,6 +783,33 @@ const ForestPage: React.FC = () => {
     }
   };
   
+  // 清理默认示例数据
+  const cleanupDefaultData = async () => {
+    try {
+      setLoading(true);
+      message.info('开始清理默认示例数据...');
+      
+      // 调用清理API
+      const response = await api.post('/dev/data-management/cleanup-defaults');
+      
+      // 处理响应
+      if (response.data.code === 200) {
+        const { treesRemoved, tasksRemoved } = response.data.data;
+        message.success(`清理完成：成功删除 ${treesRemoved} 棵默认树和 ${tasksRemoved} 个相关任务`);
+        
+        // 刷新树木数据
+        await loadTrees();
+      } else {
+        message.error('清理默认数据失败：' + response.data.message);
+      }
+    } catch (error) {
+      console.error('清理默认数据失败:', error);
+      message.error('清理默认数据失败，请查看控制台获取详细信息');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // 在页面加载后添加一个调试功能，显示所有树木与任务的关联状态
   useEffect(() => {
     if (!loading && trees.length > 0) {
@@ -835,6 +872,14 @@ const ForestPage: React.FC = () => {
               danger
             >
               清理孤立树木
+            </Button>
+            <Button
+              icon={<ClearOutlined />}
+              onClick={cleanupDefaultData}
+              title="清理系统默认示例数据"
+              danger
+            >
+              清理示例数据
             </Button>
           </Space>
         }

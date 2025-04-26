@@ -17,6 +17,15 @@ router.get('/', (req, res) => {
     
     let filteredTrees = [...trees];
     
+    // 过滤掉没有任务ID的树木
+    filteredTrees = filteredTrees.filter(tree => {
+      const hasTaskId = Boolean(tree.taskId || tree.mainTaskId);
+      if (!hasTaskId) {
+        console.log(`[TreeRoutes] 过滤掉没有任务ID的树木: ${tree.id}`);
+      }
+      return hasTaskId;
+    });
+    
     // 应用过滤条件
     if (type) {
       const typeList = Array.isArray(type) 

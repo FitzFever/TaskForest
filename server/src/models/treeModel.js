@@ -66,7 +66,8 @@ export function createTree(treeData) {
  * @returns {Array} 树木列表
  */
 export function getAllTrees() {
-  const allTrees = [...trees];
+  // 先收集所有树木
+  let allTrees = [...trees];
   
   // 添加批量创建的树木（如果存在）
   if (global.batchCreatedTrees && Array.isArray(global.batchCreatedTrees)) {
@@ -80,8 +81,17 @@ export function getAllTrees() {
     });
   }
   
-  console.log(`getAllTrees: 总共返回 ${allTrees.length} 棵树`);
-  return allTrees;
+  // 过滤掉没有关联任务ID的树木
+  const validTrees = allTrees.filter(tree => {
+    const hasTaskId = Boolean(tree.taskId || tree.mainTaskId);
+    if (!hasTaskId) {
+      console.log(`[TreeModel] 过滤掉没有任务ID的树木: ${tree.id}`);
+    }
+    return hasTaskId;
+  });
+  
+  console.log(`getAllTrees: 总共找到 ${allTrees.length} 棵树，过滤后返回 ${validTrees.length} 棵有效的树`);
+  return validTrees;
 }
 
 /**

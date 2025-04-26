@@ -248,7 +248,8 @@ const Home: React.FC = () => {
                  values.priority === '中' ? TaskPriority.MEDIUM : TaskPriority.LOW,
         dueDate: values.dueDate.format('YYYY-MM-DD'),
         type: values.type || TaskType.NORMAL,
-        tags: values.tags || []
+        tags: values.tags || [],
+        autoCreateTree: true // 确保创建树木
       };
       
       const createResponse = await taskService.createTask(taskRequest);

@@ -2,35 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Stars } from '@react-three/drei';
 import { Card, Spin, Row, Col, Button, Alert, Divider, Typography, Tooltip } from 'antd';
-import { useTreeStore } from '../store';
-import { TreeType } from '../types/Tree';
+import { TreeType, Tree } from '../types/Tree';
 import * as treeService from '../services/treeService'; // 导入树木服务
 import TreeModel from './TreeModel'; // 导入独立的TreeModel组件
+import useTreeStore from '../store/treeStore';
 
 const { Title, Text } = Typography;
 
 // 定义TreeData类型，用于API返回的树木数据类型
 interface TreeData {
-  id: string;
+  id: string | number;
   taskId?: string;
-  type: string;
-  stage: number;
-  position: { x: number, y: number, z: number };
-  rotation: { x: number, y: number, z: number };
-  scale: { x: number, y: number, z: number };
-  createdAt: string;
-  lastGrowth: string;
+  type: TreeType;
+  growthStage: number;
+  position: [number, number, number];
+  rotation: [number, number, number];
   healthState?: number;
-  task?: {
-    id: string;
-    title: string;
-    status: string;
-    progress?: number;
-  };
 }
 
 // 简易视图组件 - 在3D渲染不可用时使用
-const SimpleForestView: React.FC<{ onClickTree: (id: number) => void }> = ({ onClickTree }) => {
+const SimpleForestView: React.FC<{ onClickTree: (id: number | string) => void }> = ({ onClickTree }) => {
   const { trees } = useTreeStore();
   
   if (!trees.length) {
@@ -106,7 +97,7 @@ const SimpleForestView: React.FC<{ onClickTree: (id: number) => void }> = ({ onC
               </div>
               <Divider style={{ margin: '12px 0' }} />
               <div>
-                <p><strong>生长阶段:</strong> {tree.growthStage}/3</p>
+                <p><strong>生长阶段:</strong> {tree.growthStage}/5</p>
                 <p><strong>关联任务:</strong> {tree.task?.title || '无'}</p>
                 {tree.healthState !== undefined && (
                   <p><strong>健康状态:</strong> {tree.healthState}%</p>
@@ -186,31 +177,31 @@ const ForestScene: React.FC = () => {
   const [dataReady, setDataReady] = useState(false);
   // 添加数据来源跟踪
   const [dataSource, setDataSource] = useState<'cache' | 'api' | null>(null);
+  // 添加调试状态 - 显示树木类型统计
+  const [treeTypeCounts, setTreeTypeCounts] = useState<Record<string, number>>({});
+  // 调试开关 - 是否强制使用几何体渲染代替3D模型
+  const [forceUseGeometry, setForceUseGeometry] = useState(false);
+  // 添加树木生长阶段统计状态
+  const [stageStats, setStageStats] = useState<Record<number, number>>({});
 
   // 初始化组件
   useEffect(() => {
-    // 检查localStorage中是否有缓存的树木数据
-    try {
-      const storedData = localStorage.getItem('taskforest-tree-storage');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        if (parsedData && parsedData.state && parsedData.state.trees && parsedData.state.trees.length > 0) {
-          console.log('从本地存储加载树木数据:', parsedData.state.trees.length, '棵树');
-          console.log('上次更新时间:', new Date(parsedData.state.lastUpdated).toLocaleString());
-          
-          // 直接从缓存加载树木数据到状态
-          setTrees(parsedData.state.trees);
-          
-          // 标记数据为缓存来源
-          setDataSource('cache');
-          // 确保树木数据已就绪
-          setDataReady(true);
-        }
-      }
-    } catch (err) {
-      console.error('读取缓存的树木数据失败:', err);
-    }
-  }, [setTrees]);
+    console.log('ForestScene: 初始化或生长阶段系统更新');
+    console.log('当前生长阶段计算规则: 0-3阶段体系');
+    console.log('- 阶段0(种子): 进度 0-33%');
+    console.log('- 阶段1(幼苗): 进度 33-66%');
+    console.log('- 阶段2(成长): 进度 66-100%');
+    console.log('- 阶段3(成熟): 进度 100%');
+    
+    refreshData();
+    
+    // 设置树木数据刷新定时器
+    const intervalId = setInterval(() => {
+      refreshData();
+    }, 60000); // 每分钟刷新一次
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   // 从API获取树木数据
   useEffect(() => {
@@ -224,7 +215,19 @@ const ForestScene: React.FC = () => {
       try {
         // 使用树木服务获取数据
         const response = await treeService.getTrees();
-        console.log('API树木数据:', response.data);
+        console.log('API树木数据总数:', response.data?.data?.pagination?.total || '未知');
+        console.log('API返回树木数据:', response.data?.data?.trees?.length || 0, '棵树');
+        
+        // 记录所有树木类型，用于调试
+        if (response.data?.data?.trees) {
+          const treeTypes = response.data.data.trees.map(tree => tree.type);
+          const uniqueTypes = [...new Set(treeTypes)];
+          console.log('API返回的树木类型:', uniqueTypes);
+          console.log('树木类型统计:', treeTypes.reduce((acc, type) => {
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          }, {}));
+        }
         
         if (!isMounted) return;
         
@@ -244,78 +247,63 @@ const ForestScene: React.FC = () => {
           return;
         }
         
-        // 将API树木数据转换为应用格式并先更新到本地存储
-        const treesData = response.data.data.trees.map(apiTree => {
-          console.log(`处理树木 ${apiTree.id}, 健康状态: ${apiTree.healthState}, 生长阶段: ${apiTree.stage}`);
+        let treesData = response.data.data.trees.map(tree => {
+          // 确保TreeData的字段格式正确
+          const position: [number, number, number] = [
+            (tree.position?.x || 0), 
+            (tree.position?.y || 0), 
+            (tree.position?.z || 0)
+          ];
+
+          // 确保树木类型有效
+          const type = tree.type ? 
+            (Object.values(TreeType).includes(tree.type as TreeType) ? 
+              tree.type as TreeType : 
+              TreeType.OAK) :
+            TreeType.OAK;
           
-          // 根据任务进度计算生长阶段
-          let calculatedGrowthStage = apiTree.stage;
-          
-          // 如果有关联任务，并且有进度信息，则根据进度更新生长阶段
-          if (apiTree.task && apiTree.task.progress !== undefined) {
-            const progress = apiTree.task.progress;
-            
-            // 根据进度值计算生长阶段（0-3）
-            calculatedGrowthStage = calculateGrowthStage(progress);
-            
-            // 打印生长阶段信息，帮助调试
-            console.log(`树木 ${apiTree.id} 任务进度: ${progress}%, 计算生长阶段: ${calculatedGrowthStage}`);
-            
-            // 如果计算的生长阶段高于后端返回的生长阶段，则更新服务器的值
-            if (calculatedGrowthStage > apiTree.stage) {
-              // 异步更新树木生长阶段
-              const treeIdString = apiTree.id;
-              console.log(`更新树木 ${treeIdString} 的生长阶段: ${apiTree.stage} → ${calculatedGrowthStage}`);
-              
-              // 异步更新不阻塞主数据流程
-              treeService.updateTree(treeIdString, {
-                stage: calculatedGrowthStage
-              }).then(response => {
-                console.log(`树木 ${treeIdString} 生长阶段更新成功:`, response.data);
-              }).catch(error => {
-                console.error(`树木 ${treeIdString} 生长阶段更新失败:`, error);
-              });
-            } else if (calculatedGrowthStage < apiTree.stage) {
-              // 如果API返回的阶段高于计算的阶段，记录异常但保留API返回的值
-              console.warn(`树木 ${apiTree.id} 阶段异常: API返回${apiTree.stage}，但根据进度${progress}%计算应为${calculatedGrowthStage}`);
-              calculatedGrowthStage = apiTree.stage; // 使用API返回的更高阶段值，避免树木"退化"
-              console.log(`使用API返回的更高阶段: ${calculatedGrowthStage}`);
-            }
-          }
-          
-          // 确保健康状态存在，如果不存在则设为默认值
-          const healthState = apiTree.healthState !== undefined && apiTree.healthState !== null 
-            ? apiTree.healthState 
-            : 100; // 默认为完全健康
-          
-          // 转换为前端数据结构
           return {
-            id: Number(apiTree.id.replace('tree-', '')),
-            type: apiTree.type as TreeType,
-            growthStage: calculatedGrowthStage, // 使用计算的生长阶段，而不是API返回的值
-            positionX: apiTree.position.x,
-            positionZ: apiTree.position.z,
-            createdAt: apiTree.createdAt,
-            taskId: Number(apiTree.taskId),
-            healthState: healthState, // 确保有健康状态值
-            task: apiTree.task ? {
-              id: Number(apiTree.task.id),
-              title: apiTree.task.title,
-              priority: 1 as any,
-              status: 0 as any,
-              completed: apiTree.task.status === 'COMPLETED',
-              completedAt: apiTree.task.status === 'COMPLETED' ? new Date().toISOString() : undefined,
-              createdAt: apiTree.createdAt,
-              updatedAt: apiTree.lastGrowth,
-              progress: apiTree.task.progress
-            } : undefined
+            id: tree.id,
+            type,
+            growthStage: tree.stage || tree.growthStage || 0,
+            position,
+            rotation: [0, 0, 0] as [number, number, number],
+            healthState: tree.healthState !== undefined ? tree.healthState : 100,
+            taskId: tree.taskId || tree.mainTaskId
           };
         });
         
-        if (!isMounted) return;
+        // 过滤掉没有任务ID的树木
+        const validTreesData = treesData.filter(tree => {
+          const hasTaskId = Boolean(tree.taskId);
+          if (!hasTaskId) {
+            console.log(`[ForestScene] 过滤掉没有任务ID的树木: ${tree.id}`);
+          }
+          return hasTaskId;
+        });
         
-        // 设置树木数据，healthState已经包含在API返回中
-        console.log('处理后的树木数据:', treesData);
+        if (treesData.length !== validTreesData.length) {
+          console.log(`[ForestScene] 过滤前树木数量: ${treesData.length}, 过滤后: ${validTreesData.length}`);
+        }
+        
+        // 更新为过滤后的树木数据
+        treesData = validTreesData;
+        
+        console.log('树木数据总数:', treesData.length, '棵树');
+        console.log('树木坐标示例:', treesData.length > 0 ? {
+          位置类型: treesData[0].position ? 'position对象' : 'positionX/Z属性',
+          位置值: treesData[0].position || { x: treesData[0].positionX, z: treesData[0].positionZ }
+        } : '无树木数据');
+        
+        // 统计各类型树木数量
+        const typeCounts = treesData.reduce((acc, tree) => {
+          const type = tree.type || 'unknown';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        console.log('各类型树木数量:', typeCounts);
+        setTreeTypeCounts(typeCounts);
         
         // 验证健康状态
         const validData = treesData.every(tree => 
@@ -388,8 +376,24 @@ const ForestScene: React.FC = () => {
     };
   }, [setLoading, setError, setTrees, dataSource, trees.length]);
 
+  // 更新后在useEffect中添加生长阶段统计计算
+  useEffect(() => {
+    if (trees.length > 0) {
+      // 计算各生长阶段的树木数量
+      const stats: Record<number, number> = {};
+      trees.forEach(tree => {
+        const stage = tree.growthStage || 0;
+        stats[stage] = (stats[stage] || 0) + 1;
+      });
+      setStageStats(stats);
+      
+      // 输出统计信息到控制台
+      console.log('树木生长阶段统计:', stats);
+    }
+  }, [trees]);
+
   // 处理树木点击
-  const handleTreeClick = (treeId: number) => {
+  const handleTreeClick = (treeId: number | string) => {
     const tree = trees.find(t => t.id === treeId);
     if (tree) {
       selectTree(tree);
@@ -397,17 +401,17 @@ const ForestScene: React.FC = () => {
   };
 
   // 处理树木生长
-  const handleGrowTree = async (treeId: number) => {
+  const handleGrowTree = async (treeId: number | string) => {
     try {
       // 获取当前树木数据
       const tree = trees.find(t => t.id === treeId);
       if (!tree) return;
       
       // 确保不超过最大生长阶段
-      if (tree.growthStage >= 3) return;
+      if (tree.growthStage >= 5) return;
       
       // 调用API更新树木阶段
-      const treeIdString = `tree-${treeId}`;
+      const treeIdString = typeof treeId === 'number' ? `tree-${treeId}` : treeId.toString();
       const updatedApiTree = await treeService.updateTree(treeIdString, {
         stage: tree.growthStage + 1
       });
@@ -439,7 +443,7 @@ const ForestScene: React.FC = () => {
   };
 
   // 新增一个处理点击事件的包装函数，忽略事件参数
-  const handleTreeModelClick = (treeId: number) => () => {
+  const handleTreeModelClick = (treeId: number | string) => () => {
     handleTreeClick(treeId);
   };
 
@@ -569,6 +573,9 @@ const ForestScene: React.FC = () => {
 
             {/* 渲染树木 */}
             {trees.map((tree, index) => {
+              // 添加树木渲染前的详细日志
+              console.log(`准备渲染树木[${index}]: ID=${tree.id}, 类型=${tree.type}`, tree);
+              
               // 确保生长阶段在0-3范围内
               const validGrowthStage = Math.max(0, Math.min(3, tree.growthStage || 0));
               if (validGrowthStage !== tree.growthStage) {
@@ -577,14 +584,39 @@ const ForestScene: React.FC = () => {
               }
               
               // 确保使用包含健康状态和生长阶段的唯一键
-              const treeKey = `tree-${tree.id}-${tree.growthStage}-${tree.healthState}`;
+              const treeKey = `tree-${tree.id}-${tree.growthStage}-${tree.healthState}-${tree.type}`;
+              
+              // 确保位置信息有效
+              let posX = 0;
+              let posZ = 0;
+              
+              // 处理不同格式的位置信息
+              if (typeof tree.positionX === 'number' && !isNaN(tree.positionX)) {
+                posX = tree.positionX;
+              } else if (tree.position && typeof tree.position.x === 'number' && !isNaN(tree.position.x)) {
+                posX = tree.position.x;
+              } else {
+                // 如果位置信息无效，分配一个基于索引的位置
+                console.warn(`树木 ${tree.id} X坐标无效，分配基于索引的位置`);
+                posX = (index % 5) * 3 - 6; // 创建一个5x5的网格
+              }
+              
+              if (typeof tree.positionZ === 'number' && !isNaN(tree.positionZ)) {
+                posZ = tree.positionZ;
+              } else if (tree.position && typeof tree.position.z === 'number' && !isNaN(tree.position.z)) {
+                posZ = tree.position.z;
+              } else {
+                // 如果位置信息无效，分配一个基于索引的位置
+                console.warn(`树木 ${tree.id} Z坐标无效，分配基于索引的位置`);
+                posZ = Math.floor(index / 5) * 3 - 6; // 创建一个5x5的网格
+              }
               
               // 输出更详细的树木渲染日志
               console.log(
                 `渲染树木[${index+1}/${trees.length}]: ` + 
                 `ID=${tree.id}, 类型=${tree.type}, ` + 
                 `生长阶段=${tree.growthStage}, 健康状态=${tree.healthState}, ` + 
-                `位置=(${tree.positionX.toFixed(1)},${tree.positionZ.toFixed(1)}), ` + 
+                `位置=(${posX.toFixed(1)},${posZ.toFixed(1)}), ` + 
                 `Key=${treeKey}`
               );
               
@@ -593,15 +625,29 @@ const ForestScene: React.FC = () => {
                 console.error(`⚠️ 树木 ${tree.id} 生长阶段未定义，使用默认值0`);
                 tree.growthStage = 0;
               }
+              
+              // 检查树木类型是否有效
+              if (!tree.type || typeof tree.type !== 'string') {
+                console.error(`⚠️ 树木 ${tree.id} 类型无效: ${tree.type}，使用默认类型OAK`);
+                tree.type = TreeType.OAK;
+              }
+              
+              // 检查树木健康状态是否有效
+              if (tree.healthState === undefined || tree.healthState === null) {
+                console.warn(`⚠️ 树木 ${tree.id} 健康状态未定义，使用默认值100`);
+                tree.healthState = 100;
+              }
 
+              // 确保数据有效后才渲染树木模型
               return (
                 <TreeModel
                   key={treeKey}
                   type={tree.type as TreeType}
                   growthStage={tree.growthStage}
                   healthState={tree.healthState}
-                  position={[tree.positionX, 0, tree.positionZ]}
-                  onClick={() => handleTreeClick(tree.id)}
+                  position={[posX, 0, posZ]}
+                  onClick={handleTreeModelClick(tree.id)}
+                  useGeometry={forceUseGeometry}
                 />
               );
             })}
@@ -628,6 +674,41 @@ const ForestScene: React.FC = () => {
             切换到{use3D ? '简易' : '3D'}模式
           </Button>
         </div>
+
+        {/* 调试控制面板 */}
+        <div style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.5)', padding: 10, borderRadius: 5, color: 'white' }}>
+          <div>
+            <label style={{ marginRight: 10 }}>
+              <input 
+                type="checkbox" 
+                checked={forceUseGeometry} 
+                onChange={(e) => setForceUseGeometry(e.target.checked)}
+              /> 
+              强制使用几何体渲染（解决模型加载问题）
+            </label>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div>树木类型统计:</div>
+            {Object.entries(treeTypeCounts).map(([type, count]) => (
+              <div key={type} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>{type}:</span> <span>{count}棵</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 5 }}>
+              <strong>总计:</strong> {trees.length}棵
+            </div>
+          </div>
+          
+          {/* 新增：生长阶段统计 */}
+          <div style={{ marginTop: 10 }}>
+            <div>生长阶段统计:</div>
+            {Object.entries(stageStats).map(([stage, count]) => (
+              <div key={stage} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>阶段{stage} ({getGrowthStageName(Number(stage))}):</span> <span>{count}棵</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </ErrorBoundary>
   );
@@ -639,9 +720,26 @@ const ForestScene: React.FC = () => {
  * @returns 生长阶段（0-3）
  */
 function calculateGrowthStage(progress: number): number {
-  if (progress >= 100) return 3; // 成熟
-  if (progress >= 66) return 2;  // 生长中
-  if (progress >= 33) return 1;  // 幼苗
+  // 确保进度值有效
+  if (progress === undefined || progress === null || isNaN(progress)) {
+    console.warn(`进度值无效: ${progress}，使用默认值0`);
+    return 0;
+  }
+  
+  // 规范化进度值到0-100范围
+  const normalizedProgress = Math.max(0, Math.min(100, progress));
+  
+  // 记录计算日志
+  console.log(`计算生长阶段: 进度=${normalizedProgress}% -> ${
+    normalizedProgress >= 100 ? '成熟(3)' : 
+    normalizedProgress >= 66 ? '成长阶段(2)' : 
+    normalizedProgress >= 33 ? '幼苗(1)' : 
+    '种子(0)'
+  }`);
+  
+  if (normalizedProgress >= 100) return 3; // 完全成熟
+  if (normalizedProgress >= 66) return 2;  // 成长阶段
+  if (normalizedProgress >= 33) return 1;  // 幼苗
   return 0; // 种子
 }
 
@@ -654,7 +752,7 @@ function getGrowthStageName(stage: number): string {
   switch (stage) {
     case 0: return '种子';
     case 1: return '幼苗';
-    case 2: return '生长中';
+    case 2: return '成长中';
     case 3: return '成熟';
     default: return '未知';
   }
@@ -669,10 +767,10 @@ function getGrowthStageColor(stage: number): string {
   switch (stage) {
     case 0: return '#8B4513'; // 种子 - 棕色
     case 1: return '#90EE90'; // 幼苗 - 淡绿色
-    case 2: return '#32CD32'; // 生长中 - 绿色
+    case 2: return '#228B22'; // 生长中 - 绿色
     case 3: return '#006400'; // 成熟 - 深绿色
     default: return '#CCCCCC'; // 未知 - 灰色
   }
 }
 
-export default ForestScene; 
+export default ForestScene;

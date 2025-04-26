@@ -30,16 +30,16 @@ interface TreeActions {
   updateTree: (updatedTree: Tree) => void;
   
   // 删除树木
-  removeTree: (treeId: number) => void;
+  removeTree: (treeId: number | string) => void;
   
   // 选择当前树木
   selectTree: (tree: Tree | null) => void;
   
   // 使树木生长（增加生长阶段）
-  growTree: (treeId: number, stageIncrement?: number) => void;
+  growTree: (treeId: number | string, stageIncrement?: number) => void;
   
   // 更新树木健康状态
-  updateTreeHealth: (treeId: number, healthState: number) => void;
+  updateTreeHealth: (treeId: number | string, healthState: number) => void;
   
   // 设置加载状态
   setLoading: (loading: boolean) => void;

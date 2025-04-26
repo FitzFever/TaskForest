@@ -12,6 +12,11 @@ import {
   applyHealthTransitionEffectAtPosition,
   applyGrowthStageEffectAtPosition
 } from './TreeAnimations';
+import { 
+  GLOBAL_TREE_SCALE_MULTIPLIER, 
+  TREE_BASE_SCALE, 
+  TREE_TYPE_SCALE_FACTORS 
+} from '../constants/treeConfig';
 
 // TreeModel组件的props定义
 export interface TreeModelProps {
@@ -56,8 +61,16 @@ const TreeModel: React.FC<TreeModelProps> = ({
   
   // 计算缩放比例，根据生长阶段调整
   const treeScale = useMemo(() => {
-    return scale.map(s => s * (0.6 + growthStage * 0.1)) as [number, number, number];
-  }, [scale, growthStage]);
+    // 使用全局缩放因子和树木类型特定缩放
+    const typeScaleFactor = TREE_TYPE_SCALE_FACTORS[type] || 1.0;
+    const { BASE_MULTIPLIER, MIN_SCALE_FACTOR, GROWTH_FACTOR } = TREE_BASE_SCALE.THREE_D;
+    
+    // 计算最终缩放值 = 基础缩放 * 全局缩放系数 * 树木类型系数 * 生长阶段系数
+    return scale.map(s => 
+      s * GLOBAL_TREE_SCALE_MULTIPLIER * typeScaleFactor * 
+      (MIN_SCALE_FACTOR + (growthStage * GROWTH_FACTOR))
+    ) as [number, number, number];
+  }, [scale, growthStage, type]);
 
   // 生成模型唯一标识符
   const modelKey = useMemo(() => {

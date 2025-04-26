@@ -1,18 +1,19 @@
 import React from 'react';
 import { Tree } from '../types/Tree';
-import { Space, Card, Tag, Typography, Progress } from 'antd';
+import { Space, Card, Tag, Typography, Progress, Alert } from 'antd';
 import { GithubOutlined, AimOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
+import useTreeStore from '../store/treeStore';
 
 const { Text, Title } = Typography;
 
-// 扩展Tree类型以包含任务进度属性
+// 这个接口不再需要额外的taskProgress属性
 interface ExtendedTree extends Tree {
-  taskProgress?: number;
+  // 使用Tree中已有的task.progress
 }
 
 interface SimpleForestViewProps {
-  trees: ExtendedTree[];
-  onTreeClick?: (tree: ExtendedTree) => void;
+  trees: Tree[];
+  onTreeClick?: (tree: Tree) => void;
 }
 
 // 辅助函数：根据健康状态获取颜色
@@ -25,14 +26,23 @@ const getTreeHealthColor = (healthState?: number) => {
 };
 
 const SimpleForestView: React.FC<SimpleForestViewProps> = ({ trees, onTreeClick }) => {
-  if (!trees || trees.length === 0) {
-    return <div className="simple-forest-empty">无树木数据</div>;
+  const { trees: treeStoreTrees } = useTreeStore();
+  
+  if (!treeStoreTrees.length) {
+    return (
+      <Alert
+        message="暂无树木"
+        description="您的森林中还没有树木。完成任务来种植一棵树！"
+        type="info"
+        showIcon
+      />
+    );
   }
 
   return (
     <div className="simple-forest-view">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        {trees.map((tree) => {
+        {treeStoreTrees.map((tree) => {
           // 获取树的健康状态颜色
           const healthColor = getTreeHealthColor(tree.healthState);
           
@@ -83,14 +93,14 @@ const SimpleForestView: React.FC<SimpleForestViewProps> = ({ trees, onTreeClick 
                         </Tag>
                       </div>
                     )}
-                    {tree.taskProgress !== undefined && (
+                    {tree.task?.progress !== undefined && (
                       <div className="tree-detail-item task-progress">
                         <Text type="secondary">任务进度:</Text>
                         <Progress 
-                          percent={tree.taskProgress} 
+                          percent={tree.task.progress} 
                           size="small"
                           status={
-                            tree.taskProgress >= 100 ? 'success' :
+                            tree.task.progress >= 100 ? 'success' :
                             tree.healthState && tree.healthState < 50 ? 'exception' : 'active'
                           }
                           style={{ width: 120 }}

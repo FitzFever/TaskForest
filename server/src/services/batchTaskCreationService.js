@@ -80,7 +80,13 @@ async function createBatchTasks(tasksData) {
     if (typeof global.getBatchCreatedTasks !== 'function') {
       global._batchCreatedTasks = global._batchCreatedTasks || [];
       global.getBatchCreatedTasks = () => global._batchCreatedTasks;
-  }
+    }
+
+    // 添加对应的树木获取函数（如果不存在）
+    if (typeof global.getBatchCreatedTrees !== 'function') {
+      global._batchCreatedTrees = global._batchCreatedTrees || [];
+      global.getBatchCreatedTrees = () => global._batchCreatedTrees;
+    }
 
     // 添加到全局变量（避免重复）
     const existingTasks = global.getBatchCreatedTasks() || [];

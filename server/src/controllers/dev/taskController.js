@@ -23,15 +23,24 @@ export function getTasks(req, res) {
       allTasks.push(...global.batchCreatedTasks);
     }
     
+    // 去除重复的任务
+    const taskMap = new Map();
+    allTasks.forEach(task => {
+      taskMap.set(task.id.toString(), task);
+    });
+    
+    const uniqueTasks = Array.from(taskMap.values());
+    logger.info(`返回任务列表，总数: ${uniqueTasks.length}`);
+    
     // 返回前端期望的格式
     res.json({
       code: 200,
       data: {
-        tasks: allTasks,
+        tasks: uniqueTasks,
         pagination: {
-          total: allTasks.length,
+          total: uniqueTasks.length,
           page: 1,
-          limit: allTasks.length,
+          limit: uniqueTasks.length,
           pages: 1
         }
       },

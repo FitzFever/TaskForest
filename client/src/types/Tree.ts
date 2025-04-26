@@ -17,7 +17,7 @@ export enum TreeType {
  * 树木类型定义
  */
 export interface Tree {
-  id: number;
+  id: number | string;
   type: TreeType | string;
   growthStage: number;
   positionX: number;
@@ -26,9 +26,30 @@ export interface Tree {
   rotationY?: number;
   createdAt: string;
   updatedAt?: string;
-  taskId?: number;
+  taskId?: number | string;
   task?: Task;
   healthState?: number; // 树木健康状态(0-100)
+  
+  // 兼容新结构
+  position?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  rotation?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  scale?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  structure?: any; // 树木结构数据
+  name?: string; // 树木名称
+  mainTaskId?: string; // 主任务ID
+  lastGrowth?: string; // 最后生长时间
 }
 
 /**

@@ -2,20 +2,66 @@
  * 树木相关路由
  */
 import express from 'express';
-import { tasks, trees } from '../../data/devData.js';
+// 从dataStore中导入，而不是直接从devData导入
+import { trees as globalTrees, tasks as globalTasks } from '../../dataStore.js';
+// 作为备用，如果设置了LOAD_DEMO_DATA环境变量为true，会合并这些数据
+import { tasks as devTasks, trees as devTrees } from '../../data/devData.js';
 
 const router = express.Router();
 
 // 从taskRoutes.js导入批量创建的树木数据
 import { batchCreatedTrees } from './taskRoutes.js';
 
+// 获取当前使用的树木数据
+const getTrees = () => {
+  // 检查是否应该加载示例数据
+  const shouldLoadDemoData = process.env.LOAD_DEMO_DATA === 'true';
+  
+  let treesArray = [...globalTrees];
+  
+  if (shouldLoadDemoData) {
+    // 如果启用示例数据，合并全局数据和开发数据，并确保去重
+    const treeIds = new Set(treesArray.map(tree => tree.id));
+    
+    // 只添加不在全局数据中的示例数据
+    devTrees.forEach(tree => {
+      if (!treeIds.has(tree.id)) {
+        treesArray.push(tree);
+        treeIds.add(tree.id);
+      }
+    });
+    
+    return treesArray;
+  } else {
+    // 如果不启用示例数据，只使用全局数据
+    return treesArray;
+  }
+};
+
+// 获取当前使用的任务数据
+const getTasks = () => {
+  // 检查是否应该加载示例数据
+  const shouldLoadDemoData = process.env.LOAD_DEMO_DATA === 'true';
+  
+  if (shouldLoadDemoData) {
+    // 如果启用示例数据，合并全局数据和开发数据
+    return [...globalTasks, ...devTasks];
+  } else {
+    // 如果不启用示例数据，只使用全局数据
+    return [...globalTasks];
+  }
+};
+
 // 获取树木列表
 router.get('/', (req, res) => {
   try {
-  // 获取分页参数
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const offset = (page - 1) * limit;
+    // 获取分页参数
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    
+    // 获取当前树木数据
+    const trees = getTrees();
     
     // 打印导入的批量创建树木数组
     console.log('【树木查询】treeRoutes中的batchCreatedTrees类型:', typeof batchCreatedTrees);
@@ -25,26 +71,35 @@ router.get('/', (req, res) => {
     // 从全局变量获取树木数据
     let batchTrees = [...batchCreatedTrees];
     if (typeof global.getBatchCreatedTrees === 'function') {
-      const globalTrees = global.getBatchCreatedTrees() || [];
-      console.log('【树木查询】从global获取的批量创建树木数量:', globalTrees.length);
-      batchTrees = [...batchTrees, ...globalTrees];
+      const globalBatchTrees = global.getBatchCreatedTrees() || [];
+      console.log('【树木查询】从global获取的批量创建树木数量:', globalBatchTrees.length);
+      batchTrees = [...batchTrees, ...globalBatchTrees];
     }
     
-    // 去重
-    const treeIds = new Set();
-    const uniqueBatchTrees = batchTrees.filter(tree => {
-      if (treeIds.has(tree.id)) return false;
-      treeIds.add(tree.id);
-      return true;
+    // 使用Map进行去重，确保ID唯一
+    const treeMap = new Map();
+    
+    // 先添加初始树木
+    trees.forEach(tree => {
+      if (tree && tree.id) {
+        treeMap.set(tree.id, tree);
+      }
     });
     
-    // 合并初始树木和批量创建的树木
-    const allTrees = [...trees, ...uniqueBatchTrees];
-  
-  // 获取树木总数
+    // 再添加批量创建的树木（如有ID冲突则覆盖）
+    batchTrees.forEach(tree => {
+      if (tree && tree.id) {
+        treeMap.set(tree.id, tree);
+      }
+    });
+    
+    // 从Map中获取所有唯一的树木
+    let allTrees = Array.from(treeMap.values());
+    
+    // 获取树木总数
     const total = allTrees.length;
     
-    console.log(`【树木查询】总共有 ${total} 个树木 (${trees.length} 个初始树木 + ${uniqueBatchTrees.length} 个批量创建的树木)`);
+    console.log(`【树木查询】总共有 ${total} 个树木 (${trees.length} 个初始树木 + ${batchTrees.length} 个批量创建的树木，去重后)`);
     
     // 添加父树信息
     const treesWithParentInfo = allTrees.map(tree => {
@@ -66,23 +121,23 @@ router.get('/', (req, res) => {
       return tree;
     });
   
-  // 对树木进行分页
+    // 对树木进行分页
     const pagedTrees = treesWithParentInfo.slice(offset, offset + limit);
   
-  res.json({
-    code: 200,
-    data: {
-      trees: pagedTrees,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    },
-    message: 'Success',
-    timestamp: Date.now()
-  });
+    res.json({
+      code: 200,
+      data: {
+        trees: pagedTrees,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      },
+      message: 'Success',
+      timestamp: Date.now()
+    });
   } catch (error) {
     console.error('获取树木列表失败:', error);
     res.status(500).json({
@@ -153,22 +208,38 @@ router.get('/:id', (req, res) => {
       batchTrees = [...batchTrees, ...globalTrees];
     }
     
-    // 在所有树木中查找（包括初始树木和批量创建的树木）
-    const allTrees = [...trees, ...batchTrees];
+    // 去重树木，使用Map确保ID唯一
+    const treeMap = new Map();
+    
+    // 先放入初始树木
+    getTrees().forEach(tree => {
+      treeMap.set(tree.id, tree);
+    });
+    
+    // 再放入批量创建的树木（如有重复ID则覆盖）
+    batchTrees.forEach(tree => {
+      if (tree && tree.id) {
+        treeMap.set(tree.id, tree);
+      }
+    });
+    
+    // 从Map中获取所有唯一的树木
+    const allTrees = Array.from(treeMap.values());
+    
     const tree = allTrees.find(t => t.id === req.params.id);
     
-  if (!tree) {
-    return res.status(404).json({
-      code: 404,
-      data: null,
-      error: { message: 'Tree not found' },
-      message: 'Not Found',
-      timestamp: Date.now()
-    });
-  }
-  
+    if (!tree) {
+      return res.status(404).json({
+        code: 404,
+        data: null,
+        error: { message: 'Tree not found' },
+        message: 'Not Found',
+        timestamp: Date.now()
+      });
+    }
+    
     // 在所有任务中查找关联的任务
-    const allTasks = [...tasks];
+    const allTasks = [...getTasks()];
     if (typeof global.getBatchCreatedTasks === 'function') {
       allTasks.push(...global.getBatchCreatedTasks());
     }
@@ -183,16 +254,16 @@ router.get('/:id', (req, res) => {
     // 查找子树
     const childTrees = allTrees.filter(t => t.parentTreeId === tree.id);
   
-  res.json({
-    code: 200,
-    data: {
-      ...tree,
-      task: relatedTask ? {
-        id: relatedTask.id,
-        title: relatedTask.title,
-        description: relatedTask.description,
-        status: relatedTask.status,
-        dueDate: relatedTask.dueDate
+    res.json({
+      code: 200,
+      data: {
+        ...tree,
+        task: relatedTask ? {
+          id: relatedTask.id,
+          title: relatedTask.title,
+          description: relatedTask.description,
+          status: relatedTask.status,
+          dueDate: relatedTask.dueDate
         } : null,
         parentTree: parentTree ? {
           id: parentTree.id,
@@ -206,10 +277,10 @@ router.get('/:id', (req, res) => {
           type: t.type,
           taskId: t.taskId
         })) : []
-    },
-    message: 'Success',
-    timestamp: Date.now()
-  });
+      },
+      message: 'Success',
+      timestamp: Date.now()
+    });
   } catch (error) {
     console.error('获取树木详情失败:', error);
     res.status(500).json({
@@ -235,8 +306,24 @@ router.get('/by-task/:taskId', (req, res) => {
       batchTrees = [...batchTrees, ...globalTrees];
     }
     
-    // 在所有树木中查找（包括初始树木和批量创建的树木）
-    const allTrees = [...trees, ...batchTrees];
+    // 去重树木，使用Map确保ID唯一
+    const treeMap = new Map();
+    
+    // 先放入初始树木
+    getTrees().forEach(tree => {
+      treeMap.set(tree.id, tree);
+    });
+    
+    // 再放入批量创建的树木（如有重复ID则覆盖）
+    batchTrees.forEach(tree => {
+      if (tree && tree.id) {
+        treeMap.set(tree.id, tree);
+      }
+    });
+    
+    // 从Map中获取所有唯一的树木
+    const allTrees = Array.from(treeMap.values());
+    
     console.log(`【树木查询】总树木数量: ${allTrees.length}, 查找taskId: ${req.params.taskId}`);
     
     // 打印所有树木的taskId，检查是否有匹配
@@ -246,24 +333,24 @@ router.get('/by-task/:taskId', (req, res) => {
     const taskIdStr = String(req.params.taskId);
     const tree = allTrees.find(t => String(t.taskId) === taskIdStr);
     
-  if (!tree) {
+    if (!tree) {
       console.log(`【树木查询】未找到任务ID为 ${req.params.taskId} 的树木`);
-    return res.status(404).json({
-      code: 404,
-      data: null,
+      return res.status(404).json({
+        code: 404,
+        data: null,
         error: { 
           message: `Tree not found for task: ${req.params.taskId}`,
           debugInfo: {
             searchedTaskId: req.params.taskId,
             totalTrees: allTrees.length,
-            initialTrees: trees.length,
+            initialTrees: getTrees().length,
             batchTrees: batchTrees.length
           }
         },
-      message: 'Not Found',
-      timestamp: Date.now()
-    });
-  }
+        message: 'Not Found',
+        timestamp: Date.now()
+      });
+    }
     
     console.log(`【树木查询】找到任务关联的树木: ${tree.id}, 类型: ${tree.type}`);
     
@@ -276,8 +363,8 @@ router.get('/by-task/:taskId', (req, res) => {
     // 查找子树
     const childTrees = allTrees.filter(t => t.parentTreeId === tree.id);
   
-  res.json({
-    code: 200,
+    res.json({
+      code: 200,
       data: {
         ...tree,
         parentTree: parentTree ? {
@@ -293,9 +380,9 @@ router.get('/by-task/:taskId', (req, res) => {
           taskId: t.taskId
         })) : []
       },
-    message: 'Success',
-    timestamp: Date.now()
-  });
+      message: 'Success',
+      timestamp: Date.now()
+    });
   } catch (error) {
     console.error('获取任务关联树木失败:', error);
     res.status(500).json({
@@ -312,9 +399,9 @@ router.get('/by-task/:taskId', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     // 先检查初始树木
-    let index = trees.findIndex(t => t.id === req.params.id);
+    let index = getTrees().findIndex(t => t.id === req.params.id);
     let isInitialTree = true;
-    let treeArray = trees;
+    let treeArray = getTrees();
     
     // 如果在初始树木中找不到，检查批量创建的树木
     if (index === -1) {
@@ -350,27 +437,27 @@ router.put('/:id', (req, res) => {
       }
     }
     
-  if (index === -1) {
-    return res.status(404).json({
-      code: 404,
-      data: null,
-      error: { message: 'Tree not found' },
-      message: 'Not Found',
-      timestamp: Date.now()
-    });
-  }
-  
-  const updatedTree = {
+    if (index === -1) {
+      return res.status(404).json({
+        code: 404,
+        data: null,
+        error: { message: 'Tree not found' },
+        message: 'Not Found',
+        timestamp: Date.now()
+      });
+    }
+    
+    const updatedTree = {
       ...treeArray[index],
-    ...req.body,
-    updatedAt: new Date().toISOString()
-  };
-  
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+    
     treeArray[index] = updatedTree;
   
-  res.json({
-    code: 200,
-    data: updatedTree,
+    res.json({
+      code: 200,
+      data: updatedTree,
       message: `Tree updated successfully (${isInitialTree ? 'initial' : 'batch-created'})`,
       timestamp: Date.now()
     });
@@ -381,8 +468,8 @@ router.put('/:id', (req, res) => {
       data: null,
       error: { message: error.message },
       message: '更新树木失败',
-    timestamp: Date.now()
-  });
+      timestamp: Date.now()
+    });
   }
 });
 

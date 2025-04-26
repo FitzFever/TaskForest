@@ -50,7 +50,7 @@ export interface TreesResponse {
  */
 export const getTrees = async (): Promise<AxiosResponse<any>> => {
   try {
-    const response = await api.get('/trees');
+    const response = await api.get('/trees?limit=100');
     return response;
   } catch (error) {
     console.error('获取树木列表失败:', error);

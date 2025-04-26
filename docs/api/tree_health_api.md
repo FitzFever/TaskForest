@@ -370,31 +370,43 @@ GET /api/trees/:id/growth-history
   "code": 200,
   "data": {
     "treeId": "tree-1001",
-    "currentStage": 2,
+    "currentStage": 4,
     "currentProgress": 92,
     "growthStages": [
       {
         "stage": 0,
-        "name": "种子阶段 (0-33%)",
+        "name": "种子阶段 (0-20%)",
         "progressRequirement": "0%",
         "reached": true
       },
       {
         "stage": 1,
-        "name": "幼苗阶段 (33-66%)",
-        "progressRequirement": "33%",
+        "name": "幼苗阶段 (20-40%)",
+        "progressRequirement": "20%",
         "reached": true
       },
       {
         "stage": 2,
-        "name": "成长阶段 (66-100%)",
-        "progressRequirement": "66%",
+        "name": "小树阶段 (40-60%)",
+        "progressRequirement": "40%",
+        "reached": true
+      },
+      {
+        "stage": 3,
+        "name": "成长阶段 (60-80%)",
+        "progressRequirement": "60%",
+        "reached": true
+      },
+      {
+        "stage": 4,
+        "name": "将成熟阶段 (80-100%)",
+        "progressRequirement": "80%",
         "reached": true,
         "reachedAt": "2025-04-16T12:29:17.130Z"
       },
       {
-        "stage": 3,
-        "name": "成熟阶段 (100%)",
+        "stage": 5,
+        "name": "完全成熟阶段 (100%)",
         "progressRequirement": "100%",
         "reached": false,
         "progressNeeded": "8%"

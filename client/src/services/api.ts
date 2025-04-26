@@ -250,5 +250,13 @@ if (process.env.NODE_ENV === 'development') {
   }, 1000);
 }
 
-// 导出API对象
+/**
+ * 清理默认示例数据（ID为tree-1001到tree-1008的默认树和相关任务）
+ * @returns 清理结果
+ */
+export async function cleanupDefaultData() {
+  return api.post('/dev/data-management/cleanup-defaults');
+}
+
+// 保留原始导出
 export default api; 
