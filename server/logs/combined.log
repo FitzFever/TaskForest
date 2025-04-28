@@ -4064,3 +4064,109 @@
 {"level":"info","message":"返回任务列表，总数: 13","service":"taskforest-server","timestamp":"2025-04-27 00:20:12"}
 {"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-27 00:20:12"}
 {"level":"info","message":"返回任务列表，总数: 13","service":"taskforest-server","timestamp":"2025-04-27 00:20:12"}
+{"level":"info","message":"从全局数据存储初始化了 0 个任务","service":"taskforest-server","timestamp":"2025-04-28 13:59:41"}
+{"baseURL":"https://api.deepseek.com/v1","level":"info","maxRetries":5,"message":"DeepSeek服务初始化","model":"deepseek-chat","service":"taskforest-server","timeout":300000,"timestamp":"2025-04-28 13:59:41"}
+{"level":"warn","message":"未找到@prisma/client模块，将使用内存存储","service":"taskforest-server","timestamp":"2025-04-28 13:59:41"}
+{"level":"info","message":"从全局数据存储初始化了 0 个树木","service":"taskforest-server","timestamp":"2025-04-28 13:59:41"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:00:10"}
+{"level":"info","message":"返回任务列表，总数: 0","service":"taskforest-server","timestamp":"2025-04-28 14:00:10"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:00:10"}
+{"level":"info","message":"返回任务列表，总数: 0","service":"taskforest-server","timestamp":"2025-04-28 14:00:10"}
+{"level":"info","message":"收到创建任务请求，数据: {\"title\":\"测试任务\",\"description\":\"测试\",\"priority\":\"MEDIUM\",\"dueDate\":\"2025-04-29\",\"type\":\"WORK\",\"tags\":[\"工作\"],\"autoCreateTree\":true}","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"info","message":"创建任务: d5233765-3c66-40fa-b856-2f2e4f6d9050 - 测试任务","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"warn","message":"全局tasks数组无效，重新初始化为空数组","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"info","message":"为任务 d5233765-3c66-40fa-b856-2f2e4f6d9050 创建树: e1066131-3eac-4654-84fe-2b78a9fb32e5 - MAPLE","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"warn","message":"全局trees数组无效，重新初始化为空数组","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"info","message":"返回任务列表，总数: 1","service":"taskforest-server","timestamp":"2025-04-28 14:02:54"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:02:56"}
+{"level":"info","message":"返回任务列表，总数: 1","service":"taskforest-server","timestamp":"2025-04-28 14:02:56"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:02:56"}
+{"level":"info","message":"返回任务列表，总数: 1","service":"taskforest-server","timestamp":"2025-04-28 14:02:56"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 进度=39","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"更新任务进度: taskId=d5233765-3c66-40fa-b856-2f2e4f6d9050, progress=39, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"找到任务: 测试任务","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"已更新任务 d5233765-3c66-40fa-b856-2f2e4f6d9050 的进度: 0% -> 39%","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"找到关联树木: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"树木 tree-1745820174275-147 的生长阶段已更新: 1","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 状态=IN_PROGRESS","service":"taskforest-server","timestamp":"2025-04-28 14:03:01"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 进度=68","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"更新任务进度: taskId=d5233765-3c66-40fa-b856-2f2e4f6d9050, progress=68, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"找到任务: 测试任务","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"已更新任务 d5233765-3c66-40fa-b856-2f2e4f6d9050 的进度: 39% -> 68%","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"找到关联树木: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"树木 tree-1745820174275-147 的生长阶段已更新: 2","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 状态=IN_PROGRESS","service":"taskforest-server","timestamp":"2025-04-28 14:03:09"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 进度=100","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"更新任务进度: taskId=d5233765-3c66-40fa-b856-2f2e4f6d9050, progress=100, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"找到任务: 测试任务","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"已更新任务 d5233765-3c66-40fa-b856-2f2e4f6d9050 的进度: 68% -> 100%","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"找到关联树木: tree-1745820174275-147","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"树木 tree-1745820174275-147 的生长阶段已更新: 3","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=d5233765-3c66-40fa-b856-2f2e4f6d9050, 状态=COMPLETED","service":"taskforest-server","timestamp":"2025-04-28 14:03:11"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:03:17"}
+{"level":"info","message":"返回任务列表，总数: 1","service":"taskforest-server","timestamp":"2025-04-28 14:03:17"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:03:17"}
+{"level":"info","message":"返回任务列表，总数: 1","service":"taskforest-server","timestamp":"2025-04-28 14:03:17"}
+{"level":"info","message":"分析任务复杂度","service":"taskforest-server","taskId":"task-1745820203954","timestamp":"2025-04-28 14:03:23","title":"新项目开发计划"}
+{"level":"info","message":"分析任务:","service":"taskforest-server","taskId":"task-1745820203954","timestamp":"2025-04-28 14:03:23"}
+{"level":"info","message":"开始调用DeepSeek API","noTimeout":true,"promptLength":637,"service":"taskforest-server","timestamp":"2025-04-28 14:03:23"}
+{"elapsedTimeMs":8695,"level":"info","message":"DeepSeek API请求完成","service":"taskforest-server","timestamp":"2025-04-28 14:03:32","totalTokens":465}
+{"complexity":"HIGH","level":"info","message":"任务分析完成","service":"taskforest-server","taskId":"task-1745820203954","timestamp":"2025-04-28 14:03:32"}
+{"complexity":"HIGH","level":"info","message":"拆解任务","service":"taskforest-server","taskId":"task-1745820203954","timestamp":"2025-04-28 14:03:32","title":"新项目开发计划"}
+{"level":"info","message":"开始调用DeepSeek API","noTimeout":true,"promptLength":612,"service":"taskforest-server","timestamp":"2025-04-28 14:03:32"}
+{"elapsedTimeMs":25569,"level":"info","message":"DeepSeek API请求完成","service":"taskforest-server","timestamp":"2025-04-28 14:03:58","totalTokens":847}
+{"level":"info","message":"成功提取子任务数组，共8个子任务","service":"taskforest-server","timestamp":"2025-04-28 14:03:58"}
+{"level":"info","message":"批量创建任务和任务树 - 开始处理 1 个任务组，创建树木: true","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"创建了任务组: 主任务\"新项目开发计划\" (ID: 795721a6-aa79-49c4-aa52-339949b559db)，包含 8 个子任务","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"准备为 1 个任务组创建任务树","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"为任务\"新项目开发计划\"创建了树结构，ID为tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"为任务组 795721a6-aa79-49c4-aa52-339949b559db 使用TreeModel成功创建了任务树 tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"已将树木 tree-1745820245558-758 添加到全局batchCreatedTrees数组","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"批量创建完成后，全局batchCreatedTrees数组包含 2 棵树","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"批量创建完成: 创建了 9 个任务和 1 个任务树","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"最终返回 1 个任务组（每组包含主任务和子任务）和 1 个树木","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"确保 1 棵树木被正确添加到全局数组...","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"使用addTree函数添加树木 tree-1745820245558-758 到全局数组","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"全局batchCreatedTrees数组现在包含 2 棵树木","service":"taskforest-server","timestamp":"2025-04-28 14:04:05"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:04:07"}
+{"level":"info","message":"返回任务列表，总数: 10","service":"taskforest-server","timestamp":"2025-04-28 14:04:07"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:04:07"}
+{"level":"info","message":"返回任务列表，总数: 10","service":"taskforest-server","timestamp":"2025-04-28 14:04:07"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:04:13"}
+{"level":"info","message":"返回任务列表，总数: 10","service":"taskforest-server","timestamp":"2025-04-28 14:04:13"}
+{"level":"info","message":"获取任务列表","service":"taskforest-server","timestamp":"2025-04-28 14:04:13"}
+{"level":"info","message":"返回任务列表，总数: 10","service":"taskforest-server","timestamp":"2025-04-28 14:04:13"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 进度=52","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"更新任务进度: taskId=795721a6-aa79-49c4-aa52-339949b559db, progress=52, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050, 795721a6-aa79-49c4-aa52-339949b559db, e289e0fe-3e7f-49f5-a7a9-f652ad34c150, c056ecf0-7eab-4c69-966e-fc55faad5d29, e0c99513-578d-4f14-9726-d18b575db45a, 3c2488cb-ff0c-482d-977d-41a54cf152b9, 7379dd19-685a-4f02-9a61-2fa4f732b9ef, 5df8f3c0-a319-4ca2-a6d4-13c35c18f30f, 8d0c66a9-5a60-4a09-af6e-2340f8d5ca92, abc57aa8-a42e-4536-8e28-539082307f5e","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"找到任务: 新项目开发计划","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"已更新任务 795721a6-aa79-49c4-aa52-339949b559db 的进度: 0% -> 52%","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147, tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"找到关联树木: tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"树木 tree-1745820245558-758 的生长阶段已更新: 1","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 状态=IN_PROGRESS","service":"taskforest-server","timestamp":"2025-04-28 14:04:18"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 进度=76","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"更新任务进度: taskId=795721a6-aa79-49c4-aa52-339949b559db, progress=76, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050, 795721a6-aa79-49c4-aa52-339949b559db, e289e0fe-3e7f-49f5-a7a9-f652ad34c150, c056ecf0-7eab-4c69-966e-fc55faad5d29, e0c99513-578d-4f14-9726-d18b575db45a, 3c2488cb-ff0c-482d-977d-41a54cf152b9, 7379dd19-685a-4f02-9a61-2fa4f732b9ef, 5df8f3c0-a319-4ca2-a6d4-13c35c18f30f, 8d0c66a9-5a60-4a09-af6e-2340f8d5ca92, abc57aa8-a42e-4536-8e28-539082307f5e","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"找到任务: 新项目开发计划","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"已更新任务 795721a6-aa79-49c4-aa52-339949b559db 的进度: 52% -> 76%","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147, tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"找到关联树木: tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"树木 tree-1745820245558-758 的生长阶段已更新: 2","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 状态=IN_PROGRESS","service":"taskforest-server","timestamp":"2025-04-28 14:04:24"}
+{"level":"info","message":"收到更新任务进度请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 进度=100","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"更新任务进度: taskId=795721a6-aa79-49c4-aa52-339949b559db, progress=100, 正在收集数据...","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"系统中所有任务ID: d5233765-3c66-40fa-b856-2f2e4f6d9050, 795721a6-aa79-49c4-aa52-339949b559db, e289e0fe-3e7f-49f5-a7a9-f652ad34c150, c056ecf0-7eab-4c69-966e-fc55faad5d29, e0c99513-578d-4f14-9726-d18b575db45a, 3c2488cb-ff0c-482d-977d-41a54cf152b9, 7379dd19-685a-4f02-9a61-2fa4f732b9ef, 5df8f3c0-a319-4ca2-a6d4-13c35c18f30f, 8d0c66a9-5a60-4a09-af6e-2340f8d5ca92, abc57aa8-a42e-4536-8e28-539082307f5e","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"找到任务: 新项目开发计划","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"已更新任务 795721a6-aa79-49c4-aa52-339949b559db 的进度: 76% -> 100%","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"系统中所有树木ID: tree-1745820174275-147, tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"找到关联树木: tree-1745820245558-758","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"树木 tree-1745820245558-758 的生长阶段已更新: 3","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}
+{"level":"info","message":"收到更新任务状态请求: 任务ID=795721a6-aa79-49c4-aa52-339949b559db, 状态=COMPLETED","service":"taskforest-server","timestamp":"2025-04-28 14:04:27"}

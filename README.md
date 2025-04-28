@@ -2,6 +2,41 @@
 
 TaskForest 是一个技术试验项目，旨在探索开发人员在不直接编写代码的情况下，纯靠文档驱动和AI对话来进行项目开发的新方法。应用本身将任务管理与游戏化体验结合，通过将任务转化为树木的生长过程，为用户提供直观、有趣且富有成就感的任务管理体验。
 
+## 📚 文档导航（评审指南）
+
+> **评审须知**：以下是项目的关键文档导航，按照重要性排序，方便评审工作。
+
+### 📋 项目概述与架构文档
+
+- [🏗️ 项目架构概览](./docs/architecture/architecture_overview.md) - 系统整体架构设计
+- [📑 开发任务清单](./docs/development_tasks.md) - 项目开发进度与任务状态
+- [🔌 API 文档](./docs/api_reference.md) - API 接口规范参考
+
+### 🧩 产品模块说明文档
+
+- [🌱 树木健康系统概览](./docs/modules/tree_health_readme.md) - 树木健康成长系统说明
+- [🤖 AI任务分析系统](./docs/modules/ai_task_analysis.md) - AI驱动的任务分解系统
+- [🔔 通知系统设计](./docs/modules/notification_system.md) - 通知与提醒系统设计
+- [🖼️ 树木3D可视化](./docs/modules/tree_health_3d_visualization.md) - 树木3D效果实现
+
+### 📘 功能实现指南
+
+- [🚀 开发快速入门](./docs/guides/development_quick_start.md) - 开发环境搭建与快速上手
+- [🌲 树木健康系统实现](./docs/guides/tree_health_implementation_guide.md) - 树木系统实现指南
+- [📱 通知功能实现](./docs/guides/notification_implementation.md) - 通知系统实现指南
+- [🧪 示例数据加载指南](./docs/示例数据加载指南.md) - 开发环境示例数据使用说明
+
+### 🛠️ 开发与支持文档
+
+- [📏 开发规范](./docs/development/standards.md) - 开发规范和流程
+- [📝 开发指南](./docs/development_guide.md) - 开发实施指南
+- [🔧 故障排除指南](./docs/trouble_shooting.md) - 开发常见问题解决方案
+
+### 💻 客户端与服务端说明
+
+- [🖥️ 前端项目说明](./client/README.md) - 前端项目详细说明
+- [🖧 后端项目说明](./server/README.md) - 后端项目详细说明
+
 ## 🚀 技术试验目标
 
 本项目的核心目标是验证"文档驱动+AI辅助"的开发模式，让开发人员的角色从编码实现者转变为架构设计者和质量监督者。我们希望证明：
@@ -86,9 +121,6 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
    - 🔄 任务历史追踪（40%）
    - 🔄 任务趋势分析（20%）
 
-详细开发路线图请参阅 [📑 开发路线图](./docs/development/roadmap.md)。
-完整开发任务清单请参阅 [📋 开发任务清单](./docs/development_tasks.md)。
-
 ## 🤖 AI驱动开发流程
 
 本项目采用以下AI驱动开发流程：
@@ -101,6 +133,54 @@ TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，�
 6. **🧪 单元测试编写**：同时编写单元测试验证代码功能
 7. **🔄 迭代优化**：基于测试结果不断优化代码和文档
 8. **📚 文档更新与知识沉淀**：将关键的设计决策和技术细节更新到项目文档中
+
+## 🏗️ 项目架构
+
+```
++---------------------+        +---------------------+
+|   前端应用层         |        |   后端服务层         |
+|---------------------|        |---------------------|
+| React + TypeScript  | <----> | Node.js + Express   |
+| Three.js            |  API   | 业务逻辑             |
+| Zustand             |        | 数据处理             |
++---------------------+        +---------------------+
+                                        |
+                               +---------------------+
+                               |     数据存储层       |
+                               |---------------------|  
+                               |      SQLite         |
+                               +---------------------+
+```
+
+## 📂 项目结构
+
+```
+taskforest/
+├── client/                  # 前端代码
+│   ├── src/                 # 前端源代码
+│   │   ├── components/      # React组件
+│   │   ├── pages/           # 页面组件
+│   │   ├── services/        # API服务
+│   │   ├── three/           # 3D渲染相关
+│   │   └── stores/          # 状态管理
+│   ├── public/              # 静态资源
+│   └── README.md            # 前端文档
+├── server/                  # 后端代码
+│   ├── src/                 # 后端源代码
+│   │   ├── controllers/     # API控制器
+│   │   ├── services/        # 业务服务
+│   │   ├── routes/          # 路由配置
+│   │   └── models/          # 数据模型
+│   ├── prisma/              # Prisma ORM
+│   ├── data/                # 数据文件夹
+│   ├── start-dev.sh         # 后端开发启动脚本
+│   └── README.md            # 后端文档
+├── docs/                    # 项目文档
+├── start-dev.sh             # 项目开发启动脚本
+├── start.sh                 # Unix启动脚本
+├── start.bat                # Windows启动脚本
+└── README.md                # 项目总览文档
+```
 
 ## 🚀 快速启动
 
@@ -196,63 +276,6 @@ cd client && pnpm dev
 # 启动后端
 cd server && pnpm dev
 ```
-
-## 🏗️ 项目架构
-
-```
-+---------------------+        +---------------------+
-|   前端应用层         |        |   后端服务层         |
-|---------------------|        |---------------------|
-| React + TypeScript  | <----> | Node.js + Express   |
-| Three.js            |  API   | 业务逻辑             |
-| Zustand             |        | 数据处理             |
-+---------------------+        +---------------------+
-                                        |
-                               +---------------------+
-                               |     数据存储层       |
-                               |---------------------|  
-                               |      SQLite         |
-                               +---------------------+
-```
-
-## 📂 项目结构
-
-```
-taskforest/
-├── client/                  # 前端代码
-│   ├── src/                 # 前端源代码
-│   │   ├── components/      # React组件
-│   │   ├── pages/           # 页面组件
-│   │   ├── services/        # API服务
-│   │   ├── three/           # 3D渲染相关
-│   │   └── stores/          # 状态管理
-│   ├── public/              # 静态资源
-│   └── README.md            # 前端文档
-├── server/                  # 后端代码
-│   ├── src/                 # 后端源代码
-│   │   ├── controllers/     # API控制器
-│   │   ├── services/        # 业务服务
-│   │   ├── routes/          # 路由配置
-│   │   └── models/          # 数据模型
-│   ├── prisma/              # Prisma ORM
-│   ├── data/                # 数据文件夹
-│   ├── start-dev.sh         # 后端开发启动脚本
-│   └── README.md            # 后端文档
-├── docs/                    # 项目文档
-├── start-dev.sh             # 项目开发启动脚本
-├── start.sh                 # Unix启动脚本
-├── start.bat                # Windows启动脚本
-└── README.md                # 项目总览文档
-```
-
-## 📚 文档导航
-
-- [🏗️ 项目架构文档](./docs/architecture/architecture_overview.md) - 系统架构设计
-- [📏 开发规范](./docs/development/standards.md) - 开发规范和流程
-- [💻 前端项目说明](./client/README.md) - 前端项目详细说明
-- [🖥️ 后端项目说明](./server/README.md) - 后端项目详细说明
-- [🔌 API 文档](./docs/api_reference.md) - API 接口参考
-- [🔧 故障排除指南](./docs/trouble_shooting.md) - 开发常见问题解决方案
 
 ## 🔧 环境要求
 
