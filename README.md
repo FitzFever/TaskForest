@@ -51,6 +51,13 @@ TaskForest 是一个技术试验项目，旨在探索开发人员在不直接编
 - [🖥️ 前端项目说明](./client/README.md) - 前端项目详细说明
 - [🖧 后端项目说明](./server/README.md) - 后端项目详细说明
 
+### Cursor开发界面截图
+![TaskForest-cursor 开发界面截图 1](https://github.com/user-attachments/assets/5a4d6237-6989-48a5-8042-84947a42c71b)
+![TaskForest_cursor 开发界面截图 2](https://github.com/user-attachments/assets/9e1efe16-d90c-41d5-80f7-ccb736448d76)
+![TaskForest_cursor 开发界面截图 3](https://github.com/user-attachments/assets/fb41d9ed-e1ef-4984-9e25-179d31c7fd0e)
+![TaskForest_cursor 开发界面截图 4](https://github.com/user-attachments/assets/a43e9d1f-f961-4405-9de3-3a40f9d4d08d)
+
+
 ## 🚀 技术试验目标
 
 本项目的核心目标是验证"文档驱动+AI辅助"的开发模式，让开发人员的角色从编码实现者转变为架构设计者和质量监督者。我们希望证明：
