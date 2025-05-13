@@ -13,6 +13,13 @@ TaskForest 是一个技术试验项目，旨在探索开发人员在不直接编
 
 > **评审须知**：以下是项目的关键文档导航，按照重要性排序，方便评审工作。
 
+### 📒 产品设计与说明
+
+- [📊 TaskForest项目计划书](./TaskForest项目计划书.md) - 项目整体规划与目标
+- [📋 TaskForest产品说明文档](./product/TaskForest产品说明文档.md) - 产品功能详细说明
+- [🎨 TaskForest产品原型设计](./product/TaskForest_产品原型设计.md) - 产品界面与交互设计
+- [🔄 TaskForest流程图说明](./product/TaskForest流程图说明.md) - 系统流程与业务逻辑
+
 ### 📋 项目概述与架构文档
 
 - [🏗️ 项目架构概览](./docs/architecture/architecture_overview.md) - 系统整体架构设计
