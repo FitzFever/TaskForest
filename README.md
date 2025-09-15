@@ -1,61 +1,336 @@
-# TaskForest
+# 🌳 TaskForest - AI驱动的无代码开发试验项目
 
-TaskForest是一款游戏化任务管理应用，用户完成任务后会种下一棵虚拟树木，随着完成更多任务，将形成个人专属的任务森林，提供直观且富有成就感的任务管理体验。
+TaskForest 是一个技术试验项目，旨在探索开发人员在不直接编写代码的情况下，纯靠文档驱动和AI对话来进行项目开发的新方法。应用本身将任务管理与游戏化体验结合，通过将任务转化为树木的生长过程，为用户提供直观、有趣且富有成就感的任务管理体验。
 
-## 项目结构
+## 📺 项目演示视频
 
-- `/design` - 包含所有设计资源和文档
-  - [设计资源指引](./design/README_设计资源指引.md) - 面向开发人员的设计资源使用指南
-  - [3D视觉设计计划](./design/TaskForest_3D视觉设计计划.md) - 3D视觉设计方向和计划
-  - [3D视觉进度报告](./design/TaskForest_3D视觉进度报告.md) - 当前设计进度和完成状态
-  - [模型制作计划](./design/TaskForest_3D模型制作计划.md) - 模型制作细节规范
-  - [材质和纹理规范](./design/TaskForest_材质和纹理规范.md) - 材质标准和参数
-  - [动画和特效规范](./design/TaskForest_动画和特效规范.md) - 动画效果和实现指南
-  
-- `/scripts` - 实用工具脚本
-  - [export_gltf.py](./scripts/export_gltf.py) - 将Blender模型导出为glTF/GLB格式的脚本
+> **直观了解项目**：观看以下视频可以快速了解本项目的核心功能和视觉效果。
 
-## 技术栈
+- [🎬 TaskForest 核心功能演示](./video/TaskForest%20核心功能演示.mov) - 展示系统的主要功能和操作流程
+- [🎨 TaskForest 3D 美术资源](./video/TaskForest%203D%20美术资源.mov) - 展示项目的3D视觉效果和美术设计
 
-- 前端: React + TypeScript + Three.js
-- 桌面应用: Electron
-- 3D模型: Blender
-- 本地数据存储: SQLite / IndexedDB
-- AI任务拆解: 接入大语言模型API
+## 📚 文档导航（评审指南）
 
-## 开发指南
+> **评审须知**：以下是项目的关键文档导航，按照重要性排序，方便评审工作。
 
-### 设置开发环境
+### 📒 产品设计与说明
 
-```bash
-# 克隆项目
-git clone https://github.com/yourusername/TaskForest.git
-cd TaskForest
+- [📊 TaskForest项目计划书](./TaskForest项目计划书.md) - 项目整体规划与目标
+- [📋 TaskForest产品说明文档](./product/TaskForest产品说明文档.md) - 产品功能详细说明
+- [🎨 TaskForest产品原型设计](./product/TaskForest_产品原型设计.md) - 产品界面与交互设计
+- [🔄 TaskForest流程图说明](./product/TaskForest流程图说明.md) - 系统流程与业务逻辑
 
-# 安装依赖
-npm install
+### 📋 项目概述与架构文档
 
-# 启动开发服务器
-npm run dev
+- [🏗️ 项目架构概览](./docs/architecture/architecture_overview.md) - 系统整体架构设计
+- [📑 开发任务清单](./docs/development_tasks.md) - 项目开发进度与任务状态
+- [🔌 API 文档](./docs/api_reference.md) - API 接口规范参考
+
+### 🧩 产品模块说明文档
+
+- [🌱 树木健康系统概览](./docs/modules/tree_health_readme.md) - 树木健康成长系统说明
+- [🤖 AI任务分析系统](./docs/modules/ai_task_analysis.md) - AI驱动的任务分解系统
+- [🔔 通知系统设计](./docs/modules/notification_system.md) - 通知与提醒系统设计
+- [🖼️ 树木3D可视化](./docs/modules/tree_health_3d_visualization.md) - 树木3D效果实现
+
+### 📘 功能实现指南
+
+- [🚀 开发快速入门](./docs/guides/development_quick_start.md) - 开发环境搭建与快速上手
+- [🌲 树木健康系统实现](./docs/guides/tree_health_implementation_guide.md) - 树木系统实现指南
+- [📱 通知功能实现](./docs/guides/notification_implementation.md) - 通知系统实现指南
+- [🧪 示例数据加载指南](./docs/示例数据加载指南.md) - 开发环境示例数据使用说明
+
+### 🛠️ 开发与支持文档
+
+- [📏 开发规范](./docs/development/standards.md) - 开发规范和流程
+- [📝 开发指南](./docs/development_guide.md) - 开发实施指南
+- [🔧 故障排除指南](./docs/trouble_shooting.md) - 开发常见问题解决方案
+
+### 💻 客户端与服务端说明
+
+- [🖥️ 前端项目说明](./client/README.md) - 前端项目详细说明
+- [🖧 后端项目说明](./server/README.md) - 后端项目详细说明
+
+### Cursor开发界面截图
+![TaskForest-cursor 开发界面截图 1](https://github.com/user-attachments/assets/5a4d6237-6989-48a5-8042-84947a42c71b)
+![TaskForest_cursor 开发界面截图 2](https://github.com/user-attachments/assets/9e1efe16-d90c-41d5-80f7-ccb736448d76)
+![TaskForest_cursor 开发界面截图 3](https://github.com/user-attachments/assets/fb41d9ed-e1ef-4984-9e25-179d31c7fd0e)
+![TaskForest_cursor 开发界面截图 4](https://github.com/user-attachments/assets/a43e9d1f-f961-4405-9de3-3a40f9d4d08d)
+
+
+## 🚀 技术试验目标
+
+本项目的核心目标是验证"文档驱动+AI辅助"的开发模式，让开发人员的角色从编码实现者转变为架构设计者和质量监督者。我们希望证明：
+- ✅ 通过合理的功能拆分和模块化设计，复杂项目可以被AI理解和实现
+- ✅ 通过规范化的文档和对话流程，可以实现高质量的AI编码
+- ✅ 通过单元测试驱动，可以保证AI生成代码的质量和稳定性
+
+## 🧠 开发人员核心原则
+
+1. **🧩 功能拆解与模块化** - 开发人员要先把复杂功能拆解得足够小，形成多模块结构，便于AI理解和实现
+   
+2. **📝 设计先行，编码后随** - 开发人员与IDE/AI的互动过程中要先设计后编码，先和AI聊清楚实现方案、技术选型和配套环境，确认无误后再让AI进行编码
+   
+3. **🧪 单元测试可验证** - 每个文件都应该便于单元测试和验证，确保AI生成的代码质量和功能正确性
+   
+4. **📚 文档驱动开发** - 为防止开发人员由于现实工作的频繁切换以及和AI对话的长上下文，每次关键对话后都应该让AI汇总成高度凝练的、AI容易理解的文档
+   
+5. **📄 文档优先实现** - AI在开发实现过程中都应该先遵循之前一起建立的文档进行编码，然后再出单元测试用例来验证
+   
+6. **🎯 关注点转移** - 开发人员最终只需要关注三个方面：产品需求、与AI之间的文档约定、单元测试用例的覆盖程度，减少对具体编码的直接设计
+   
+7. **🚀 技能结构升级** - 开发人员的能力要求应该进一步向上提升到架构设计、功能拆分以及单元测试设计，而不是具体的代码实现
+
+## 📋 项目概述
+
+TaskForest 采用前后端分离架构，结合 Electron 实现桌面应用，使用 Three.js 进行 3D 渲染，SQLite 进行本地数据存储。
+
+### ✨ 核心功能
+- 📝 **任务管理**：创建、编辑、完成任务
+- 🌱 **可视化树木生长**：任务完成度映射为树木生长状态
+- 🌲 **3D 森林场景**：直观展示任务完成情况
+- ❤️ **树木生命状态**：基于任务进度和截止日期的树木健康系统
+- 🏆 **奖励与解锁机制**：完成任务解锁不同树种和特殊装饰
+- 🤖 **AI 辅助功能**：
+  - ✅ 智能任务拆解：自动分析任务复杂度并拆解为子任务
+  - ✅ 批量任务创建：支持一次性创建多个相关任务和任务树
+  - ✅ 文本到任务转换：将长文本需求自动转换为结构化任务和任务树
+  - ✅ AI任务优化建议：根据历史数据提供任务管理优化建议
+- 📊 **数据统计分析**：任务完成率与时间投入分析
+
+### 🛠️ 技术栈
+- 💻 **前端**：React 18 + TypeScript 5 + Three.js + Zustand + Vite
+- 🖥️ **后端**：Node.js 18 + Express 4 + Prisma 4 + TypeScript 5
+- 💾 **数据库**：SQLite 3
+- 📦 **包管理**：pnpm
+- 🧠 **AI 集成**：DeepSeek API（已实现）+ OpenAI API（已实现）
+
+## 📅 开发计划与进展
+
+当前项目进展已经完成了大部分核心功能，正在优化细节和用户体验：
+
+### 🏗️ 当前进展
+- ✅ 基础项目架构搭建完成
+- ✅ 任务CRUD基础功能实现
+- ✅ 3D场景基础渲染系统
+- ✅ 前后端通信架构
+- ✅ 基础任务列表与任务管理UI
+- ✅ 树木模型基础加载和展示
+- ✅ 树木健康状态数据模型
+- ✅ 树木健康状态视觉效果实现
+- ✅ 任务数据模型扩展
+- ✅ 前端体验优化
+- ✅ AI任务拆解功能
+- ✅ 批量任务处理系统
+
+### 📌 近期开发计划
+1. **🌱 树木高级交互功能** - 实现树木交互功能和环境效果
+   - ✅ 生命值与生长阶段映射
+   - ✅ 健康状态视觉效果
+   - 🔄 环境效果（65%）
+   - 🔄 树木交互细节（85%）
+
+2. **🔓 用户成就与奖励系统** - 开发成就系统和高级奖励机制
+   - ✅ 树木类型数据模型
+   - ✅ 解锁条件管理
+   - 🔄 成就系统实现（30%）
+   - 🔄 特殊树种解锁机制（40%）
+
+3. **🌿 任务统计与分析功能** - 实现任务统计和数据可视化
+   - ✅ 基础统计数据
+   - 🔄 数据可视化组件（25%）
+   - 🔄 任务历史追踪（40%）
+   - 🔄 任务趋势分析（20%）
+
+## 🤖 AI驱动开发流程
+
+本项目采用以下AI驱动开发流程：
+
+1. **🔍 需求分析与架构设计**：开发人员分析需求，设计高层架构，定义模块边界
+2. **📝 文档生成与规范制定**：制定技术规范与文档模板，作为AI编码的指导方针
+3. **🧩 模块拆解与功能描述**：将功能拆解为具体模块，详细描述每个模块的职责和接口
+4. **💬 AI对话与方案确认**：与AI讨论技术实现方案，确认技术选型和实现思路
+5. **⌨️ 文档驱动编码**：基于确认的文档让AI生成具体代码
+6. **🧪 单元测试编写**：同时编写单元测试验证代码功能
+7. **🔄 迭代优化**：基于测试结果不断优化代码和文档
+8. **📚 文档更新与知识沉淀**：将关键的设计决策和技术细节更新到项目文档中
+
+## 🏗️ 项目架构
+
+```
++---------------------+        +---------------------+
+|   前端应用层         |        |   后端服务层         |
+|---------------------|        |---------------------|
+| React + TypeScript  | <----> | Node.js + Express   |
+| Three.js            |  API   | 业务逻辑             |
+| Zustand             |        | 数据处理             |
++---------------------+        +---------------------+
+                                        |
+                               +---------------------+
+                               |     数据存储层       |
+                               |---------------------|  
+                               |      SQLite         |
+                               +---------------------+
 ```
 
-### 设计资源获取
+## 📂 项目结构
 
-开发人员请参考[设计资源指引](./design/README_设计资源指引.md)获取所需的设计资源和3D模型文件。
+```
+taskforest/
+├── client/                  # 前端代码
+│   ├── src/                 # 前端源代码
+│   │   ├── components/      # React组件
+│   │   ├── pages/           # 页面组件
+│   │   ├── services/        # API服务
+│   │   ├── three/           # 3D渲染相关
+│   │   └── stores/          # 状态管理
+│   ├── public/              # 静态资源
+│   └── README.md            # 前端文档
+├── server/                  # 后端代码
+│   ├── src/                 # 后端源代码
+│   │   ├── controllers/     # API控制器
+│   │   ├── services/        # 业务服务
+│   │   ├── routes/          # 路由配置
+│   │   └── models/          # 数据模型
+│   ├── prisma/              # Prisma ORM
+│   ├── data/                # 数据文件夹
+│   ├── start-dev.sh         # 后端开发启动脚本
+│   └── README.md            # 后端文档
+├── docs/                    # 项目文档
+├── start-dev.sh             # 项目开发启动脚本
+├── start.sh                 # Unix启动脚本
+├── start.bat                # Windows启动脚本
+└── README.md                # 项目总览文档
+```
 
-## 团队成员
+## 🚀 快速启动
 
-- 项目经理：李明
-- 产品设计：王芳
-- 3D视觉设计师：林小玲
-- 前端开发：张强
-- 全栈开发：陈学
-- AI集成工程师：吴杰
+项目提供了便捷的启动脚本，支持多种系统和启动方式。
 
-## 项目计划
+### ✨ 推荐：使用开发专用脚本（Unix/Linux/macOS）
 
-TaskForest计划在8周内完成MVP版本，详细进度请参考[项目计划书](./TaskForest项目计划书.md)。
+```bash
+# 先赋予脚本执行权限
+chmod +x start-dev.sh
 
-## 许可证
+# 启动开发环境（前后端）
+./start-dev.sh
+```
 
-本项目采用MIT许可证 - 详见LICENSE文件
+### 🔄 其他启动方式
+
+#### 🪟 Windows 系统
+
+```bash
+# 开发模式启动前后端
+start.bat
+
+# 仅启动前端
+start.bat /f
+
+# 仅启动后端
+start.bat /b
+
+# 生产模式启动
+start.bat /p
+
+# 显示帮助信息
+start.bat /h
+```
+
+#### 🐧 Unix/Linux/macOS 系统
+
+```bash
+# 先赋予脚本执行权限
+chmod +x start.sh
+
+# 开发模式启动前后端
+./start.sh
+
+# 仅启动前端
+./start.sh -f
+
+# 仅启动后端
+./start.sh -b
+
+# 生产模式启动
+./start.sh -p
+
+# 显示帮助信息
+./start.sh -h
+```
+
+### 🌱 启动带示例数据的开发服务器
+
+如果你希望在开发环境中加载预设的示例数据，可以使用以下方式：
+
+```bash
+# 使用示例数据启动脚本
+cd server
+chmod +x start-with-demo-data.sh
+./start-with-demo-data.sh
+```
+
+或者，你可以通过环境变量控制：
+
+```bash
+# 通过环境变量启用示例数据
+cd server
+LOAD_DEMO_DATA=true node src/index.js
+```
+
+详细的示例数据说明请参阅 [📚 示例数据加载指南](./docs/示例数据加载指南.md)。
+
+### 🛠️ 手动启动
+
+如果你不想使用启动脚本，也可以手动启动项目：
+
+```bash
+# 安装依赖
+pnpm install
+cd client && pnpm install && cd ..
+cd server && pnpm install && cd ..
+
+# 启动前端
+cd client && pnpm dev
+
+# 启动后端
+cd server && pnpm dev
+```
+
+## 🔧 环境要求
+
+- 📦 Node.js >= 18
+- 📦 pnpm >= 7（推荐）或 npm >= 8
+- 📦 Git
+
+## ❓ 常见问题解决
+
+1. **🚫 启动脚本提示"无法识别的命令"**
+   - 确保已安装Node.js和pnpm
+   - 在Unix/Linux/macOS系统上，确保已设置脚本执行权限：`chmod +x start-dev.sh`
+
+2. **⚪ 前端启动后显示空白页面**
+   - 检查浏览器控制台是否有错误
+   - 确认后端服务是否正常运行（API地址默认为 http://localhost:9000）
+   - 检查前端配置文件是否正确（.env.development.local）
+
+3. **🔌 后端服务启动失败**
+   - 检查端口9000是否被占用
+   - 确认数据库配置是否正确
+   - 检查logs/目录中的日志文件获取详细错误信息
+
+4. **🖼️ 3D模型加载失败**
+   - 检查控制台是否有资源加载错误
+   - 确认public/models目录中的模型文件是否存在
+   - 检查模型路径是否正确配置
+
+详细问题解决方案请参阅 [🔍 故障排除指南](./docs/trouble_shooting.md)。
+
+## 👥 贡献指南
+
+请参阅 [🤝 贡献指南](./docs/development/contributing.md) 了解如何为项目做出贡献。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [📜 LICENSE](LICENSE) 文件

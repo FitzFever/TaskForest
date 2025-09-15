@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskForest 3D模型查看器</title>
+  <!-- Three.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/DRACOLoader.js"></script>
+  <style>
+    :root {
+      --primary-color: #52c41a;
+      --secondary-color: #1890ff;
+      --dark-bg: #001529;
+      --light-bg: #f5f5f5;
+      --border-color: #d9d9d9;
+      --text-color: #333;
+      --text-light: #999;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text-color);
+      background-color: var(--light-bg);
+      overflow: hidden;
+      display: flex;
+      height: 100vh;
+    }
+    
+    /* 侧边栏样式 */
+    .sidebar {
+      width: 280px;
+      background-color: var(--dark-bg);
+      color: white;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      transition: all 0.3s;
+    }
+    
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar-header h1 {
+      font-size: 18px;
+      margin-left: 10px;
+      font-weight: 500;
+    }
+    
+    .sidebar-header .logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+    
+    .search-box {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      padding-left: 32px;
+      border-radius: 4px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 14px;
+    }
+    
+    .search-box input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .search-box::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .categories {
+      margin-bottom: 15px;
+    }
+    
+    .category-title {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .dropdown-arrow {
+      cursor: pointer;
+      transition: transform 0.3s;
+      font-size: 12px;
+    }
+    
+    .dropdown-arrow.open {
+      transform: rotate(180deg);
+    }
+    
+    .model-list {
+      list-style: none;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .model-item {
+      padding: 10px 12px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    
+    .model-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .model-item.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .model-icon {
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    
+    .model-name {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .category-list {
+      list-style: none;
+      margin-left: 10px;
+      margin-bottom: 10px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s;
+    }
+    
+    .category-list.open {
+      max-height: 500px;
+    }
+    
+    .category-item {
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .category-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .category-item.active {
+      color: var(--primary-color);
+    }
+    
+    .sidebar-footer {
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+    }
+    
+    /* 主内容区域 */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      background-color: #f0f0f0;
+      overflow: hidden;
+    }
+    
+    #model-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    /* 工具栏 */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background-color: white;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .toolbar-group {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .toolbar-button {
+      padding: 6px 12px;
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    
+    .toolbar-button:hover {
+      border-color: var(--secondary-color);
+      color: var(--secondary-color);
+    }
+    
+    .toolbar-button.active {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      color: white;
+    }
+    
+    /* 颜色选择器 */
+    .color-picker {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .color-option {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    
+    .color-option.active {
+      border-color: var(--secondary-color);
+    }
+    
+    .color-white { background-color: #ffffff; }
+    .color-light { background-color: #f0f0f0; }
+    .color-dark { background-color: #333333; }
+    .color-blue { background-color: #e6f7ff; }
+    .color-green { background-color: #f6ffed; }
+    
+    /* 加载提示 */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      color: white;
+      font-size: 18px;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid white;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* 信息面板 */
+    .info-panel {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 4px;
+      font-size: 14px;
+      pointer-events: none;
+      max-width: 300px;
+      transition: opacity 0.3s;
+    }
+    
+    .info-panel h3 {
+      margin-bottom: 5px;
+      font-size: 16px;
+      font-weight: normal;
+    }
+    
+    .info-panel p {
+      margin-bottom: 3px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40%;
+      }
+      
+      .content {
+        height: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span style="font-size: 24px;">🌳</span>
+      <h1>TaskForest 模型查看器</h1>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="搜索模型...">
+    </div>
+    
+    <div class="categories">
+      <div class="category-title">
+        <span>模型分类</span>
+        <span class="dropdown-arrow open">▼</span>
+      </div>
+      <ul class="category-list open">
+        <li class="category-item active" data-category="all">
+          <span class="model-icon">🏠</span>
+          <span>所有模型</span>
+        </li>
+        <li class="category-item" data-category="trees">
+          <span class="model-icon">🌲</span>
+          <span>树木</span>
+        </li>
+        <li class="category-item" data-category="plants">
+          <span class="model-icon">🌿</span>
+          <span>植物</span>
+        </li>
+        <li class="category-item" data-category="animals">
+          <span class="model-icon">🦊</span>
+          <span>动物</span>
+        </li>
+        <li class="category-item" data-category="objects">
+          <span class="model-icon">📦</span>
+          <span>物品</span>
+        </li>
+        <li class="category-item" data-category="scenes">
+          <span class="model-icon">🏞️</span>
+          <span>场景</span>
+        </li>
+        <li class="category-item" data-category="environment">
+          <span class="model-icon">🌍</span>
+          <span>环境</span>
+        </li>
+      </ul>
+    </div>
+    
+    <ul id="model-list" class="model-list">
+      <!-- 模型列表将通过JavaScript动态填充 -->
+      <li class="model-item">
+        <span class="model-icon">⏳</span>
+        <span class="model-name">正在加载模型列表...</span>
+      </li>
+    </ul>
+    
+    <div class="sidebar-footer">
+      TaskForest 模型工作室 &copy; 2025
+    </div>
+  </div>
+  
+  <!-- 主内容区域 -->
+  <div class="content">
+    <div id="canvas-container">
+      <canvas id="model-canvas"></canvas>
+      
+      <!-- 信息面板 -->
+      <div id="info-panel" class="info-panel" style="opacity: 0;">
+        <h3 id="model-title">未选择模型</h3>
+        <p id="model-vertices">顶点数：0</p>
+        <p id="model-triangles">三角面数：0</p>
+        <p id="model-materials">材质数：0</p>
+        <p id="model-size">尺寸：0 x 0 x 0</p>
+      </div>
+      
+      <!-- 加载提示 -->
+      <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <div id="loading-text">正在加载模型...</div>
+      </div>
+    </div>
+    
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <div class="color-picker">
+          <span>背景：</span>
+          <div class="color-option color-white active" data-color="#ffffff"></div>
+          <div class="color-option color-light" data-color="#f0f0f0"></div>
+          <div class="color-option color-dark" data-color="#333333"></div>
+          <div class="color-option color-blue" data-color="#e6f7ff"></div>
+          <div class="color-option color-green" data-color="#f6ffed"></div>
+        </div>
+      </div>
+      
+      <div class="toolbar-group">
+        <button id="btn-auto-rotate" class="toolbar-button">
+          <span>🔄</span> 自动旋转
+        </button>
+        <button id="btn-wireframe" class="toolbar-button">
+          <span>📐</span> 线框模式
+        </button>
+        <button id="btn-reset" class="toolbar-button">
+          <span>🔙</span> 重置视角
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // 全局变量
+    let scene, camera, renderer, controls;
+    let currentModel = null;
+    let isWireframe = false;
+    let isAutoRotate = false;
+    let modelList = [];
+    let filteredModels = [];
+    let currentCategory = 'all';
+    
+    // 初始化Three.js场景
+    function initScene() {
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+      
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(
+        45, 
+        window.innerWidth / window.innerHeight, 
+        0.1, 
+        1000
+      );
+      camera.position.set(5, 5, 5);
+      
+      // 创建渲染器
+      const canvas = document.getElementById('model-canvas');
+      renderer = new THREE.WebGLRenderer({ 
+        canvas: canvas,
+        antialias: true 
+      });
+      renderer.setSize(
+        canvas.clientWidth, 
+        canvas.clientHeight
+      );
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      
+      // 添加轨道控制器
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      
+      // 添加灯光
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7.5);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+      
+      // 添加网格辅助线
+      const gridHelper = new THREE.GridHelper(10, 10, 0xcccccc, 0xcccccc);
+      scene.add(gridHelper);
+      
+      // 添加方向辅助线
+      const axesHelper = new THREE.AxesHelper(5);
+      scene.add(axesHelper);
+      
+      // 设置相机位置
+      resetCamera();
+      
+      // 监听窗口大小变化，调整渲染器大小
+      window.addEventListener('resize', onWindowResize);
+      
+      // 开始动画循环
+      animate();
+    }
+    
+    // 在窗口大小变化时调整渲染器大小
+    function onWindowResize() {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      
+      renderer.setSize(width, height);
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // 应用阻尼效果
+      controls.update();
+      
+      // 自动旋转
+      if (isAutoRotate && currentModel) {
+        currentModel.rotation.y += 0.005;
+      }
+      
+      // 渲染场景
+      renderer.render(scene, camera);
+    }
+    
+    // 重置相机位置
+    function resetCamera() {
+      camera.position.set(5, 5, 5);
+      camera.lookAt(0, 0, 0);
+      controls.reset();
+    }
+    
+    // 加载模型
+    function loadModel(modelPath) {
+      // 显示加载中
+      showLoading(true, `正在加载模型: ${getModelFileName(modelPath)}`);
+      
+      // 移除当前模型
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+      
+      // 创建GLTF加载器
+      const loader = new THREE.GLTFLoader();
+      
+      // 可选：添加Draco解压缩支持
+      const dracoLoader = new THREE.DRACOLoader();
+      dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/libs/draco/');
+      loader.setDRACOLoader(dracoLoader);
+      
+      console.log("正在加载模型路径:", modelPath); // 添加日志以调试路径问题
+      
+      // 加载模型
+      loader.load(
+        modelPath,
+        // 成功回调
+        function(gltf) {
+          // 添加模型到场景
+          const model = gltf.scene;
+          scene.add(model);
+          currentModel = model;
+          
+          // 更新模型材质
+          updateMaterialsMode();
+          
+          // 居中模型
+          centerModel(model);
+          
+          // 更新模型信息
+          updateModelInfo(model, modelPath);
+          
+          // 隐藏加载中
+          showLoading(false);
+          
+          console.log("模型加载成功:", modelPath); // 加载成功日志
+        },
+        // 加载进度回调
+        function(xhr) {
+          const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+          showLoading(true, `加载进度: ${percent}%`);
+        },
+        // 错误回调
+        function(error) {
+          console.error('模型加载失败:', error);
+          showLoading(false);
+          alert(`模型加载失败: ${error.message}`);
+        }
+      );
+    }
+    
+    // 显示或隐藏加载提示
+    function showLoading(show, text) {
+      const overlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+      
+      if (show) {
+        overlay.style.display = 'flex';
+        if (text) loadingText.textContent = text;
+      } else {
+        overlay.style.display = 'none';
+      }
+    }
+    
+    // 居中模型
+    function centerModel(model) {
+      // 计算包围盒
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      
+      // 将模型移动到场景中心
+      model.position.x = -center.x;
+      model.position.y = -center.y;
+      model.position.z = -center.z;
+      
+      // 调整相机位置以适应模型大小
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / Math.sin(fov / 2));
+      
+      // 设置相机位置
+      const direction = new THREE.Vector3(1, 0.5, 1);
+      direction.normalize();
+      camera.position.copy(direction.multiplyScalar(cameraZ * 0.5));
+      camera.lookAt(0, 0, 0);
+      
+      // 更新控制器
+      controls.update();
+    }
+    
+    // 更新模型信息
+    function updateModelInfo(model, modelPath) {
+      const infoPanel = document.getElementById('info-panel');
+      const modelTitle = document.getElementById('model-title');
+      const modelVertices = document.getElementById('model-vertices');
+      const modelTriangles = document.getElementById('model-triangles');
+      const modelMaterials = document.getElementById('model-materials');
+      const modelSize = document.getElementById('model-size');
+      
+      // 计算模型的基本信息
+      let vertexCount = 0;
+      let triangleCount = 0;
+      let materialCount = 0;
+      
+      model.traverse(function(child) {
+        if (child.isMesh) {
+          if (child.geometry) {
+            if (child.geometry.attributes.position) {
+              vertexCount += child.geometry.attributes.position.count;
+            }
+            if (child.geometry.index) {
+              triangleCount += child.geometry.index.count / 3;
+            } else if (child.geometry.attributes.position) {
+              triangleCount += child.geometry.attributes.position.count / 3;
+            }
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              materialCount += child.material.length;
+            } else {
+              materialCount++;
+            }
+          }
+        }
+      });
+      
+      // 计算包围盒大小
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      
+      // 更新信息面板
+      modelTitle.textContent = getModelFileName(modelPath);
+      modelVertices.textContent = `顶点数：${vertexCount.toLocaleString()}`;
+      modelTriangles.textContent = `三角面数：${Math.round(triangleCount).toLocaleString()}`;
+      modelMaterials.textContent = `材质数：${materialCount}`;
+      modelSize.textContent = `尺寸：${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`;
+      
+      // 显示信息面板
+      infoPanel.style.opacity = 1;
+    }
+    
+    // 获取模型文件名
+    function getModelFileName(path) {
+      const parts = path.split('/');
+      return parts[parts.length - 1].replace('.glb', '').replace('.gltf', '');
+    }
+    
+    // 更新材质模式（普通或线框）
+    function updateMaterialsMode() {
+      if (!currentModel) return;
+      
+      currentModel.traverse((child) => {
+        if (child.isMesh) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => {
+              mat.wireframe = isWireframe;
+            });
+          } else {
+            child.material.wireframe = isWireframe;
+          }
+        }
+      });
+    }
+    
+    // 切换线框模式
+    function toggleWireframe() {
+      isWireframe = !isWireframe;
+      updateMaterialsMode();
+      
+      // 更新按钮状态
+      const btnWireframe = document.getElementById('btn-wireframe');
+      if (isWireframe) {
+        btnWireframe.classList.add('active');
+      } else {
+        btnWireframe.classList.remove('active');
+      }
+    }
+    
+    // 切换自动旋转
+    function toggleAutoRotate() {
+      isAutoRotate = !isAutoRotate;
+      
+      // 更新按钮状态
+      const btnAutoRotate = document.getElementById('btn-auto-rotate');
+      if (isAutoRotate) {
+        btnAutoRotate.classList.add('active');
+      } else {
+        btnAutoRotate.classList.remove('active');
+      }
+    }
+    
+    // 改变背景颜色
+    function changeBackgroundColor(color) {
+      scene.background = new THREE.Color(color);
+      
+      // 更新颜色选择器状态
+      const colorOptions = document.querySelectorAll('.color-option');
+      colorOptions.forEach(option => {
+        if (option.getAttribute('data-color') === color) {
+          option.classList.add('active');
+        } else {
+          option.classList.remove('active');
+        }
+      });
+    }
+    
+    // 加载模型列表
+    function loadModelList() {
+      // 显示加载中
+      const modelListEl = document.getElementById('model-list');
+      modelListEl.innerHTML = `
+        <li class="model-item">
+          <span class="model-icon">⏳</span>
+          <span class="model-name">正在加载模型列表...</span>
+        </li>
+      `;
+      
+      // 发送请求获取模型列表
+      fetch('/list')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            modelList = data.files.map(file => {
+              // 提取分类（根据文件路径）
+              let category = 'other';
+              if (file.includes('/trees/')) category = 'trees';
+              else if (file.includes('/plants/')) category = 'plants';
+              else if (file.includes('/animals/')) category = 'animals';
+              else if (file.includes('/objects/')) category = 'objects';
+              else if (file.includes('/scenes/')) category = 'scenes';
+              else if (file.includes('/environment/')) category = 'environment';
+              
+              return {
+                path: file,
+                name: getModelFileName(file),
+                category: category
+              };
+            });
+            
+            // 默认显示所有模型
+            filteredModels = [...modelList];
+            updateModelListUI();
+          } else {
+            modelListEl.innerHTML = `
+              <li class="model-item">
+                <span class="model-icon">❌</span>
+                <span class="model-name">加载模型列表失败</span>
+              </li>
+            `;
+            console.error('加载模型列表失败:', data.error);
+          }
+        })
+        .catch(error => {
+          modelListEl.innerHTML = `
+            <li class="model-item">
+              <span class="model-icon">❌</span>
+              <span class="model-name">加载模型列表失败: ${error.message}</span>
+            </li>
+          `;
+          console.error('加载模型列表错误:', error);
+        });
+    }
+    
+    // 根据搜索和分类过滤模型
+    function filterModels(searchText, category) {
+      if (category === 'all') {
+        filteredModels = modelList.filter(model => 
+          model.name.toLowerCase().includes(searchText.toLowerCase())
+        );
+      } else {
+        filteredModels = modelList.filter(model => 
+          model.name.toLowerCase().includes(searchText.toLowerCase()) && 
+          model.category === category
+        );
+      }
+      
+      updateModelListUI();
+    }
+    
+    // 更新模型列表UI
+    function updateModelListUI() {
+      const modelListEl = document.getElementById('model-list');
+      
+      if (filteredModels.length === 0) {
+        modelListEl.innerHTML = `
+          <li class="model-item">
+            <span class="model-icon">🔍</span>
+            <span class="model-name">没有找到匹配的模型</span>
+          </li>
+        `;
+        return;
+      }
+      
+      // 添加调试信息
+      console.log("模型列表总数:", filteredModels.length);
+      filteredModels.forEach(model => {
+        console.log("模型路径:", model.path);
+      });
+      
+      modelListEl.innerHTML = filteredModels.map(model => {
+        // 选择合适的图标
+        let icon = '📄';
+        if (model.category === 'trees') icon = '🌲';
+        else if (model.category === 'plants') icon = '🌿';
+        else if (model.category === 'animals') icon = '🦊';
+        else if (model.category === 'objects') icon = '📦';
+        else if (model.category === 'scenes') icon = '🏞️';
+        else if (model.category === 'environment') icon = '🌍';
+        
+        return `
+          <li class="model-item" data-path="${model.path}">
+            <span class="model-icon">${icon}</span>
+            <span class="model-name">${model.name}</span>
+          </li>
+        `;
+      }).join('');
+      
+      // 添加点击事件
+      const modelItems = modelListEl.querySelectorAll('.model-item');
+      modelItems.forEach(item => {
+        item.addEventListener('click', function() {
+          const path = this.getAttribute('data-path');
+          if (path) {
+            // 更新选中状态
+            modelItems.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            
+            // 加载模型
+            loadModel(path);
+          }
+        });
+      });
+    }
+    
+    // 初始化事件监听器
+    function initEventListeners() {
+      // 搜索输入
+      const searchInput = document.getElementById('search-input');
+      searchInput.addEventListener('input', function() {
+        filterModels(this.value, currentCategory);
+      });
+      
+      // 分类项点击
+      const categoryItems = document.querySelectorAll('.category-item');
+      categoryItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // 更新选中状态
+          categoryItems.forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          
+          // 更新当前分类并过滤模型
+          currentCategory = this.getAttribute('data-category');
+          filterModels(searchInput.value, currentCategory);
+        });
+      });
+      
+      // 分类标题点击（折叠/展开）
+      const categoryTitle = document.querySelector('.category-title');
+      const dropdownArrow = document.querySelector('.dropdown-arrow');
+      const categoryList = document.querySelector('.category-list');
+      
+      categoryTitle.addEventListener('click', function() {
+        dropdownArrow.classList.toggle('open');
+        categoryList.classList.toggle('open');
+      });
+      
+      // 线框模式按钮
+      const btnWireframe = document.getElementById('btn-wireframe');
+      btnWireframe.addEventListener('click', toggleWireframe);
+      
+      // 自动旋转按钮
+      const btnAutoRotate = document.getElementById('btn-auto-rotate');
+      btnAutoRotate.addEventListener('click', toggleAutoRotate);
+      
+      // 重置视角按钮
+      const btnReset = document.getElementById('btn-reset');
+      btnReset.addEventListener('click', resetCamera);
+      
+      // 背景颜色选择
+      const colorOptions = document.querySelectorAll('.color-option');
+      colorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const color = this.getAttribute('data-color');
+          changeBackgroundColor(color);
+        });
+      });
+    }
+    
+    // 页面加载完成后初始化
+    window.addEventListener('load', function() {
+      // 初始化场景
+      initScene();
+      
+      // 初始化事件监听器
+      initEventListeners();
+      
+      // 加载模型列表
+      loadModelList();
+      
+      // 适应窗口大小
+      onWindowResize();
+    });
+  </script>
+</body>
+</html> 

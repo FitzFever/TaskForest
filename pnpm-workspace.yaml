@@ -1,0 +1,7 @@
+ignoredBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - electron
+  - esbuild
+  - prisma
+  - sqlite3

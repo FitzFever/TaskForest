@@ -1,0 +1,19 @@
+.taskStats {
+  margin-bottom: 24px;
+}
+
+.taskStats :global(.ant-card) {
+  margin-bottom: 16px;
+}
+
+.progressCard {
+  margin-top: 16px;
+}
+
+.progressCard :global(.ant-progress) {
+  margin-bottom: 0;
+}
+
+.progressCard :global(.ant-row) {
+  height: 100%;
+} 

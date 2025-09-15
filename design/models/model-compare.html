@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TaskForest 3D模型比较器</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+    #container { display: flex; width: 100vw; height: 100vh; }
+    .viewer { flex: 1; position: relative; }
+    canvas { display: block; width: 100%; height: 100%; }
+    
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      border-radius: 5px;
+      max-width: 300px;
+      font-size: 12px;
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    select {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 5px;
+    }
+    
+    .title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 5px;
+      padding: 5px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 3px;
+    }
+    
+    #global-controls {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+    
+    button {
+      padding: 5px 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div id="global-controls">
+    <select id="model-selector" onchange="loadModels()">
+      <option value="test_tree">测试树 (Test Tree)</option>
+      <option value="oak">橡树 (Oak)</option>
+      <option value="pine">松树 (Pine)</option>
+      <option value="maple">枫树 (Maple)</option>
+      <option value="cherry">樱花树 (Cherry)</option>
+      <option value="willow">柳树 (Willow)</option>
+      <option value="apple">苹果树 (Apple)</option>
+      <option value="palm">棕榈树 (Palm)</option>
+    </select>
+    <button onclick="syncCamera('left-to-right')">左→右同步相机</button>
+    <button onclick="syncCamera('right-to-left')">右→左同步相机</button>
+    <button onclick="resetCameras()">重置相机</button>
+    <button onclick="toggleWireframe()">切换线框模式</button>
+  </div>
+  
+  <div id="container">
+    <div id="left-viewer" class="viewer">
+      <div class="title">原始模型</div>
+      <div id="left-info" class="info-panel">加载中...</div>
+      <div class="controls">
+        <button onclick="toggleGrid('left')">切换网格</button>
+        <button onclick="toggleAutoRotate('left')">切换旋转</button>
+      </div>
+    </div>
+    <div id="right-viewer" class="viewer">
+      <div class="title">修复后模型</div>
+      <div id="right-info" class="info-panel">加载中...</div>
+      <div class="controls">
+        <button onclick="toggleGrid('right')">切换网格</button>
+        <button onclick="toggleAutoRotate('right')">切换旋转</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.110.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.110.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    // 全局变量
+    const viewers = {
+      left: {
+        scene: null,
+        camera: null,
+        renderer: null,
+        controls: null,
+        gridHelper: null,
+        model: null,
+        container: document.getElementById('left-viewer'),
+        info: document.getElementById('left-info'),
+        autoRotate: false
+      },
+      right: {
+        scene: null,
+        camera: null,
+        renderer: null,
+        controls: null,
+        gridHelper: null,
+        model: null,
+        container: document.getElementById('right-viewer'),
+        info: document.getElementById('right-info'),
+        autoRotate: false
+      }
+    };
+    
+    let wireframeMode = false;
+    
+    // 初始化查看器
+    function initViewers() {
+      for (const [key, viewer] of Object.entries(viewers)) {
+        // 创建场景
+        viewer.scene = new THREE.Scene();
+        viewer.scene.background = new THREE.Color(0x333333);
+        
+        // 创建相机
+        viewer.camera = new THREE.PerspectiveCamera(45, viewer.container.clientWidth / viewer.container.clientHeight, 0.1, 1000);
+        viewer.camera.position.set(5, 5, 5);
+        
+        // 创建渲染器
+        viewer.renderer = new THREE.WebGLRenderer({ antialias: true });
+        viewer.renderer.setSize(viewer.container.clientWidth, viewer.container.clientHeight);
+        viewer.container.appendChild(viewer.renderer.domElement);
+        
+        // 添加光源
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        viewer.scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        viewer.scene.add(directionalLight);
+        
+        // 添加网格
+        viewer.gridHelper = new THREE.GridHelper(10, 10);
+        viewer.scene.add(viewer.gridHelper);
+        
+        // 添加控制器
+        viewer.controls = new THREE.OrbitControls(viewer.camera, viewer.renderer.domElement);
+        viewer.controls.enableDamping = true;
+        viewer.controls.dampingFactor = 0.05;
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+          viewer.camera.aspect = viewer.container.clientWidth / viewer.container.clientHeight;
+          viewer.camera.updateProjectionMatrix();
+          viewer.renderer.setSize(viewer.container.clientWidth, viewer.container.clientHeight);
+        });
+        
+        // 初始化信息
+        logInfo(key, "查看器已初始化，请选择模型");
+      }
+      
+      // 开始渲染循环
+      animate();
+      
+      // 默认加载测试树模型
+      loadModels("test_tree");
+    }
+    
+    // 加载模型
+    function loadModels(modelName) {
+      if (!modelName) {
+        modelName = document.getElementById('model-selector').value;
+      } else {
+        document.getElementById('model-selector').value = modelName;
+      }
+      
+      logInfo('left', `加载原始模型: ${modelName}`);
+      logInfo('right', `加载修复后模型: ${modelName}`);
+      
+      // 左侧加载原始模型
+      loadModel('left', `export/trees/${modelName}.glb`);
+      
+      // 右侧加载修复后模型
+      loadModel('right', `export/trees/fixed/${modelName}_fixed.glb`);
+    }
+    
+    // 加载单个模型
+    function loadModel(viewerKey, path) {
+      const viewer = viewers[viewerKey];
+      
+      // 移除现有模型
+      if (viewer.model) {
+        viewer.scene.remove(viewer.model);
+        viewer.model = null;
+      }
+      
+      // 检查GLTFLoader是否可用
+      if (typeof THREE.GLTFLoader !== 'function') {
+        logInfo(viewerKey, '错误: GLTFLoader未加载');
+        return;
+      }
+      
+      // 加载模型
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        path,
+        function(gltf) {
+          viewer.model = gltf.scene;
+          
+          // 应用线框模式（如果启用）
+          if (wireframeMode) {
+            setWireframe(viewer.model, true);
+          }
+          
+          // 计算模型边界
+          const box = new THREE.Box3().setFromObject(viewer.model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          // 重置位置
+          viewer.model.position.x = -center.x;
+          viewer.model.position.y = -center.y;
+          viewer.model.position.z = -center.z;
+          
+          // 设置阴影
+          viewer.model.traverse(function(node) {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+            }
+          });
+          
+          viewer.scene.add(viewer.model);
+          
+          // 调整相机
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const distance = maxDim * 2.5;
+          viewer.camera.position.set(distance, distance / 2, distance);
+          viewer.controls.target.set(0, 0, 0);
+          viewer.controls.update();
+          
+          // 显示模型信息
+          logInfo(viewerKey, `模型加载成功: ${path}`);
+          logInfo(viewerKey, `尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          
+          // 分析模型材质
+          analyzeModel(viewerKey);
+        },
+        function(xhr) {
+          if (xhr.total > 0) {
+            const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+            logInfo(viewerKey, `加载进度: ${percent}%`);
+          }
+        },
+        function(error) {
+          logInfo(viewerKey, `加载失败: ${error.message}`);
+          console.error('详细错误:', error);
+        }
+      );
+    }
+    
+    // 分析模型信息
+    function analyzeModel(viewerKey) {
+      const viewer = viewers[viewerKey];
+      if (!viewer.model) return;
+      
+      let meshCount = 0;
+      let materialCount = 0;
+      const materials = new Set();
+      
+      viewer.model.traverse(function(node) {
+        if (node.isMesh) {
+          meshCount++;
+          
+          if (node.material) {
+            if (Array.isArray(node.material)) {
+              node.material.forEach(mat => materials.add(mat));
+            } else {
+              materials.add(node.material);
+            }
+          }
+        }
+      });
+      
+      materialCount = materials.size;
+      
+      logInfo(viewerKey, `网格数量: ${meshCount}`);
+      logInfo(viewerKey, `材质数量: ${materialCount}`);
+      
+      // 显示材质颜色
+      let index = 1;
+      materials.forEach(material => {
+        if (material.color) {
+          const r = Math.floor(material.color.r * 255);
+          const g = Math.floor(material.color.g * 255);
+          const b = Math.floor(material.color.b * 255);
+          logInfo(viewerKey, `材质 #${index++}: RGB(${r},${g},${b})`);
+        }
+      });
+    }
+    
+    // 日志信息
+    function logInfo(viewerKey, message) {
+      const info = viewers[viewerKey].info;
+      console.log(`[${viewerKey}] ${message}`);
+      
+      if (message.startsWith('加载进度')) {
+        // 如果是进度信息，替换最后一行
+        const lines = info.innerHTML.split('<br>');
+        if (lines[lines.length - 1].startsWith('加载进度')) {
+          lines.pop();
+        }
+        lines.push(message);
+        info.innerHTML = lines.join('<br>');
+      } else {
+        info.innerHTML += message + '<br>';
+      }
+      
+      // 限制日志行数
+      const maxLines = 10;
+      const lines = info.innerHTML.split('<br>');
+      if (lines.length > maxLines) {
+        info.innerHTML = lines.slice(lines.length - maxLines).join('<br>');
+      }
+    }
+    
+    // 同步相机位置
+    function syncCamera(direction) {
+      if (direction === 'left-to-right') {
+        // 从左向右同步
+        viewers.right.camera.position.copy(viewers.left.camera.position);
+        viewers.right.controls.target.copy(viewers.left.controls.target);
+        viewers.right.controls.update();
+      } else {
+        // 从右向左同步
+        viewers.left.camera.position.copy(viewers.right.camera.position);
+        viewers.left.controls.target.copy(viewers.right.controls.target);
+        viewers.left.controls.update();
+      }
+    }
+    
+    // 重置相机
+    function resetCameras() {
+      for (const [key, viewer] of Object.entries(viewers)) {
+        if (viewer.model) {
+          const box = new THREE.Box3().setFromObject(viewer.model);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const distance = maxDim * 2.5;
+          viewer.camera.position.set(distance, distance / 2, distance);
+          viewer.controls.target.set(0, 0, 0);
+          viewer.controls.update();
+        }
+      }
+    }
+    
+    // 切换网格显示
+    function toggleGrid(viewerKey) {
+      const viewer = viewers[viewerKey];
+      viewer.gridHelper.visible = !viewer.gridHelper.visible;
+    }
+    
+    // 切换自动旋转
+    function toggleAutoRotate(viewerKey) {
+      const viewer = viewers[viewerKey];
+      viewer.autoRotate = !viewer.autoRotate;
+    }
+    
+    // 切换线框模式
+    function toggleWireframe() {
+      wireframeMode = !wireframeMode;
+      
+      for (const [key, viewer] of Object.entries(viewers)) {
+        if (viewer.model) {
+          setWireframe(viewer.model, wireframeMode);
+        }
+      }
+    }
+    
+    // 设置线框模式
+    function setWireframe(model, enabled) {
+      model.traverse(function(node) {
+        if (node.isMesh && node.material) {
+          if (Array.isArray(node.material)) {
+            node.material.forEach(mat => mat.wireframe = enabled);
+          } else {
+            node.material.wireframe = enabled;
+          }
+        }
+      });
+    }
+    
+    // 渲染循环
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      for (const [key, viewer] of Object.entries(viewers)) {
+        // 自动旋转
+        if (viewer.model && viewer.autoRotate) {
+          viewer.model.rotation.y += 0.01;
+        }
+        
+        // 更新控制器
+        viewer.controls.update();
+        
+        // 渲染
+        viewer.renderer.render(viewer.scene, viewer.camera);
+      }
+    }
+    
+    // 初始化应用
+    initViewers();
+  </script>
+</body>
+</html> 

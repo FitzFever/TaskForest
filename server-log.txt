@@ -1,0 +1,437 @@
+=== TaskForest 开发环境服务器 ===
+正在启动...
+✅ 服务已启动
+🔗 服务地址: http://localhost:9000
+🔗 API基础路径: http://localhost:9000/api
+🔗 健康检查: http://localhost:9000/api/health
+
+开发环境准备就绪. 按 Ctrl+C 停止服务.
+
+2025-04-23T02:51:24.729Z - POST /api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  'user-agent': 'curl/8.7.1',
+  accept: '*/*',
+  'content-type': 'application/json',
+  'content-length': '85'
+}
+请求体: {
+  "taskId": "test-123",
+  "title": "测试任务",
+  "description": "这是一个测试任务"
+}
+2025-04-23 10:51:24 [32minfo[39m: 分析任务复杂度
+[32minfo[39m: 分析任务复杂度 {"service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 10:51:24","title":"测试任务"}
+2025-04-23 10:51:24 [32minfo[39m: 分析任务:
+[32minfo[39m: 分析任务: {"service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 10:51:24"}
+2025-04-23 10:51:30 [32minfo[39m: 任务分析完成
+[32minfo[39m: 任务分析完成 {"complexity":"LOW","service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 10:51:30"}
+2025-04-23T02:51:30.487Z - 响应状态: 200
+响应体: {"code":200,"message":"任务分析成功","data":{"taskId":"test-123","title":"测试任务","complexity":"LOW","analysis":""}}
+2025-04-23T02:51:46.762Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-O1Vj+IeCRJG3V1fjCgBzBRj2v+U"'
+}
+2025-04-23T02:51:46.763Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T02:51:46.763Z","message":"TaskForest API服务正常运行"}
+2025-04-23T02:56:22.543Z - POST /api/api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '263',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745376982515",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。"
+}
+2025-04-23T02:56:42.940Z - GET /api/health
+请求头: { host: 'localhost:9000', 'user-agent': 'curl/8.7.1', accept: '*/*' }
+2025-04-23T02:56:42.941Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T02:56:42.940Z","message":"TaskForest API服务正常运行"}
+2025-04-23T02:58:03.925Z - GET /api/tasks
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"b9c-C+5dUs9eLa0IzwOpfBLfsZtps2g"'
+}
+接收到获取任务列表请求
+查询参数: {}
+按 dueDate asc 排序
+返回 8 条任务，总计 8 条
+2025-04-23T02:58:03.926Z - 响应状态: 200
+响应体: {"code":200,"data":{"tasks":[{"id":"1008","title":"准备季度财务报表","description":"收集和整理第一季度财务数据并生成报表","type":"WORK","status":"CANCELLED","priority":3,"progress":20,"dueDate":"2023-04-30T00:00:00.000Z","createdAt":"2023-04-15T10:30:00.000Z","updatedAt":"2023-04-25T16:45:00.000Z","tags":["财务","报表"],"treeType":"MAPLE","growthStage":0},{"id":"1005","title":"完成产品设计","description":"完成新产品原型设计并提交审核","type":"PROJECT","status":"COMPLETED","priority":3,"progress":100,"dueDate":"2023-05-08T00:00:00.000Z","createdAt":"2023-04-20T09:30:00.000Z","updatedAt":"2023-05-07T14:20:00.000Z","completedAt":"2023-05-07T14:20:00.000Z","tags":["设计","产品"],"treeType":"WILLOW","growthStage":3},{"id":"1007","title":"日常邮件整理","description":"整理工作邮箱并回复重要邮件","type":"NORMAL","status":"TODO","priority":2,"progress":0,"dueDate":"2023-05-12T00:00:00.000Z","createdAt":"2023-05-11T09:00:00.000Z","updatedAt":"2023-05-11T09:00:00.000Z","tags":["邮件","整理"],"treeType":"OAK","growthStage":0},{"id":"1004","title":"每周健身计划","description":"完成每周三次的健身训练","type":"RECURRING","status":"TODO","priority":1,"progress":0,"dueDate":"2023-05-14T00:00:00.000Z","createdAt":"2023-05-07T10:00:00.000Z","updatedAt":"2023-05-07T10:00:00.000Z","tags":["健身","健康"],"treeType":"PINE","growthStage":0},{"id":"1002","title":"安排团队会议","description":"为下周的项目启动安排团队会议","type":"WORK","status":"IN_PROGRESS","priority":2,"progress":40,"dueDate":"2023-05-15T00:00:00.000Z","createdAt":"2023-05-09T14:30:00.000Z","updatedAt":"2023-05-11T10:15:00.000Z","tags":["会议","团队"],"treeType":"MAPLE","growthStage":1},{"id":"1001","title":"完成项目报告","description":"完成季度项目进度报告并提交给项目经理","type":"WORK","status":"TODO","priority":3,"progress":0,"dueDate":"2023-05-20T00:00:00.000Z","createdAt":"2023-05-10T09:00:00.000Z","updatedAt":"2023-05-10T09:00:00.000Z","tags":["报告","项目"],"treeType":"MAPLE","growthStage":0},{"id":"1003","title":"学习React框架","description":"完成React基础教程并构建一个示例应用","type":"LEARNING","status":"IN_PROGRESS","priority":2,"progress":70,"dueDate":"2023-05-30T00:00:00.000Z","createdAt":"2023-05-05T08:00:00.000Z","updatedAt":"2023-05-12T16:30:00.000Z","tags":["学习","编程","React"],"treeType":"APPLE","growthStage":2},{"id":"1006","title":"阅读《原子习惯》","description":"完成《原子习惯》全书阅读并做笔记","type":"LEISURE","status":"IN_PROGRESS","priority":1,"progress":30,"dueDate":"2023-06-01T00:00:00.000Z","createdAt":"2023-05-01T18:00:00.000Z","updatedAt":"2023-05-10T20:15:00.000Z","tags":["阅读","自我提升"],"treeType":"PALM","growthStage":1}],"pagination":{"total":8,"page":1,"limit":10,"pages":1}},"message":"获取任务列表成功","timestamp":1745377083926}
+2025-04-23T02:58:03.928Z - GET /api/tasks
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"b9c-nx7rFrzVyr8FXreIoKN0ScoiI40"'
+}
+接收到获取任务列表请求
+查询参数: {}
+按 dueDate asc 排序
+返回 8 条任务，总计 8 条
+2025-04-23T02:58:03.928Z - 响应状态: 200
+响应体: {"code":200,"data":{"tasks":[{"id":"1008","title":"准备季度财务报表","description":"收集和整理第一季度财务数据并生成报表","type":"WORK","status":"CANCELLED","priority":3,"progress":20,"dueDate":"2023-04-30T00:00:00.000Z","createdAt":"2023-04-15T10:30:00.000Z","updatedAt":"2023-04-25T16:45:00.000Z","tags":["财务","报表"],"treeType":"MAPLE","growthStage":0},{"id":"1005","title":"完成产品设计","description":"完成新产品原型设计并提交审核","type":"PROJECT","status":"COMPLETED","priority":3,"progress":100,"dueDate":"2023-05-08T00:00:00.000Z","createdAt":"2023-04-20T09:30:00.000Z","updatedAt":"2023-05-07T14:20:00.000Z","completedAt":"2023-05-07T14:20:00.000Z","tags":["设计","产品"],"treeType":"WILLOW","growthStage":3},{"id":"1007","title":"日常邮件整理","description":"整理工作邮箱并回复重要邮件","type":"NORMAL","status":"TODO","priority":2,"progress":0,"dueDate":"2023-05-12T00:00:00.000Z","createdAt":"2023-05-11T09:00:00.000Z","updatedAt":"2023-05-11T09:00:00.000Z","tags":["邮件","整理"],"treeType":"OAK","growthStage":0},{"id":"1004","title":"每周健身计划","description":"完成每周三次的健身训练","type":"RECURRING","status":"TODO","priority":1,"progress":0,"dueDate":"2023-05-14T00:00:00.000Z","createdAt":"2023-05-07T10:00:00.000Z","updatedAt":"2023-05-07T10:00:00.000Z","tags":["健身","健康"],"treeType":"PINE","growthStage":0},{"id":"1002","title":"安排团队会议","description":"为下周的项目启动安排团队会议","type":"WORK","status":"IN_PROGRESS","priority":2,"progress":40,"dueDate":"2023-05-15T00:00:00.000Z","createdAt":"2023-05-09T14:30:00.000Z","updatedAt":"2023-05-11T10:15:00.000Z","tags":["会议","团队"],"treeType":"MAPLE","growthStage":1},{"id":"1001","title":"完成项目报告","description":"完成季度项目进度报告并提交给项目经理","type":"WORK","status":"TODO","priority":3,"progress":0,"dueDate":"2023-05-20T00:00:00.000Z","createdAt":"2023-05-10T09:00:00.000Z","updatedAt":"2023-05-10T09:00:00.000Z","tags":["报告","项目"],"treeType":"MAPLE","growthStage":0},{"id":"1003","title":"学习React框架","description":"完成React基础教程并构建一个示例应用","type":"LEARNING","status":"IN_PROGRESS","priority":2,"progress":70,"dueDate":"2023-05-30T00:00:00.000Z","createdAt":"2023-05-05T08:00:00.000Z","updatedAt":"2023-05-12T16:30:00.000Z","tags":["学习","编程","React"],"treeType":"APPLE","growthStage":2},{"id":"1006","title":"阅读《原子习惯》","description":"完成《原子习惯》全书阅读并做笔记","type":"LEISURE","status":"IN_PROGRESS","priority":1,"progress":30,"dueDate":"2023-06-01T00:00:00.000Z","createdAt":"2023-05-01T18:00:00.000Z","updatedAt":"2023-05-10T20:15:00.000Z","tags":["阅读","自我提升"],"treeType":"PALM","growthStage":1}],"pagination":{"total":8,"page":1,"limit":10,"pages":1}},"message":"获取任务列表成功","timestamp":1745377083928}
+2025-04-23T02:58:04.879Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-kPOgPWcFf0WJtNmopp/yEnBcqTU"'
+}
+2025-04-23T02:58:04.880Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T02:58:04.880Z","message":"TaskForest API服务正常运行"}
+2025-04-23T02:58:10.116Z - POST /api/api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '263',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745377090100",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。"
+}
+2025-04-23T03:01:48.507Z - GET /api/health
+请求头: { host: 'localhost:9000', 'user-agent': 'curl/8.7.1', accept: '*/*' }
+2025-04-23T03:01:48.508Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T03:01:48.508Z","message":"TaskForest API服务正常运行"}
+2025-04-23T03:01:59.342Z - POST /api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  'user-agent': 'curl/8.7.1',
+  accept: '*/*',
+  'content-type': 'application/json',
+  'content-length': '85'
+}
+请求体: {
+  "taskId": "test-123",
+  "title": "测试任务",
+  "description": "这是一个测试任务"
+}
+2025-04-23 11:01:59 [32minfo[39m: 分析任务复杂度
+[32minfo[39m: 分析任务复杂度 {"service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 11:01:59","title":"测试任务"}
+2025-04-23 11:01:59 [32minfo[39m: 分析任务:
+[32minfo[39m: 分析任务: {"service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 11:01:59"}
+2025-04-23 11:02:04 [32minfo[39m: 任务分析完成
+[32minfo[39m: 任务分析完成 {"complexity":"LOW","service":"taskforest-server","taskId":"test-123","timestamp":"2025-04-23 11:02:04"}
+2025-04-23T03:02:04.369Z - 响应状态: 200
+响应体: {"code":200,"message":"任务分析成功","data":{"taskId":"test-123","title":"测试任务","complexity":"LOW","analysis":""}}
+2025-04-23T03:09:18.170Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-n9fga3nv0LJTmFMV3La9b7DYX6E"'
+}
+2025-04-23T03:09:18.178Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T03:09:18.177Z","message":"TaskForest API服务正常运行"}
+2025-04-23T03:09:20.118Z - POST /api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '263',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745377760102",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。"
+}
+2025-04-23 11:09:20 [32minfo[39m: 分析任务复杂度
+[32minfo[39m: 分析任务复杂度 {"service":"taskforest-server","taskId":"task-1745377760102","timestamp":"2025-04-23 11:09:20","title":"新项目开发计划"}
+2025-04-23 11:09:20 [32minfo[39m: 分析任务:
+[32minfo[39m: 分析任务: {"service":"taskforest-server","taskId":"task-1745377760102","timestamp":"2025-04-23 11:09:20"}
+2025-04-23 11:09:25 [32minfo[39m: 任务分析完成
+[32minfo[39m: 任务分析完成 {"complexity":"HIGH","service":"taskforest-server","taskId":"task-1745377760102","timestamp":"2025-04-23 11:09:25"}
+2025-04-23T03:09:25.132Z - 响应状态: 200
+响应体: {"code":200,"message":"任务分析成功","data":{"taskId":"task-1745377760102","title":"新项目开发计划","complexity":"HIGH","analysis":""}}
+2025-04-23T03:09:25.141Z - POST /api/tasks/decompose
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '283',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745377760102",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。",
+  "complexity": "HIGH"
+}
+2025-04-23 11:09:25 [32minfo[39m: 拆解任务
+[32minfo[39m: 拆解任务 {"complexity":"HIGH","service":"taskforest-server","taskId":"task-1745377760102","timestamp":"2025-04-23 11:09:25","title":"新项目开发计划"}
+2025-04-23 11:09:52 [31merror[39m: 解析任务拆解响应失败
+[31merror[39m: 解析任务拆解响应失败 {"error":"DeepSeek返回的子任务不是数组格式","response":{"choices":[{"finish_reason":"stop","index":0,"logprobs":null,"message":{"content":"{\n  \"subTasks\": [\n    {\n      \"title\": \"需求分析与规划\",\n      \"description\": \"收集并分析电子商务网站的需求，制定项目开发计划和时间表。\",\n      \"estimatedHours\": 16\n    },\n    {\n      \"title\": \"用户注册登录系统开发\",\n      \"description\": \"开发用户注册、登录、找回密码等功能，包括前端页面和后端逻辑。\",\n      \"estimatedHours\": 40\n    },\n    {\n      \"title\": \"商品展示功能开发\",\n      \"description\": \"开发商品分类、搜索、详情展示等功能，包括前端展示和后端数据管理。\",\n      \"estimatedHours\": 32\n    },\n    {\n      \"title\": \"购物车功能开发\",\n      \"description\": \"开发购物车的添加商品、修改数量、删除商品等功能，包括前端交互和后端逻辑。\",\n      \"estimatedHours\": 24\n    },\n    {\n      \"title\": \"订单管理系统开发\",\n      \"description\": \"开发订单生成、查看、修改状态等功能，包括前端页面和后端逻辑。\",\n      \"estimatedHours\": 32\n    },\n    {\n      \"title\": \"支付系统集成\",\n      \"description\": \"集成第三方支付系统，实现支付功能，包括前端交互和后端支付逻辑。\",\n      \"estimatedHours\": 40\n    },\n    {\n      \"title\": \"数据库设计与实现\",\n      \"description\": \"设计并实现数据库结构，包括用户信息、商品信息、订单信息等数据的存储和管理。\",\n      \"estimatedHours\": 24\n    },\n    {\n      \"title\": \"系统测试与调试\",\n      \"description\": \"对整个电子商务网站进行功能测试、性能测试和安全测试，修复发现的问题。\",\n      \"estimatedHours\": 32\n    },\n    {\n      \"title\": \"部署上线\",\n      \"description\": \"将电子商务网站部署到服务器，配置域名和SSL证书，确保网站可正常访问。\",\n      \"estimatedHours\": 16\n    },\n    {\n      \"title\": \"用户手册编写与培训\",\n      \"description\": \"编写用户操作手册，对管理员进行系统使用培训。\",\n      \"estimatedHours\": 8\n    }\n  ]\n}","role":"assistant"}}],"created":1745377765,"id":"25be3f95-014b-44f4-aa19-cd1f432a9f87","model":"deepseek-chat","object":"chat.completion","system_fingerprint":"fp_3d5141a69a_prod0225","usage":{"completion_tokens":460,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":238,"prompt_tokens":238,"prompt_tokens_details":{"cached_tokens":0},"total_tokens":698}},"service":"taskforest-server","timestamp":"2025-04-23 11:09:52"}
+2025-04-23 11:09:52 [31merror[39m: 拆解任务失败
+[31merror[39m: 拆解任务失败 {"error":"解析任务拆解响应失败: DeepSeek返回的子任务不是数组格式","request":{"complexity":"HIGH","description":"我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。","taskId":"task-1745377760102","title":"新项目开发计划"},"service":"taskforest-server","timestamp":"2025-04-23 11:09:52"}
+2025-04-23T03:09:52.436Z - 响应状态: 500
+响应体: {"code":500,"message":"拆解任务失败: 解析任务拆解响应失败: DeepSeek返回的子任务不是数组格式","data":null}
+2025-04-23T03:12:54.549Z - POST /api/api/text-to-task
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '229',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "text": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。",
+  "createTree": true,
+  "treeType": "OAK"
+}
+2025-04-23T03:18:02.763Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-VPWsG7kV+eZc9HOgILxByR1C3+A"'
+}
+2025-04-23T03:18:02.764Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T03:18:02.764Z","message":"TaskForest API服务正常运行"}
+2025-04-23T03:18:12.613Z - POST /api/tasks/analyze
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '263',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745378292586",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。"
+}
+2025-04-23 11:18:12 [32minfo[39m: 分析任务复杂度
+[32minfo[39m: 分析任务复杂度 {"service":"taskforest-server","taskId":"task-1745378292586","timestamp":"2025-04-23 11:18:12","title":"新项目开发计划"}
+2025-04-23 11:18:12 [32minfo[39m: 分析任务:
+[32minfo[39m: 分析任务: {"service":"taskforest-server","taskId":"task-1745378292586","timestamp":"2025-04-23 11:18:12"}
+2025-04-23 11:18:18 [32minfo[39m: 任务分析完成
+[32minfo[39m: 任务分析完成 {"complexity":"HIGH","service":"taskforest-server","taskId":"task-1745378292586","timestamp":"2025-04-23 11:18:18"}
+2025-04-23T03:18:18.828Z - 响应状态: 200
+响应体: {"code":200,"message":"任务分析成功","data":{"taskId":"task-1745378292586","title":"新项目开发计划","complexity":"HIGH","analysis":""}}
+2025-04-23T03:18:18.840Z - POST /api/tasks/decompose
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'content-length': '283',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'content-type': 'application/json',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8'
+}
+请求体: {
+  "taskId": "task-1745378292586",
+  "title": "新项目开发计划",
+  "description": "我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。",
+  "complexity": "HIGH"
+}
+2025-04-23 11:18:18 [32minfo[39m: 拆解任务
+[32minfo[39m: 拆解任务 {"complexity":"HIGH","service":"taskforest-server","taskId":"task-1745378292586","timestamp":"2025-04-23 11:18:18","title":"新项目开发计划"}
+2025-04-23 11:18:43 [31merror[39m: 解析任务拆解响应失败
+[31merror[39m: 解析任务拆解响应失败 {"error":"DeepSeek返回的子任务不是数组格式","response":{"choices":[{"finish_reason":"stop","index":0,"logprobs":null,"message":{"content":"{\n  \"subTasks\": [\n    {\n      \"title\": \"需求分析与规划\",\n      \"description\": \"收集并分析电子商务网站的需求，制定项目计划和时间表。\",\n      \"estimatedHours\": 16\n    },\n    {\n      \"title\": \"用户注册登录系统开发\",\n      \"description\": \"开发用户注册、登录、找回密码等功能，确保用户信息安全。\",\n      \"estimatedHours\": 40\n    },\n    {\n      \"title\": \"商品展示功能开发\",\n      \"description\": \"实现商品分类、搜索、详情展示等功能，支持图片和视频展示。\",\n      \"estimatedHours\": 48\n    },\n    {\n      \"title\": \"购物车功能开发\",\n      \"description\": \"开发购物车功能，支持添加、删除、修改商品数量等操作。\",\n      \"estimatedHours\": 24\n    },\n    {\n      \"title\": \"订单管理系统开发\",\n      \"description\": \"实现订单创建、查询、取消、状态更新等功能。\",\n      \"estimatedHours\": 32\n    },\n    {\n      \"title\": \"支付系统集成\",\n      \"description\": \"集成第三方支付系统，支持多种支付方式，确保交易安全。\",\n      \"estimatedHours\": 40\n    },\n    {\n      \"title\": \"后台管理系统开发\",\n      \"description\": \"开发后台管理界面，支持商品管理、订单管理、用户管理等功能。\",\n      \"estimatedHours\": 56\n    },\n    {\n      \"title\": \"测试与调试\",\n      \"description\": \"进行系统测试，包括功能测试、性能测试、安全测试等，修复发现的问题。\",\n      \"estimatedHours\": 40\n    },\n    {\n      \"title\": \"部署与上线\",\n      \"description\": \"将系统部署到服务器，进行最后的配置和优化，确保系统稳定运行。\",\n      \"estimatedHours\": 24\n    },\n    {\n      \"title\": \"用户手册与培训\",\n      \"description\": \"编写用户操作手册，对管理员进行系统使用培训。\",\n      \"estimatedHours\": 16\n    }\n  ]\n}","role":"assistant"}}],"created":1745378299,"id":"517d9d19-1127-4894-8506-acd47ffd1844","model":"deepseek-chat","object":"chat.completion","system_fingerprint":"fp_3d5141a69a_prod0225","usage":{"completion_tokens":438,"prompt_cache_hit_tokens":192,"prompt_cache_miss_tokens":46,"prompt_tokens":238,"prompt_tokens_details":{"cached_tokens":192},"total_tokens":676}},"service":"taskforest-server","timestamp":"2025-04-23 11:18:43"}
+2025-04-23 11:18:43 [31merror[39m: 拆解任务失败
+[31merror[39m: 拆解任务失败 {"error":"解析任务拆解响应失败: DeepSeek返回的子任务不是数组格式","request":{"complexity":"HIGH","description":"我需要开发一个电子商务网站，包含用户注册登录、商品展示、购物车、订单管理和支付系统功能。请帮我将这个项目拆解为合适的任务。","taskId":"task-1745378292586","title":"新项目开发计划"},"service":"taskforest-server","timestamp":"2025-04-23 11:18:43"}
+2025-04-23T03:18:43.468Z - 响应状态: 500
+响应体: {"code":500,"message":"拆解任务失败: 解析任务拆解响应失败: DeepSeek返回的子任务不是数组格式","data":null}
+2025-04-23T03:35:37.783Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-RjYuaGTQikF2Yem1UX8JUrwFKj0"'
+}
+2025-04-23T03:35:37.784Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T03:35:37.784Z","message":"TaskForest API服务正常运行"}
+2025-04-23T05:45:20.024Z - GET /api/health
+请求头: { host: 'localhost:9000', 'user-agent': 'curl/8.7.1', accept: '*/*' }
+2025-04-23T05:45:20.029Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T05:45:20.029Z","message":"TaskForest API服务正常运行"}
+2025-04-23T06:00:28.747Z - GET /api/health
+请求头: {
+  host: 'localhost:9000',
+  connection: 'keep-alive',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+  accept: 'application/json',
+  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+  'sec-ch-ua-mobile': '?0',
+  origin: 'http://localhost:5173',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-dest': 'empty',
+  referer: 'http://localhost:5173/',
+  'accept-encoding': 'gzip, deflate, br, zstd',
+  'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'if-none-match': 'W/"63-9T6CxzJWuNHKPK0wfTbNiPt73PM"'
+}
+2025-04-23T06:00:28.748Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T06:00:28.748Z","message":"TaskForest API服务正常运行"}
+2025-04-23T06:02:01.505Z - GET /api/health
+请求头: { host: 'localhost:9000', 'user-agent': 'curl/8.7.1', accept: '*/*' }
+2025-04-23T06:02:01.507Z - 响应状态: 200
+响应体: {"status":"ok","timestamp":"2025-04-23T06:02:01.507Z","message":"TaskForest API服务正常运行"}

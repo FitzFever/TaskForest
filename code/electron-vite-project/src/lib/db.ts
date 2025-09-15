@@ -217,8 +217,8 @@ export const TreeService = {
       throw new Error('树木不存在')
     }
 
-    // 最大生长阶段为5
-    const newGrowthStage = Math.min(tree.growthStage + 1, 5)
+    // 最大生长阶段为3
+    const newGrowthStage = Math.min(tree.growthStage + 1, 3)
 
     return prisma.tree.update({
       where: { id },

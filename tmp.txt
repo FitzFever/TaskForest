@@ -1,0 +1,81 @@
+const ForestScene: React.FC<ForestSceneProps> = ({
+  trees = [],
+  onTreeClick,
+  width = '100%',
+  height = '500px',
+  selectedTreeId,
+  showHealthIndicators = true
+}) => {
+  // 预加载常用树木模型
+  useEffect(() => {
+    modelLoader.preloadCommonModels();
+    
+    // 组件卸载时清理缓存
+    return () => {
+      // 如果需要在组件卸载时清理缓存，可以取消下面的注释
+      // modelLoader.clearCache();
+    };
+  }, []);
+  
+  // 预加载常用树木模型
+  useEffect(() => {
+    // 预加载模型
+    modelLoader.preloadCommonModels();
+    
+    // 在开发环境中检查模型文件
+    if (process.env.NODE_ENV === 'development') {
+      // 延迟检查，避免与模型预加载冲突
+      setTimeout(() => {
+        modelLoader.checkModelFiles().catch(err => {
+          console.error('检查模型文件时出错:', err);
+        });
+      }, 3000);
+    }
+    
+    // 组件卸载时清理缓存
+    return () => {
+      // 如果需要在组件卸载时清理缓存，可以取消下面的注释
+      // modelLoader.clearCache();
+    };
+  }, []);
+  
+  // 预加载常用树木模型并检查模型文件
+  useEffect(() => {
+    // 预加载模型
+    modelLoader.preloadCommonModels();
+    
+    // 在开发环境中检查模型文件
+    if (process.env.NODE_ENV === 'development') {
+      // 延迟检查，避免与模型预加载冲突
+      setTimeout(() => {
+        modelLoader.checkModelFiles().catch(err => {
+          console.error('检查模型文件时出错:', err);
+        });
+      }, 3000);
+    }
+    
+    // 组件卸载时清理缓存
+    return () => {
+      // 如果需要在组件卸载时清理缓存，可以取消下面的注释
+      // modelLoader.clearCache();
+    };
+  }, []);
+  
+  // 预加载常用树木模型并检查模型文件
+  useEffect(() => {
+    console.log('加载森林场景模型...');
+    // 预加载模型
+    modelLoader.preloadCommonModels();
+    
+    // 在开发环境中检查模型文件
+    if (process.env.NODE_ENV === 'development') {
+      // 延迟检查，避免与模型预加载冲突
+      setTimeout(() => {
+        modelLoader.checkModelFiles().catch(err => {
+          console.error('检查模型文件时出错:', err);
+        });
+      }, 3000);
+    }
+    
+    // 组件卸载时清理缓存
+    return () => {

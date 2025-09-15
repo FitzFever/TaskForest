@@ -1,0 +1,70 @@
+{
+  "totalModels": 42,
+  "missingModels": 0,
+  "treeTypes": {
+    "oak": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "pine": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "maple": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "palm": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "apple": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "willow": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    },
+    "cherry": {
+      "genericModel": true,
+      "stages": {
+        "seedstage": true,
+        "sapling": true,
+        "growing": true,
+        "mature": true
+      }
+    }
+  },
+  "timestamp": "\u751f\u6210\u65f6\u95f4"
+}

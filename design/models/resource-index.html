@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TaskForest 资源索引</title>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h1 {
+      color: #2E7D32;
+      border-bottom: 2px solid #2E7D32;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #388E3C;
+      margin-top: 30px;
+    }
+    h3 {
+      color: #43A047;
+    }
+    .model-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .model-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .model-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .model-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1B5E20;
+    }
+    .model-info {
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .model-links {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 8px 12px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #388E3C;
+    }
+    .btn-secondary {
+      background-color: #78909C;
+    }
+    .btn-secondary:hover {
+      background-color: #607D8B;
+    }
+    .doc-card {
+      border-left: 4px solid #4CAF50;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      background-color: #f9f9f9;
+    }
+    .doc-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .doc-desc {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TaskForest 3D资源索引</h1>
+    
+    <p>这个页面列出了TaskForest项目中的所有3D模型资源和相关的开发文档，方便开发人员和设计师查找和使用。</p>
+    
+    <h2>树木模型分类</h2>
+    
+    <h3>基础树种 (已更新 - 2024版)</h3>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-title">橡树 (Oak)</div>
+        <div class="model-info">基础树种，项目中的主要树木类型，已按照新规范更新</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/oak.glb" class="btn">预览</a>
+          <a href="/export/trees/oak.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">松树 (Pine)</div>
+        <div class="model-info">针叶树种，常见于寒冷气候，尖塔形树冠</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/pine.glb" class="btn">预览</a>
+          <a href="/export/trees/pine.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">枫树 (Maple)</div>
+        <div class="model-info">落叶树种，秋季红叶特性已优化</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/maple.glb" class="btn">预览</a>
+          <a href="/export/trees/maple.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">柳树 (Willow)</div>
+        <div class="model-info">垂枝型树种，下垂特征更明显</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/willow.glb" class="btn">预览</a>
+          <a href="/export/trees/willow.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">棕榈树 (Palm)</div>
+        <div class="model-info">热带树种，树干细长，叶片放射状</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/palm.glb" class="btn">预览</a>
+          <a href="/export/trees/palm.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">樱花树 (Cherry)</div>
+        <div class="model-info">开花树种，粉色花朵，雨伞状树冠</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/cherry.glb" class="btn">预览</a>
+          <a href="/export/trees/cherry.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">苹果树 (Apple)</div>
+        <div class="model-info">果树，红色果实，圆形树冠</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/apple.glb" class="btn">预览</a>
+          <a href="/export/trees/apple.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+    </div>
+    
+    <h3>生长阶段模型</h3>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-title">橡树种子期 (Oak Seed)</div>
+        <div class="model-info">橡树的起始生长阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/seedstage_oak.glb" class="btn">预览</a>
+          <a href="/export/trees/seedstage_oak.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">松树种子期 (Pine Seed)</div>
+        <div class="model-info">松树的起始生长阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/seedstage_pine.glb" class="btn">预览</a>
+          <a href="/export/trees/seedstage_pine.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">苹果树种子期 (Apple Seed)</div>
+        <div class="model-info">苹果树的起始生长阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/seedstage_apple.glb" class="btn">预览</a>
+          <a href="/export/trees/seedstage_apple.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">苹果树幼苗 (Apple Sapling)</div>
+        <div class="model-info">苹果树的幼苗阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/apple_sapling.glb" class="btn">预览</a>
+          <a href="/export/trees/apple_sapling.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">棕榈树幼苗 (Palm Sapling)</div>
+        <div class="model-info">棕榈树的幼苗阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/palm_sapling.glb" class="btn">预览</a>
+          <a href="/export/trees/palm_sapling.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+    </div>
+    
+    <h3>成熟阶段模型 (已更新)</h3>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-title">橡树成熟期 (Oak Mature)</div>
+        <div class="model-info">橡树的成熟阶段，半球状树冠，符合原型图</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/oak_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/oak_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">松树成熟期 (Pine Mature)</div>
+        <div class="model-info">松树的成熟阶段，尖塔形，分层清晰</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/pine_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/pine_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">枫树成熟期 (Maple Mature)</div>
+        <div class="model-info">枫树的成熟阶段，红叶特性已强化</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/maple_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/maple_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">柳树成熟期 (Willow Mature)</div>
+        <div class="model-info">柳树的成熟阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/willow_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/willow_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">棕榈树成熟期 (Palm Mature)</div>
+        <div class="model-info">棕榈树的成熟阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/palm_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/palm_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">樱花树成熟期 (Cherry Mature)</div>
+        <div class="model-info">樱花树的成熟阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/cherry_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/cherry_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">苹果树成熟期 (Apple Mature)</div>
+        <div class="model-info">苹果树的成熟阶段</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/apple_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/apple_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+    </div>
+    
+    <h3>健康状态模型</h3>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-title">健康树 (Healthy Tree)</div>
+        <div class="model-info">完全健康状态的树木</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/healthy_tree.glb" class="btn">预览</a>
+          <a href="/export/trees/healthy_tree.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">轻微枯萎树 (Slightly Wilted Tree)</div>
+        <div class="model-info">轻微缺水/受损状态</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/slightly_wilted_tree.glb" class="btn">预览</a>
+          <a href="/export/trees/slightly_wilted_tree.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">中度枯萎树 (Moderately Wilted Tree)</div>
+        <div class="model-info">中等程度缺水/受损状态</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/moderately_wilted_tree.glb" class="btn">预览</a>
+          <a href="/export/trees/moderately_wilted_tree.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">严重枯萎树 (Severely Wilted Tree)</div>
+        <div class="model-info">严重缺水/受损状态</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/severely_wilted_tree.glb" class="btn">预览</a>
+          <a href="/export/trees/severely_wilted_tree.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+    </div>
+    
+    <h3>特殊树种</h3>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-title">杨桃树 (Starfruit)</div>
+        <div class="model-info">热带特殊果树</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/starfruit.glb" class="btn">预览</a>
+          <a href="/export/trees/starfruit.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+      
+      <div class="model-card">
+        <div class="model-title">橡胶树 (Rubber)</div>
+        <div class="model-info">可提供橡胶资源的特殊树种</div>
+        <div class="model-links">
+          <a href="/direct-test.html?model=export/trees/rubber_mature.glb" class="btn">预览</a>
+          <a href="/export/trees/rubber_mature.glb" class="btn btn-secondary">下载</a>
+        </div>
+      </div>
+    </div>
+    
+    <h2>设计和开发文档</h2>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_3D模型制作计划.md</div>
+      <div class="doc-desc">项目的3D模型制作计划文档，包含了模型制作的目标、范围和时间安排。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_3D视觉设计计划.md</div>
+      <div class="doc-desc">项目的3D视觉风格指南，包含了颜色、纹理、光照等视觉元素的规范。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_材质和纹理规范.md</div>
+      <div class="doc-desc">详细的材质和纹理制作规范，包含了PBR材质参数和纹理图制作标准。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_动画和特效规范.md</div>
+      <div class="doc-desc">树木动画和特效制作指南，包含了生长、摇摆等动画的规范。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_3D模型动画规范.md</div>
+      <div class="doc-desc">3D模型动画制作的详细标准，包含了关键帧、时间轴和曲线设置规范。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">TaskForest_3D视觉进度报告.md</div>
+      <div class="doc-desc">项目的3D视觉进度报告，记录了项目各阶段的完成情况。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <div class="doc-card">
+      <div class="doc-title">README_设计资源指引.md</div>
+      <div class="doc-desc">设计资源的总体指引文档，包含了资源组织结构和使用方法。</div>
+      <a href="javascript:void(0)" class="btn">查看文档</a>
+    </div>
+    
+    <h2>模型加载工具</h2>
+    
+    <div style="margin-top: 20px; display: flex; gap: 20px;">
+      <a href="/direct-test.html" class="btn">简单模型查看器</a>
+      <a href="/fix-test.html" class="btn">修复版模型查看器</a>
+      <a href="/viewer.html" class="btn">完整模型查看器</a>
+    </div>
+    
+    <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
+      <p>TaskForest 项目资源索引 - 更新日期: 2023年8月15日</p>
+    </footer>
+  </div>
+  
+  <script>
+    // 读取URL参数加载指定模型
+    document.addEventListener('DOMContentLoaded', function() {
+      // 检查URL中是否有模型参数
+      const urlParams = new URLSearchParams(window.location.search);
+      const modelParam = urlParams.get('model');
+      
+      // 给所有预览按钮添加模型参数
+      document.querySelectorAll('a[href^="/direct-test.html"]').forEach(function(link) {
+        if (!link.href.includes('?')) {
+          const modelPath = link.parentNode.querySelector('a[href^="/export/"]').href.split('/').slice(4).join('/');
+          link.href = `/direct-test.html?model=${modelPath}`;
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

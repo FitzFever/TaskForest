@@ -1,0 +1,167 @@
+{
+  "exported_models": 32,
+  "export_date": "2025-04-11 21:25:34",
+  "blender_version": "4.4.0",
+  "models": [
+    {
+      "file_name": "apple.glb",
+      "size_kb": 616.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "apple_growing.glb",
+      "size_kb": 189.6,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "apple_mature.glb",
+      "size_kb": 616.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "apple_sapling.glb",
+      "size_kb": 80.4,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "cherry.glb",
+      "size_kb": 353.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "cherry_growing.glb",
+      "size_kb": 206.2,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "cherry_mature.glb",
+      "size_kb": 353.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "cherry_sapling.glb",
+      "size_kb": 15.8,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "maple.glb",
+      "size_kb": 8.0,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "maple_growing.glb",
+      "size_kb": 8.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "maple_mature.glb",
+      "size_kb": 8.0,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "maple_sapling.glb",
+      "size_kb": 8.0,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "palm.glb",
+      "size_kb": 512.5,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "palm_growing.glb",
+      "size_kb": 120.3,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "palm_mature.glb",
+      "size_kb": 512.5,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "palm_sapling.glb",
+      "size_kb": 22.6,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "pine.glb",
+      "size_kb": 140.7,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "pine_growing.glb",
+      "size_kb": 44.8,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "pine_mature.glb",
+      "size_kb": 140.7,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "pine_sapling.glb",
+      "size_kb": 14.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "rubber_mature.glb",
+      "size_kb": 76.2,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "seedstage_cherry.glb",
+      "size_kb": 13.9,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "seedstage_maple.glb",
+      "size_kb": 70.1,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "seedstage_oak.glb",
+      "size_kb": 13.4,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "seedstage_palm.glb",
+      "size_kb": 20.7,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "seedstage_willow.glb",
+      "size_kb": 7.4,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "severelywiltedtree.glb",
+      "size_kb": 22.9,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "starfruit.glb",
+      "size_kb": 1177.3,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "willow.glb",
+      "size_kb": 66.3,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "willow_growing.glb",
+      "size_kb": 27.9,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "willow_mature.glb",
+      "size_kb": 66.3,
+      "export_status": "成功"
+    },
+    {
+      "file_name": "willow_sapling.glb",
+      "size_kb": 19.1,
+      "export_status": "成功"
+    }
+  ]
+}

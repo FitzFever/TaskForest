@@ -467,4 +467,223 @@ describe('TaskForest Integration', () => {
     // 测试实现
   });
 });
-``` 
+```
+
+## 8. 项目重构规划
+
+### 8.1 前后端分离架构
+
+```
++---------------------+        +---------------------+
+|   前端应用层         |        |   后端服务层         |
+|---------------------|        |---------------------|
+| React + TypeScript  | <----> | Node.js + Express   |
+| Three.js            |  API   | 业务逻辑             |
+| Zustand             |        | 数据处理             |
+|---------------------|        |---------------------|
+| Electron容器         |        | 数据持久化层         |
++---------------------+        +---------------------+
+                                        |
+                               +---------------------+
+                               |     数据存储层       |
+                               |---------------------|  
+                               |      SQLite         |
+                               +---------------------+
+```
+
+### 8.2 模块划分
+
+#### 前端模块
+- **UI组件模块**：所有React组件
+- **状态管理模块**：使用Zustand管理应用状态
+- **3D渲染模块**：Three.js和React Three Fiber相关代码
+- **API请求模块**：封装所有与后端的通信
+- **工具类模块**：通用工具函数
+
+#### 后端模块
+- **API控制器模块**：处理HTTP请求和响应
+- **服务层模块**：实现业务逻辑
+- **数据访问模块**：使用Prisma操作数据库
+- **AI集成模块**：与OpenAI API交互
+- **工具类模块**：通用工具函数和辅助类
+
+### 8.3 具体重构步骤
+
+#### 8.3.1 项目结构重组
+
+```
+taskforest/
+├── client/                  # 前端代码
+│   ├── src/
+│   │   ├── components/      # React组件
+│   │   ├── hooks/           # 自定义hooks
+│   │   ├── store/           # Zustand状态管理
+│   │   ├── pages/           # 页面组件
+│   │   ├── services/        # API服务
+│   │   ├── three/           # Three.js相关代码
+│   │   │   ├── models/      # 3D模型管理
+│   │   │   ├── scenes/      # 场景管理
+│   │   │   └── utils/       # 3D工具函数
+│   │   ├── utils/           # 工具函数
+│   │   └── electron/        # Electron相关代码
+│   ├── public/              # 静态资源
+│   └── electron/            # Electron主进程代码
+├── server/                  # 后端代码
+│   ├── src/
+│   │   ├── controllers/     # API控制器
+│   │   ├── services/        # 业务服务
+│   │   ├── models/          # 数据模型
+│   │   ├── utils/           # 工具函数
+│   │   ├── middleware/      # 中间件
+│   │   ├── ai/              # AI助手相关
+│   │   └── database/        # 数据库配置
+│   ├── prisma/              # Prisma ORM配置
+│   └── tests/               # 测试代码
+└── docs/                    # 项目文档
+    ├── api/                 # API接口文档
+    ├── development/         # 开发规范
+    ├── architecture/        # 架构文档
+    └── guides/              # 开发指南
+```
+
+#### 8.3.2 数据模型重构
+
+将现有的数据模型转换为Prisma schema，确保数据一致性和类型安全：
+
+```prisma
+// prisma/schema.prisma
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  type        TaskType
+  status      TaskStatus @default(TODO)
+  priority    Int        @default(1)
+  dueDate     DateTime
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  completedAt DateTime?
+  parentId    String?
+  tags        String[]
+  tree        Tree?
+  parent      Task?      @relation("TaskToTask", fields: [parentId], references: [id])
+  children    Task[]     @relation("TaskToTask")
+}
+
+model Tree {
+  id          String   @id @default(uuid())
+  taskId      String   @unique
+  type        String
+  stage       Int      @default(0)
+  positionX   Float
+  positionY   Float
+  positionZ   Float
+  rotationX   Float    @default(0)
+  rotationY   Float    @default(0)
+  rotationZ   Float    @default(0)
+  scaleX      Float    @default(1)
+  scaleY      Float    @default(1)
+  scaleZ      Float    @default(1)
+  createdAt   DateTime @default(now())
+  lastGrowth  DateTime @default(now())
+  healthState Int      @default(100)
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+enum TaskType {
+  NORMAL
+  RECURRING
+  PROJECT
+  LEARNING
+  WORK
+  LEISURE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+```
+
+## 9. API接口规范
+
+### 9.1 RESTful API设计
+
+```
+# 任务相关API
+GET    /api/tasks           - 获取任务列表
+GET    /api/tasks/:id       - 获取单个任务
+POST   /api/tasks           - 创建新任务
+PUT    /api/tasks/:id       - 更新任务
+DELETE /api/tasks/:id       - 删除任务
+PUT    /api/tasks/:id/status - 更新任务状态
+POST   /api/tasks/:id/complete - 完成任务
+
+# 树木相关API
+GET    /api/trees           - 获取树木列表
+GET    /api/trees/:id       - 获取单个树木
+PUT    /api/trees/:id       - 更新树木
+DELETE /api/trees/:id       - 删除树木
+GET    /api/trees/by-task/:taskId - 根据任务ID获取树木
+
+# AI助手相关API
+POST   /api/ai/analyze-task - AI分析任务
+POST   /api/ai/breakdown-task - AI拆解任务
+POST   /api/ai/suggestions  - 获取任务建议
+
+# 用户设置相关API
+GET    /api/settings        - 获取用户设置
+PUT    /api/settings        - 更新用户设置
+
+# 数据同步相关API
+POST   /api/sync            - 同步数据
+POST   /api/backup          - 备份数据
+POST   /api/restore         - 恢复数据
+```
+
+### 9.2 API接口示例文档
+
+```json
+// GET /api/tasks
+{
+  "endpoint": "GET /api/tasks",
+  "description": "获取任务列表",
+  "params": {
+    "status": "任务状态筛选(可选)",
+    "type": "任务类型筛选(可选)",
+    "dueDate": "截止日期筛选(可选)",
+    "page": "页码(可选，默认1)",
+    "limit": "每页数量(可选，默认20)"
+  },
+  "response": {
+    "code": 200,
+    "data": {
+      "tasks": [
+        {
+          "id": "uuid",
+          "title": "任务标题",
+          "description": "任务描述",
+          "type": "NORMAL",
+          "status": "TODO",
+          "priority": 1,
+          "dueDate": "2023-07-20T10:00:00Z",
+          "createdAt": "2023-07-10T08:00:00Z",
+          "updatedAt": "2023-07-10T08:00:00Z",
+          "completedAt": null,
+          "parentId": null,
+          "tags": ["工作", "重要"],
+          "treeType": "OAK",
+          "growthStage": 0
+        }
+      ],
+      "pagination": {
+        "total": 100,
+        "page": 1,
+        "limit": 20,
+        "pages": 5
+      }
+    }
+  }
+} 

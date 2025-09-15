@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>修复测试 - 模型加载</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #333; }
+    #status { 
+      position: absolute; 
+      top: 10px; 
+      left: 10px; 
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 80vh;
+      overflow-y: auto;
+      max-width: 500px;
+    }
+    .model-button {
+      margin: 5px;
+      padding: 8px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .model-button:hover {
+      background: #388E3C;
+    }
+  </style>
+  <!-- 使用UMD版本的Three.js库 -->
+  <script src="https://unpkg.com/three@0.126.1/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.126.1/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.126.1/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="status">
+    <h3>模型加载测试</h3>
+    <div id="controls">
+      <button class="model-button" onclick="loadModelWithPath('export/trees/oak.glb')">加载橡树(相对路径)</button>
+      <button class="model-button" onclick="loadModelWithPath('./export/trees/oak.glb')">加载橡树(当前目录)</button>
+      <button class="model-button" onclick="loadModelWithPath('/export/trees/oak.glb')">加载橡树(绝对路径)</button>
+      <button class="model-button" onclick="loadModelWithPath('export/trees/healthy_tree.glb')">加载健康树</button>
+      <button class="model-button" onclick="loadModelWithPath('export/trees/severely_wilted_tree.glb')">加载枯萎树</button>
+      <button class="model-button" onclick="checkModelFiles()">检查模型文件</button>
+    </div>
+    <div id="log"></div>
+  </div>
+  
+  <script>
+    // 添加调试信息，确认组件加载情况
+    console.log("THREE 是否存在:", typeof THREE !== 'undefined');
+    console.log("OrbitControls 是否存在:", typeof THREE.OrbitControls !== 'undefined');
+    console.log("GLTFLoader 是否存在:", typeof THREE.GLTFLoader !== 'undefined');
+    
+    // 全局变量
+    let scene, camera, renderer, controls, currentModel;
+    const log = document.getElementById('log');
+    
+    // 日志函数
+    function addLog(message, isError = false) {
+      const entry = document.createElement('div');
+      entry.textContent = message;
+      if (isError) {
+        entry.style.color = '#ff6666';
+      }
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+      console.log(message);
+    }
+    
+    // 初始化Three.js场景
+    function init() {
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x333333);
+      
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(5, 5, 5);
+      
+      // 创建渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // 添加控制器
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      
+      // 添加灯光
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
+      
+      // 添加网格辅助
+      const gridHelper = new THREE.GridHelper(10, 10);
+      scene.add(gridHelper);
+      
+      // 开始动画循环
+      animate();
+      
+      // 测试WebGL支持
+      if (!renderer.capabilities.isWebGL2) {
+        addLog('警告: 您的浏览器不支持WebGL2', true);
+      }
+      
+      addLog('3D场景初始化完成!');
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    // 加载模型函数
+    function loadModelWithPath(path) {
+      addLog(`尝试加载模型: ${path}`);
+      
+      // 移除之前的模型
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+      
+      const loader = new GLTFLoader();
+      
+      // 先检查文件是否存在
+      fetch(path)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`模型文件不存在 (状态 ${response.status})`);
+          }
+          addLog(`文件存在! 开始加载模型...`);
+          
+          // 加载模型
+          loader.load(
+            path,
+            function(gltf) {
+              const model = gltf.scene;
+              
+              // 计算包围盒并居中模型
+              const box = new THREE.Box3().setFromObject(model);
+              const size = box.getSize(new THREE.Vector3());
+              const center = box.getCenter(new THREE.Vector3());
+              
+              model.position.x = -center.x;
+              model.position.y = -center.y;
+              model.position.z = -center.z;
+              
+              scene.add(model);
+              currentModel = model;
+              
+              addLog(`模型加载成功! 尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+              
+              // 调整相机以适应模型大小
+              adjustCameraToModel(model);
+            },
+            function(xhr) {
+              const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+              addLog(`加载进度: ${percent}%`);
+            },
+            function(error) {
+              addLog(`模型加载失败: ${error.message}`, true);
+            }
+          );
+        })
+        .catch(error => {
+          addLog(`无法访问模型文件: ${error.message}`, true);
+        });
+    }
+    
+    // 调整相机以适应模型大小
+    function adjustCameraToModel(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / Math.sin(fov / 2));
+      
+      cameraZ = cameraZ * 1.5; // 给相机一些额外距离
+      
+      const direction = new THREE.Vector3(1, 0.5, 1);
+      direction.normalize();
+      camera.position.copy(direction.multiplyScalar(cameraZ));
+      camera.lookAt(center);
+      
+      controls.target.copy(center);
+      controls.update();
+    }
+    
+    // 检查模型文件
+    function checkModelFiles() {
+      addLog('检查服务器上的模型文件...');
+      
+      fetch('/listExport')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.files.length > 0) {
+            addLog(`找到 ${data.files.length} 个模型文件:`);
+            data.files.forEach(file => {
+              addLog(` - ${file}`);
+              
+              // 测试文件可访问性
+              fetch(`/export/trees/${file}`)
+                .then(response => {
+                  if (response.ok) {
+                    addLog(`  √ 文件可访问: ${file}`);
+                  } else {
+                    addLog(`  × 文件无法访问: ${file} (${response.status})`, true);
+                  }
+                })
+                .catch(err => {
+                  addLog(`  × 文件请求错误: ${file} (${err.message})`, true);
+                });
+            });
+            
+            // 显示建议的加载路径
+            addLog('推荐的加载路径:');
+            data.paths.forEach(path => {
+              addLog(` - ${path}`);
+            });
+          } else {
+            addLog('未找到模型文件或API返回错误', true);
+            addLog(JSON.stringify(data));
+          }
+        })
+        .catch(err => {
+          addLog(`获取模型列表失败: ${err.message}`, true);
+        });
+    }
+    
+    // 窗口大小调整
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // 初始化
+    init();
+    
+    // 添加全局引用以便调试
+    window.scene = scene;
+  </script>
+</body>
+</html> 

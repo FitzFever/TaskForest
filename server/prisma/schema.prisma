@@ -1,0 +1,78 @@
+// TaskForest Prisma Schema
+
+// 数据源配置
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 生成器配置
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 任务模型
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  // 使用字符串替代枚举
+  type        String    @default("NORMAL") // NORMAL, RECURRING, PROJECT, LEARNING, WORK, LEISURE
+  status      String    @default("TODO") // TODO, IN_PROGRESS, COMPLETED, CANCELLED
+  priority    Int       @default(3)
+  dueDate     DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+  parentId    String?
+  // 使用逗号分隔的字符串替代字符串数组
+  tags        String    @default("")
+  treeType    String    @default("OAK") // OAK, PINE, CHERRY, PALM, APPLE, MAPLE, WILLOW
+  tree        Tree?
+  parent      Task?     @relation("TaskToTask", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Task[]    @relation("TaskToTask")
+}
+
+// 树木模型
+model Tree {
+  id          String   @id @default(uuid())
+  taskId      String   @unique
+  type        String   @default("OAK") // OAK, PINE, CHERRY, PALM, APPLE, MAPLE, WILLOW
+  stage       Int      @default(0)
+  positionX   Float    @default(0)
+  positionY   Float    @default(0)
+  positionZ   Float    @default(0)
+  rotationY   Float    @default(0)
+  scaleX      Float    @default(1)
+  scaleY      Float    @default(1)
+  scaleZ      Float    @default(1)
+  createdAt   DateTime @default(now())
+  lastGrowth  DateTime @default(now())
+  healthState Int      @default(100)
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+// 用户设置模型
+model Settings {
+  id                    String   @id @default(uuid())
+  theme                 String   @default("light")
+  
+  // 通知设置
+  notificationsEnabled  Boolean  @default(true)
+  dueDateReminderHours  Int      @default(24)
+  dailyDigestEnabled    Boolean  @default(true)
+  
+  // 显示设置
+  taskListView          String   @default("kanban")
+  defaultSortField      String   @default("dueDate")
+  defaultSortOrder      String   @default("asc")
+  
+  // 森林设置
+  renderQuality         String   @default("high")
+  autoRotate            Boolean  @default(true)
+  weatherEffects        Boolean  @default(true)
+  ambientSound          Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+} 

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>快速模型测试</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow: auto;
+    }
+    #model-list {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 80vh;
+      overflow: auto;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 5px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">等待加载...</div>
+  <div id="model-list"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.110.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    // 状态显示
+    const info = document.getElementById('info');
+    function log(message) {
+      console.log(message);
+      info.innerHTML += message + '<br>';
+      info.scrollTop = info.scrollHeight;
+    }
+    
+    // 清除日志
+    function clearLog() {
+      info.innerHTML = '';
+    }
+    
+    // 初始化场景
+    let scene, camera, renderer, model;
+    
+    function initScene() {
+      clearLog();
+      log('初始化场景...');
+      
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x333333);
+      
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 5, 10);
+      
+      // 创建渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // 添加光源
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+      
+      // 添加网格
+      const gridHelper = new THREE.GridHelper(10, 10);
+      scene.add(gridHelper);
+      
+      // 窗口大小调整
+      window.addEventListener('resize', onWindowResize);
+      
+      log('场景初始化完成');
+      
+      // 开始渲染
+      animate();
+    }
+    
+    // 窗口大小变化
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // 加载模型
+    function loadModel(path) {
+      clearLog();
+      log(`加载模型: ${path}`);
+      
+      // 移除现有模型
+      if (model) {
+        log('移除现有模型');
+        scene.remove(model);
+        model = null;
+      }
+      
+      // 判断GLTFLoader是否可用
+      if (typeof THREE.GLTFLoader !== 'function') {
+        log('错误: GLTFLoader未加载');
+        return;
+      }
+      
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        path,
+        function(gltf) {
+          log('模型加载成功!');
+          model = gltf.scene;
+          
+          // 打印子对象
+          log(`子对象数量: ${model.children.length}`);
+          model.children.forEach((child, index) => {
+            log(`- ${index+1}: ${child.name} (${child.type})`);
+          });
+          
+          // 计算模型尺寸
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          
+          log(`尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+          
+          // 重置位置
+          model.position.x = -center.x;
+          model.position.y = -center.y;
+          model.position.z = -center.z;
+          
+          scene.add(model);
+          
+          // 调整相机
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const distance = maxDim * 2.5;
+          camera.position.set(distance, distance / 2, distance);
+          camera.lookAt(new THREE.Vector3(0, 0, 0));
+        },
+        function(xhr) {
+          if (xhr.total > 0) {
+            const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+            log(`加载进度: ${percent}%`);
+          } else {
+            log(`加载中... ${xhr.loaded} 字节`);
+          }
+        },
+        function(error) {
+          log(`加载失败: ${error.message}`);
+          console.error('详细错误:', error);
+        }
+      );
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      if (model) {
+        model.rotation.y += 0.005;
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    // 加载模型列表
+    function loadModelList() {
+      const modelList = document.getElementById('model-list');
+      modelList.innerHTML = '<h3>模型列表</h3>';
+      
+      const treeModels = [
+        { name: '橡树 (Oak)', path: 'export/trees/oak.glb' },
+        { name: '松树 (Pine)', path: 'export/trees/pine.glb' },
+        { name: '枫树 (Maple)', path: 'export/trees/maple.glb' },
+        { name: '樱花树 (Cherry)', path: 'export/trees/cherry.glb' },
+        { name: '柳树 (Willow)', path: 'export/trees/willow.glb' },
+        { name: '苹果树 (Apple)', path: 'export/trees/apple.glb' },
+        { name: '棕榈树 (Palm)', path: 'export/trees/palm.glb' },
+        { name: '橡树种子 (Oak Seed)', path: 'export/trees/seedstage_oak.glb' },
+        { name: '松树种子 (Pine Seed)', path: 'export/trees/seedstage_pine.glb' },
+        { name: '苹果树种子 (Apple Seed)', path: 'export/trees/seedstage_apple.glb' },
+        { name: '橡树成熟期 (Oak Mature)', path: 'export/trees/oak_mature.glb' },
+        { name: '松树成熟期 (Pine Mature)', path: 'export/trees/pine_mature.glb' },
+        { name: '枫树成熟期 (Maple Mature)', path: 'export/trees/maple_mature.glb' },
+        { name: '樱花树成熟期 (Cherry Mature)', path: 'export/trees/cherry_mature.glb' },
+        { name: '柳树成熟期 (Willow Mature)', path: 'export/trees/willow_mature.glb' },
+        { name: '苹果树成熟期 (Apple Mature)', path: 'export/trees/apple_mature.glb' },
+        { name: '棕榈树成熟期 (Palm Mature)', path: 'export/trees/palm_mature.glb' }
+      ];
+      
+      treeModels.forEach(model => {
+        const button = document.createElement('button');
+        button.textContent = model.name;
+        button.onclick = function() {
+          loadModel(model.path);
+        };
+        modelList.appendChild(button);
+      });
+    }
+    
+    // 初始化
+    initScene();
+    loadModelList();
+  </script>
+</body>
+</html> 
